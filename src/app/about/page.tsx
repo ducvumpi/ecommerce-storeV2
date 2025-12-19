@@ -143,7 +143,7 @@ export default function AboutPage() {
             Đăng ký ngay hôm nay để được giảm giá 15% cho đơn hàng đầu tiên cùng quyền truy cập độc quyền vào các bộ sưu tập mới.
           </p>
           <a
-            href="/signup.html"
+            href="/signup"
             className="inline-block bg-white text-black px-8 py-3 rounded-full font-medium hover:bg-opacity-90 transition"
           >
             Tham gia ngay

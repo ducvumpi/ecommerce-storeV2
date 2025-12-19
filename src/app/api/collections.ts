@@ -1,6 +1,7 @@
 import axios from "axios";
 import { create } from "zustand";
-
+import { supabase } from "../libs/supabaseClient";
+import { Clothes } from "./productsAPI"
 export type Collection = {
   id: number;
   name: string;
@@ -14,18 +15,28 @@ export interface CategoryStore {
   fetchCategories: () => Promise<void>;
 }
 
+// export async function fetchCollections(): Promise<Collection[]> {
+//   try {
+//     const response = await axios.get<Collection[]>(
+//       "https://api.escuelajs.co/api/v1/categories"
+//     );
+//     return response.data;
+//   } catch (error) {
+//     console.error("Lỗi", error);
+//     return [];
+//   }
 export async function fetchCollections(): Promise<Collection[]> {
-  try {
-    const response = await axios.get<Collection[]>(
-      "https://api.escuelajs.co/api/v1/categories"
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Lỗi", error);
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+
+  if (error) {
+    console.error("Lỗi lấy sản phẩm:", error);
     return [];
   }
-}
 
+  return data as Collection[];
+}
 export const useCategoryStore = create<CategoryStore>((set) => ({
   categories: [],
   setCategories: (data) => set({ categories: data }),
@@ -54,7 +65,18 @@ export async function fetchCollectionBySlug(slug: string): Promise<Collection | 
     return null;
   }
 }
-
+export async function fetchProductsByCategory(categoryId: number) {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("category_id", categoryId);
+  console.log("check datata", data)
+  if (error) {
+    console.error("Lỗi lấy sản phẩm:", error);
+    return [];
+  }
+  return data;
+}
 
 
 

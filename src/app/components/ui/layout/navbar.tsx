@@ -1,10 +1,14 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Handbag, HomeIcon, InfoIcon, StoreIcon } from "lucide-react";
-import { useAuthStore } from "../context/isLoggedIn";
+import { Handbag, HomeIcon, InfoIcon, StoreIcon, Search, ShoppingBag, } from "lucide-react";
+import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
-
+import { Button } from "@mui/material";
+import { GetUserProfile } from "@/app/api/loginAPI";
+import UserAccount from "@/app/account/page";
+import Navbar123 from "@/app/admintest/page";
+// import { syncProductsToSupabase } from "../api/dongboAPI"
 export default function Navbar() {
   const router = useRouter();
   const { isLoggedIn, logout } = useAuthStore();
@@ -45,20 +49,25 @@ export default function Navbar() {
             <InfoIcon className="w-5 h-5 text-gray-600" />
             Giới thiệu
           </Link>
-          <Link href="/search.html">
-            <i data-feather="search"></i>
+          <Link href="/search">
+            <Search className="w-5 h-5 text-gray-600" />
           </Link>
           <Link href="/cart">
-            <i data-feather="shopping-bag"></i>
+            <ShoppingBag className="w-5 h-5 text-gray-600" />
           </Link>
+          <Link href="/account">
+            <ShoppingBag className="w-5 h-5 text-gray-600" />
+          </Link>
+          {/* <Navbar123 /> */}
+          {/* <Button onClick={syncProductsToSupabase}>Đồng bộ</Button> */}
         </div>
         {!isLoggedIn ? (
           <div className="nav-actions">
             <div className="auth-buttons">
-              <a href="/login" className="auth-btn login-btn">
+              <a href="/auth/login" className="auth-btn login-btn">
                 Đăng nhập
               </a>
-              <a href="/signup" className="auth-btn signup-btn">
+              <a href="/auth/register" className="auth-btn signup-btn">
                 Đăng ký
               </a>
             </div>
@@ -66,11 +75,7 @@ export default function Navbar() {
         ) : (
           <>
             <div className="flex flex-gap">
-
-              <a href="/account">
-                <i data-feather="user"></i>
-              </a>
-
+              <UserAccount />
               <button className="mobile-menu-btn">
                 <i data-feather="menu"></i>
               </button>
