@@ -75,7 +75,7 @@ export default function UserPage() {
             </Box>
             <MenuItem
               component={Link}
-              href="/account"
+              href="/info"
               onClick={handleMenuClose}
             >
               Trang cá nhân
