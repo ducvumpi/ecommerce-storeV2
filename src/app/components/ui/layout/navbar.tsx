@@ -58,6 +58,9 @@ export default function Navbar() {
           <Link href="/account">
             <ShoppingBag className="w-5 h-5 text-gray-600" />
           </Link>
+          <Link href="/admintest">
+            <ShoppingBag className="w-5 h-5 text-gray-600" />
+          </Link>
           {/* <Navbar123 /> */}
           {/* <Button onClick={syncProductsToSupabase}>Đồng bộ</Button> */}
         </div>

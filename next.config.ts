@@ -14,7 +14,7 @@ const nextConfig = {
       "tiem-mua-cham-store.vercel.app",
       "www.arkema.com",
       'images.unsplash.com',
-      'encrypted-tbn0.gstatic.com', 'cdn.brvn.vn', 'image.made-in-china.com', 'file.hstatic.nets', 'images.unsplash.com', 'file.hstatic.net', 'picsum.photos'
+      'encrypted-tbn0.gstatic.com', 'cdn.brvn.vn', 'image.made-in-china.com', 'file.hstatic.nets', 'images.unsplash.com', 'file.hstatic.net', 'picsum.photos', "opjluoktkkgyqwujdhdu.supabase.co"
     ], // ✅ thêm domain ở đây
   },
 };
