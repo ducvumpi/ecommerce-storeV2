@@ -12,7 +12,41 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/DialogTitle';
+import { createOrder, handlePaymentSuccess, insertOrderItemsFromCart } from '../store/createOrder';
 
+
+export type CartItem = {
+  id: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  ward: string;
+  note: string;
+  quantity: number;
+  cart: {
+    user_id: string;
+  };
+  variants: {
+    id: number;
+    sizes: {
+      id: number;
+      name: string;
+    };
+    colors: {
+      id: number;
+      name: string;
+    };
+    products: {
+      id: number;
+      price: number;
+      title: string;
+      image: string;
+    };
+  };
+
+};
 export default function ShoppingCartUI() {
   const [open, setOpen] = useState(false);
 
@@ -26,6 +60,7 @@ export default function ShoppingCartUI() {
     email: '',
     phone: '',
     address: '',
+    totalAmount: 0,
     city: '',
     ward: '',
     note: ''
@@ -33,37 +68,55 @@ export default function ShoppingCartUI() {
 
 
 
-  type CartItem = {
-    id: number;
-    quantity: number;
-    cart: {
-      user_id: string;
-    };
-    variants: {
-      id: number;
-      color: string;
-      size: string;
-      price: number;
-      product_id: number;
-      products: {
-        id: number;
-        title: string;
-        image: string;
-      };
-    };
-  };
-
 
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   // Address data from API
   const [addressData, setAddressData] = useState([]);
   const [provinces, setProvinces] = useState<Commune[]>([]);
   const [wards, setWards] = useState<Commune[]>([]);
   const [loading, setLoading] = useState(true);
+  const handlePlaceOrder = async () => {
+    if (!orderId) {
+      alert("Không tìm thấy đơn hàng");
+      return;
+    }
+
+    const success = await handlePaymentSuccess(orderId, cartItems);
+
+    if (!success) {
+      alert("Đặt hàng thất bại, vui lòng thử lại");
+      return;
+    }
+
+    // ✅ TỪ ĐÂY TRỞ ĐI MỚI LÀ SUCCESS
+    setOrderSuccess(true);
+
+    setTimeout(() => {
+      setOrderSuccess(false);
+      setCurrentStep(1);
+      setCartItems([]);
+      setCustomerInfo({
+        fullName: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        ward: "",
+        note: "",
+      });
+      setAppliedCoupon(null);
+      setCouponCode("");
+      setOrderId(null);
+      localStorage.removeItem("order_id");
+    }, 3000);
+  };
+
+
   // Load address data from API
   useEffect(() => {
     const fetchAddressData = async () => {
@@ -99,23 +152,28 @@ export default function ShoppingCartUI() {
         setCartItems([]);
         return;
       }
-
       const { data, error } = await supabase
         .from("cart_items")
         .select(`
     id,
     quantity,
-    cart:cart_id!inner (
+    cart:cart_id (
+      id,
       user_id
     ),
-    variants:variant_id!inner (
+    variants:variant_id (
       id,
-      color,
-      size,
-      price,
-      products:product_id!inner (
+      colors:color_id (
         id,
-        title,
+        name
+      ),
+      sizes:size_id (
+        id,
+        name
+      ),
+      products:product_id (
+        id,
+        title,price,
         image
       )
     )
@@ -129,7 +187,21 @@ export default function ShoppingCartUI() {
         return;
       }
 
-      setCartItems(data ?? []);
+      const transformedData = (data ?? []).map(item => {
+        const variant = Array.isArray(item.variants) ? item.variants[0] : item.variants;
+        const products = Array.isArray(variant.products) ? variant.products[0] : variant.products;
+        return {
+          ...item,
+          cart: Array.isArray(item.cart) ? item.cart[0] : item.cart,
+          variants: {
+            ...variant,
+            product_id: products?.id || 0,
+            products: products
+          }
+        };
+      });
+
+      setCartItems(transformedData);
     }
 
     fetchCart();
@@ -167,7 +239,36 @@ export default function ShoppingCartUI() {
       customerInfo.phone &&
       customerInfo.address &&
       customerInfo.city;
+
   };
+  const handleContinue = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("Vui lòng đăng nhập để tiếp tục");
+        return;
+      }
+
+      const orderId = await createOrder({
+        ...customerInfo,
+        cartID: user.id
+      }, total);
+
+      await insertOrderItemsFromCart(orderId); // 🔥 BẮT BUỘC
+
+      setOrderId(orderId);
+      setCurrentStep(3); // sang thanh toán
+    } catch (err: any) {
+      console.error("CREATE ORDER ERROR:", err);
+      alert(err?.message || "Không thể tạo đơn hàng");
+    }
+
+  };
+
+
 
   const updateQuantity = (id, change) => {
     setCartItems(items =>
@@ -212,36 +313,17 @@ export default function ShoppingCartUI() {
     }
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.variants.price * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + item.variants.products.price * item.quantity, 0);
   const discount = appliedCoupon ? subtotal * (appliedCoupon.discount || 0) : 0;
   const shipping = appliedCoupon?.freeShip ? 0 : 30000;
-  const total = subtotal - discount + shipping;
+  const total = subtotal - discount;
+  const calculation = subtotal - discount + shipping;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(price);
-  };
-
-  const handlePlaceOrder = () => {
-    setOrderSuccess(true);
-    setTimeout(() => {
-      setOrderSuccess(false);
-      setCurrentStep(1);
-      setCartItems([]);
-      setCustomerInfo({
-        fullName: '',
-        email: '',
-        phone: '',
-        address: '',
-        city: '',
-        ward: '',
-        note: ''
-      });
-      setAppliedCoupon(null);
-      setCouponCode('');
-    }, 3000);
   };
 
   if (loading) {
@@ -347,9 +429,10 @@ export default function ShoppingCartUI() {
                             {item.variants.products.title}
                           </h3>
                           <div className="flex gap-4 mt-1 text-sm text-slate-600">
-                            <span>Size: {item.variants.size}</span>
-                            <span>Màu: {item.variants.color}</span>
+                            <span>Size: {item.variants.sizes?.name}</span>
+                            <span>Màu: {item.variants.colors?.name}</span>
                           </div>
+
                         </div>
                         <button
                           onClick={handleClickOpen}
@@ -380,10 +463,10 @@ export default function ShoppingCartUI() {
 
                         <div className="text-right">
                           <div className="text-xl font-bold text-blue-600">
-                            {formatPrice(item.variants.price * item.quantity)}
+                            {formatPrice(item.variants.products.price * item.quantity)}
                           </div>
                           <div className="text-sm text-slate-500">
-                            {formatPrice(item.variants.price)} / sp
+                            {formatPrice(item.variants.products.price)} / sp
                           </div>
                         </div>
                       </div>
@@ -460,7 +543,7 @@ export default function ShoppingCartUI() {
                     Tổng cộng
                   </span>
                   <span className="text-2xl font-bold text-blue-600">
-                    {formatPrice(total)}
+                    {formatPrice(calculation)}
                   </span>
                 </div>
 
@@ -626,13 +709,13 @@ export default function ShoppingCartUI() {
                     Quay lại giỏ hàng
                   </button>
                   <button
-                    onClick={() => validateStep2() && setCurrentStep(3)}
-                    disabled={!validateStep2()}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleContinue}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2"
                   >
                     Tiếp tục
                     <ArrowRight className="w-5 h-5" />
                   </button>
+
                 </div>
               </div>
             </div>
@@ -655,9 +738,9 @@ export default function ShoppingCartUI() {
                       /> */}
                       <div className="flex-1">
                         <h4 className="font-medium text-sm text-slate-800">{item.variants.products.title}</h4>
-                        <p className="text-xs text-slate-500">SL: {item.quantity} <br /> Màu: {item.variants.color} Size: {item.variants.size}</p>
+                        <p className="text-xs text-slate-500">SL: {item.quantity} <br /> Màu: {item.variants.colors?.name} Size: {item.variants.sizes?.name}</p>
                         <p className="text-sm font-semibold text-blue-600 mt-1">
-                          {formatPrice(item.variants.price * item.quantity)}
+                          {formatPrice(item.variants.products.price * item.quantity)}
                         </p>
                       </div>
                     </div>
@@ -688,7 +771,7 @@ export default function ShoppingCartUI() {
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-slate-800">Tổng cộng</span>
                   <span className="text-xl font-bold text-blue-600">
-                    {formatPrice(total)}
+                    {formatPrice(calculation)}
                   </span>
                 </div>
               </div>
@@ -874,7 +957,7 @@ export default function ShoppingCartUI() {
                         <h4 className="font-medium text-sm text-slate-800">{item.variants.products.title}</h4>
                         <p className="text-xs text-slate-500">SL: {item.quantity}</p>
                         <p className="text-sm font-semibold text-blue-600 mt-1">
-                          {formatPrice(item.variants.price * item.quantity)}
+                          {formatPrice(item.variants.products.price * item.quantity)}
                         </p>
                       </div>
                     </div>
@@ -905,7 +988,7 @@ export default function ShoppingCartUI() {
                 <div className="flex justify-between items-center mb-4">
                   <span className="font-semibold text-slate-800">Tổng cộng</span>
                   <span className="text-xl font-bold text-blue-600">
-                    {formatPrice(total)}
+                    {formatPrice(calculation)}
                   </span>
                 </div>
 
@@ -996,3 +1079,4 @@ export default function ShoppingCartUI() {
     </div>
   );
 }
+

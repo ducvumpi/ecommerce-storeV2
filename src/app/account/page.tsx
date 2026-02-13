@@ -82,6 +82,13 @@ export default function UserPage() {
             </MenuItem>
             <MenuItem
               component={Link}
+              href="/orders"
+              onClick={handleMenuClose}
+            >
+              Đơn mua
+            </MenuItem>
+            <MenuItem
+              component={Link}
               href="/settings"
               onClick={handleMenuClose}
             >

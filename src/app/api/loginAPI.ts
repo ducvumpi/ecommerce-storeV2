@@ -138,31 +138,32 @@ export async function getOrCreateCart(userId: string) {
   }
 
   return cart;
-}
+} export async function addToCart(product_id: number, variantId: number, quantity: number) {
+  const { data: authData } = await supabase.auth.getUser();
 
-export async function addToCart(variantId: number, quantity: number) {
-  const { data: authData, error } = await supabase.auth.getUser();
-
-  if (error || !authData?.user) {
+  if (!authData?.user) {
     toast.error("Bạn cần đăng nhập");
     return;
   }
 
-  const userId = authData.user.id;
+  const cart = await getOrCreateCart(authData.user.id);
 
-  // 1️⃣ Lấy hoặc tạo cart active
-  const cart = await getOrCreateCart(userId);
-  console.log("check cart", cart);
-  // 2️⃣ Check variant đã có trong cart chưa
-  const { data: existingItem } = await supabase
+  // 1️⃣ Kiểm tra item đã tồn tại chưa
+  const { data: existingItem, error: fetchError } = await supabase
     .from("cart_items")
     .select("id, quantity")
     .eq("cart_id", cart.id)
     .eq("variant_id", variantId)
     .single();
 
+  if (fetchError && fetchError.code !== "PGRST116") {
+    console.error(fetchError);
+    toast.error("Không thể kiểm tra giỏ hàng");
+    return;
+  }
+
+  // 2️⃣ Nếu đã tồn tại → CỘNG DỒN
   if (existingItem) {
-    // 3️⃣ Update quantity
     const { error } = await supabase
       .from("cart_items")
       .update({
@@ -170,23 +171,25 @@ export async function addToCart(variantId: number, quantity: number) {
       })
       .eq("id", existingItem.id);
 
-    if (!error) toast.success("Đã cập nhật số lượng");
+    if (error) {
+      console.error(error);
+      toast.error("Không thể cập nhật giỏ hàng");
+    }
     return;
   }
 
-  // 4️⃣ Insert mới
-  const { error: insertError } = await supabase
-    .from("cart_items")
-    .insert({
-      cart_id: cart.id,
-      variant_id: variantId,
-      quantity,
-    });
+  // 3️⃣ Nếu chưa tồn tại → INSERT
+  const { error } = await supabase.from("cart_items").insert({
+    cart_id: cart.id,
+    product_id: product_id,
+    variant_id: variantId,
+    quantity,
+  });
 
-  if (!insertError) {
-    toast.success("Đã thêm vào giỏ hàng");
+  if (error) {
+    console.error(error);
+    toast.error("Không thể thêm vào giỏ");
   }
-  console.log("check insertError", insertError);
 }
 
 
@@ -223,5 +226,7 @@ export async function GetUserProfile(): Promise<UserData | null> {
     console.error("Lỗi xóa sản phẩm:", error);
   }
   console.log("check Profile", data)
+  console.log("check userId", userId)
+
   return data as null;
 }

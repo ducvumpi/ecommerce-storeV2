@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     // Lưu token vào cookie server
-    cookies().set("access_token", data.session?.access_token!, {
+    (await cookies()).set("access_token", data.session?.access_token!, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",

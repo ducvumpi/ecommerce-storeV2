@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Clothes } from "../api/productsAPI";
+import { Clothes } from "@/app/api/productsAPI";
 export default function ProductGallery({ collection }: { collection: Clothes }) {
     const images = collection.images?.length > 0
         ? collection.images

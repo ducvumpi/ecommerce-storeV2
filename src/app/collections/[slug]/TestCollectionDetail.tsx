@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
-import { fetchProductsByCategory } from "@/app/api/collections";
+import { Collection, fetchProductsByCategory } from "@/app/api/collections";
+import { Clothes } from "@/app/api/productsAPI"
 import Image from 'next/image';
+import { use } from "react";
 import { addToCart } from "@/app/api/loginAPI";
 
 // const sampleProducts = [
@@ -15,14 +17,23 @@ import { addToCart } from "@/app/api/loginAPI";
 //   { id: 7, name: 'Áo Sơ Mi', price: 350000, image: '👔', category: 'Áo', rating: 4.7, inStock: true },
 //   { id: 8, name: 'Quần Short', price: 280000, image: '🩳', category: 'Quần', rating: 4.4, inStock: true },
 // ];
-export default function CollectionProducts({ CollectionSlugDetail }: { CollectionSlugDetail: Promise<{ CollectionSlugDetail: string }> }) {
+export default function CollectionProducts({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = use(params);   // 🔥 unwrap Promise params
     const [quantity, setQuantity] = useState<number>(1);
 
     const increment = () => setQuantity(prev => prev + 1);
     const decrement = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
+    const categoryId = Number(slug);
 
     const [sampleProducts, setSampleProducts] = useState<any[]>([]);
 
+    useEffect(() => {
+        async function load() {
+            const res = await fetchProductsByCategory(categoryId);
+            setSampleProducts(res);
+        }
+        if (categoryId) load();
+    }, [categoryId]);
 
 
     const [priceRange, setPriceRange] = useState([0, 1600000]);

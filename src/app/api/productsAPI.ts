@@ -7,6 +7,7 @@ export interface Clothes {
   slug: string,
   price: number,
   image: string,
+  gender: string,
   description: string,
   category_id: number,
   category: {
@@ -15,6 +16,7 @@ export interface Clothes {
     image: string;
   },
   variants: any;
+  instock: number;
   images: string[]
 }
 
@@ -47,6 +49,19 @@ export async function fetchProduct(): Promise<Clothes[]> {
 
   return data as Clothes[];
 }
+export async function fetchProductWoman(): Promise<Clothes[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("id", { ascending: true })
+    .in("gender", ["female", "unisex"])
+  if (error) {
+    console.error("Lỗi lấy sản phẩm:", error);
+    return [];
+  }
+
+  return data as Clothes[];
+}
 export async function fetchProductDetail(id: number) {
   try {
     const response = await axios.get(
@@ -69,7 +84,17 @@ export async function fetchClothesByProduct(slug: string): Promise<Clothes | nul
     return null;
   }
 }
-
+export async function fetchClothesByProductWoman(slug: string): Promise<Clothes | null> {
+  try {
+    const products = await fetchProductWoman();
+    const found = products.find((c) => c.slug === slug);
+    console.log("check found", found)
+    return found ?? null;
+  } catch (error) {
+    console.error("Lỗi khi lấy dữ liệu quần áo theo slug:", error);
+    return null;
+  }
+}
 
 export async function createCartIfNotExists(userId: number) {
   const { data: existing } = await supabase
@@ -104,3 +129,5 @@ export async function deleteCartItems(idCartItems: number) {
   toast.success("Xóa sản phẩm thành công")
   return true;
 }
+
+

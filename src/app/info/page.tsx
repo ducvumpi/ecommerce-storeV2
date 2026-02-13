@@ -1,21 +1,60 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Settings, Camera, Save, Edit2, Check, X } from 'lucide-react';
-
+import { supabase } from '../libs/supabaseClient';
 export default function AccountProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [showSuccess, setShowSuccess] = useState(false);
-  
+
   const [profileData, setProfileData] = useState({
-    fullName: 'Nguyễn Văn A',
-    email: 'nguyenvana@email.com',
-    phone: '+84 123 456 789',
-    address: 'Hà Nội, Việt Nam',
+    last_name: '',
+    email: '',
+    phone: '',
+    address: '',
     bio: 'Full Stack Developer đam mê công nghệ',
     dateOfBirth: '1995-01-15',
     gender: 'Nam'
   });
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      const profile = await supabase.auth.getUser();
+
+      if (!profile.data.user) return;
+
+      // 1. Lấy dữ liệu từ bảng profiles
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", profile.data.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+      console.log("Fetched profile data:", data);
+      // 2. Lấy dữ liệu từ auth user
+
+      setProfileData(prev => ({
+        ...prev,
+        fullName:
+          data.user_metadata?.last_name ||
+          data?.last_name ||        // nếu bạn có cột full_name trong bảng profiles
+          prev.last_name,
+
+        email: data.email || prev.email,
+        phone: data.phone || prev.phone,
+        address: data.address || prev.address,
+        dateOfBirth: data.date_of_birth || prev.dateOfBirth,
+      }));
+
+
+    };
+
+    fetchProfileData();
+  }, []);
+
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -60,35 +99,34 @@ export default function AccountProfile() {
               <div className="text-center mb-6">
                 <div className="relative inline-block">
                   <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                    {profileData.fullName.charAt(0)}
+                    {profileData.last_name.charAt(0)}
                   </div>
                   <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg hover:bg-gray-50 transition-colors">
                     <Camera className="w-4 h-4 text-gray-600" />
                   </button>
                 </div>
-                <h3 className="mt-4 text-xl font-semibold text-gray-800">{profileData.fullName}</h3>
+                <h3 className="mt-4 text-xl font-semibold text-gray-800">{profileData.last_name}</h3>
                 <p className="text-sm text-gray-500">{profileData.email}</p>
               </div>
-                      {/* Navigation Tabs */}
-                  <nav className="flex flex-wrap gap-2">
-                        {tabs.map(tab => {  
-                          const Icon = tab.icon;          
-                          return (  
-                            <button      
-                              key={tab.id} 
-                              onClick={() => setActiveTab(tab.id)}
-                              className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
-                                activeTab === tab.id
-                                  ? 'bg-blue-600 text-white shadow'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              }`}
-                            >
-                              <Icon className="w-4 h-4" />
-                              <span className="text-sm">{tab.label}</span>
-                            </button>
-                          );      
-                        })}        
-                   </nav>    
+              {/* Navigation Tabs */}
+              <nav className="flex flex-wrap gap-2">
+                {tabs.map(tab => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${activeTab === tab.id
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-sm">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
             </div>
           </div>
 
@@ -230,7 +268,7 @@ export default function AccountProfile() {
               {activeTab === 'security' && (
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">Bảo mật</h2>
-                  
+
                   <div className="space-y-6">
                     <div className="border-b pb-6">
                       <h3 className="text-lg font-semibold text-gray-800 mb-4">Đổi mật khẩu</h3>
@@ -293,7 +331,7 @@ export default function AccountProfile() {
               {activeTab === 'notifications' && (
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">Cài đặt thông báo</h2>
-                  
+
                   <div className="space-y-4">
                     {Object.entries({
                       email: 'Thông báo qua Email',
@@ -330,7 +368,7 @@ export default function AccountProfile() {
               {activeTab === 'billing' && (
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">Phương thức thanh toán</h2>
-                  
+
                   <div className="space-y-6">
                     <div className="border border-gray-200 rounded-lg p-6">
                       <div className="flex items-center justify-between mb-4">

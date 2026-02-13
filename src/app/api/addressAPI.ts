@@ -16,10 +16,11 @@ interface PhuongXaType {
 
 export const DiaGioiHanhChinh2Cap = async () => {
     try {
-        const response = await axios.get("https://production.cas.so/address-kit/2025-07-01/communes");
+        const response = await axios.get("/api/communes");
+        console.log("API response:", response);
         return response.data;
     } catch (error) {
-        console.error(error);
+        console.error("API ERROR:", error);
+        throw error;
     }
 };
-
