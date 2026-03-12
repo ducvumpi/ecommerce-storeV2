@@ -21,8 +21,9 @@ export default function LoginFormAuth() {
         resolver: yupResolver(LoginSchema),
     });
     const handleLogin = async (data: LoginData) => {
-        await onSubmit(data);
-        if (useAuthStore.getState().isLoggedIn) {
+        const success = await onSubmit(data);
+
+        if (success) {
             router.push("/");
         }
     };

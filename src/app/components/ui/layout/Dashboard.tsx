@@ -1,7 +1,6 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import { getProfile, UserData } from "../api/loginAPI";
-import { useAuthStore } from "../context/isLoggedIn";
+
+import { useEffect, useState } from "react";
 import {
   CircularProgress,
   Box,
@@ -10,30 +9,29 @@ import {
   Button,
   Fade,
 } from "@mui/material";
+import { useAuth } from "@/app/AuthProvider";
+import { supabase } from "@/app/libs/supabaseClient";
+import { getProfile, UserData } from "@/app/api/loginAPI";
 
 export default function Dashboard() {
-  const { isLoggedIn, setIsLoggedIn, logout } = useAuthStore();
+  const { user } = useAuth(); // ✅ chỉ dùng Supabase session
   const [profile, setProfile] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const isInit = useRef(true);
 
   useEffect(() => {
-    if (isInit.current) {
-      isInit.current = false;
-      const token = sessionStorage.getItem("access_token");
-      if (token) {
-        getProfile(token)
-          .then((data) => {
-            setProfile(data);
-            setIsLoggedIn(true);
-          })
-          .catch(() => setIsLoggedIn(false))
-          .finally(() => setTimeout(() => setLoading(false), 0)); // ⏱ delay nhẹ để mượt hơn
-      } else {
-        setTimeout(() => setLoading(false), 0);
-      }
+    if (!user) {
+      setLoading(false);
+      return;
     }
-  }, [setIsLoggedIn]);
+
+    getProfile(user.id) // 👈 truyền user.id nếu API cần
+      .then((data) => setProfile(data))
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <Box
@@ -45,8 +43,7 @@ export default function Dashboard() {
         backgroundColor: "#fafafa",
       }}
     >
-      {/* ⏳ Hiệu ứng fade mờ cho spinner */}
-      <Fade in={loading} timeout={600} unmountOnExit>
+      <Fade in={loading} timeout={300} unmountOnExit>
         <Box
           sx={{
             display: "flex",
@@ -55,48 +52,39 @@ export default function Dashboard() {
             opacity: 0.8,
           }}
         >
-          <CircularProgress size={60} thickness={4} color="primary" />
-          <Typography variant="body2" sx={{ mt: 2, color: "#666" }}>
+          <CircularProgress size={60} thickness={4} />
+          <Typography variant="body2" sx={{ mt: 2 }}>
             Đang tải thông tin...
           </Typography>
         </Box>
       </Fade>
 
-      {/* ✨ Hiệu ứng fade-in cho nội dung chính */}
-      <Fade in={!loading} timeout={800}>
+      <Fade in={!loading} timeout={300}>
         <Box
           sx={{
             display: loading ? "none" : "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            width: "80%",
-            maxWidth: 800,
+            gap: 2,
             p: 3,
             borderRadius: 3,
             boxShadow: 2,
             backgroundColor: "#fff",
           }}
         >
-          {isLoggedIn && profile ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {user && profile ? (
+            <>
               <Avatar alt={profile.name} src="/avatar.png" />
               <Typography variant="h6">{profile.name}</Typography>
               <Button
-                onClick={logout}
+                onClick={handleLogout}
                 variant="outlined"
                 color="error"
-                sx={{ textTransform: "none" }}
               >
                 Đăng xuất
               </Button>
-            </Box>
+            </>
           ) : (
-            <Button
-              href="/login"
-              variant="contained"
-              color="primary"
-              sx={{ textTransform: "none" }}
-            >
+            <Button href="/auth/login" variant="contained">
               Đăng nhập
             </Button>
           )}

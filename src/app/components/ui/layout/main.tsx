@@ -1,47 +1,51 @@
 "use client";
 import Image from "next/image";
-import { useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import feather from "feather-icons";
 import { Search, ShoppingCart, User, Menu, X, ChevronRight } from 'lucide-react';
+import { fetchCollections, Collection } from "@/app/api/collections";
+import { Clothes } from "@/app/api/productsAPI";
+import { supabase } from "@/app/libs/supabaseClient";
+
 import Link from "next/link";
-const menProducts = [
-  {
-    id: 1,
-    name: 'Áo sơ mi linen nam',
-    price: '599.000đ',
-    image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&q=80',
-    description: 'Chất liệu linen tự nhiên, thoáng mát',
-    material: '100% Linen',
-    colors: ['Trắng kem', 'Be', 'Xanh nhạt']
-  },
-  {
-    id: 2,
-    name: 'Quần baggy cotton nam',
-    price: '799.000đ',
-    image: 'https://images.unsplash.com/photo-1542272454315-7ad9f8c92a4e?w=500&q=80',
-    description: 'Form rộng thoải mái, phong cách tối giản',
-    material: 'Cotton organic',
-    colors: ['Be', 'Nâu đất', 'Xám']
-  },
-  {
-    id: 3,
-    name: 'Áo len cổ tròn',
-    price: '1.299.000đ',
-    image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&q=80',
-    description: 'Len mềm mại, giữ ấm tự nhiên',
-    material: 'Len merino',
-    colors: ['Nâu đất', 'Xanh rêu', 'Xám than']
-  },
-  {
-    id: 4,
-    name: 'Giày canvas nam',
-    price: '899.000đ',
-    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&q=80',
-    description: 'Nhẹ nhàng, bền vững, dễ phối đồ',
-    material: 'Canvas tự nhiên',
-    colors: ['Trắng kem', 'Be', 'Xám']
-  },
-];
+// const menProducts = [
+//   {
+//     id: 1,
+//     name: 'Áo sơ mi linen nam',
+//     price: '599.000đ',
+//     image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&q=80',
+//     description: 'Chất liệu linen tự nhiên, thoáng mát',
+//     material: '100% Linen',
+//     colors: ['Trắng kem', 'Be', 'Xanh nhạt']
+//   },
+//   {
+//     id: 2,
+//     name: 'Quần baggy cotton nam',
+//     price: '799.000đ',
+//     image: 'https://images.unsplash.com/photo-1542272454315-7ad9f8c92a4e?w=500&q=80',
+//     description: 'Form rộng thoải mái, phong cách tối giản',
+//     material: 'Cotton organic',
+//     colors: ['Be', 'Nâu đất', 'Xám']
+//   },
+//   {
+//     id: 3,
+//     name: 'Áo len cổ tròn',
+//     price: '1.299.000đ',
+//     image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&q=80',
+//     description: 'Len mềm mại, giữ ấm tự nhiên',
+//     material: 'Len merino',
+//     colors: ['Nâu đất', 'Xanh rêu', 'Xám than']
+//   },
+//   {
+//     id: 4,
+//     name: 'Giày canvas nam',
+//     price: '899.000đ',
+//     image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&q=80',
+//     description: 'Nhẹ nhàng, bền vững, dễ phối đồ',
+//     material: 'Canvas tự nhiên',
+//     colors: ['Trắng kem', 'Be', 'Xám']
+//   },
+// ];
 
 const womenProducts = [
   {
@@ -81,34 +85,94 @@ const womenProducts = [
     colors: ['Nâu camel', 'Be', 'Đen']
   },
 ];
-const collections = [
-  {
-    id: 1,
-    name: 'Bộ sưu tập Xuân Hè 2024',
-    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80',
-    tag: 'Mới',
-    description: 'Nhẹ nhàng như làn gió mùa hè, thoải mái như những ngày hè lười biếng'
-  },
-  {
-    id: 2,
-    name: 'Bộ sưu tập Thu Đông 2024',
-    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80',
-    tag: 'Hot',
-    description: 'Ấm áp trong những ngày se lạnh, thanh lịch với tông màu đất'
-  },
-  {
-    id: 3,
-    name: 'Thời trang Công sở',
-    image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&q=80',
-    tag: 'Sale',
-    description: 'Chuyên nghiệp nhưng vẫn thoải mái, thanh lịch trong từng chi tiết'
-  },
-];
+// const collections = [
+//   {
+//     id: 1,
+//     name: 'Bộ sưu tập Xuân Hè 2024',
+//     image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80',
+//     tag: 'Mới',
+//     description: 'Nhẹ nhàng như làn gió mùa hè, thoải mái như những ngày hè lười biếng'
+//   },
+//   {
+//     id: 2,
+//     name: 'Bộ sưu tập Thu Đông 2024',
+//     image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80',
+//     tag: 'Hot',
+//     description: 'Ấm áp trong những ngày se lạnh, thanh lịch với tông màu đất'
+//   },
+//   {
+//     id: 3,
+//     name: 'Thời trang Công sở',
+//     image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&q=80',
+//     tag: 'Sale',
+//     description: 'Chuyên nghiệp nhưng vẫn thoải mái, thanh lịch trong từng chi tiết'
+//   },
+// ];
 
 export default function Main() {
+
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [menProducts, setMenProducts] = useState<Clothes[]>([]);
   useEffect(() => {
-    feather.replace();
+    async function loadProducts() {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select(`
+          id,
+          title,
+          image,
+          description,
+          material,
+          price,
+          variants (
+            colors!variants_color_id_fkey (
+              id,
+              name,
+              hex_code
+            )
+          )
+        `);
+
+        if (error) {
+          console.log("Error:", error);
+          return;
+        }
+
+        // 🔥 Format lại dữ liệu cho đúng cấu trúc bạn đang render
+        const formatted = data?.map((product: any) => ({
+          ...product,
+          colors: [
+            ...new Map(
+              product.variants?.map((v: any) => [
+                v.colors?.id,
+                v.colors?.name
+              ])
+            ).values()
+          ]
+        }));
+
+        setMenProducts(formatted ?? []);
+
+      } catch (err) {
+        console.error("Lỗi khi load products:", err);
+      }
+    }
+
+    loadProducts();
   }, []);
+  useEffect(() => {
+    async function loadCollections() {
+      try {
+        const data = await fetchCollections();
+        setCollections(data);
+        console.log("Dữ liệu collections:", data);
+      } catch (err) {
+        console.error("Lỗi khi load collections:", err);
+      }
+    }
+    loadCollections();
+  }, [])
   return (
     <div>
       <main className="container mx-auto px-4 py-12">
@@ -175,7 +239,7 @@ export default function Main() {
                   <div className="overflow-hidden rounded-t-lg relative">
                     <img
                       src={product.image}
-                      alt={product.name}
+                      alt={product.title}
                       className="w-full h-64 object-cover group-hover:scale-110 transition duration-500"
                     />
                     <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-amber-700">
@@ -183,7 +247,7 @@ export default function Main() {
                     </div>
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
+                    <h3 className="font-semibold text-gray-900 mb-1">{product.title}</h3>
                     <p className="text-sm text-gray-600 mb-3">{product.description}</p>
                     <div className="flex gap-2 mb-3">
                       {product.colors.map((color, idx) => (
@@ -192,7 +256,7 @@ export default function Main() {
                     </div>
                     <p className="text-amber-700 font-bold text-lg mb-4">{product.price}</p>
                     <button
-                      onClick={() => alert(`Đã thêm ${product.name} vào giỏ hàng!`)}
+                      onClick={() => alert(`Đã thêm ${product.title} vào giỏ hàng!`)}
                       className="w-full bg-amber-700 text-white py-2 rounded-lg hover:bg-amber-800 transition"
                     >
                       Thêm vào giỏ

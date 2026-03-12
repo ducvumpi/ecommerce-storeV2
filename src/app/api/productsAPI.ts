@@ -8,6 +8,7 @@ export interface Clothes {
   price: number,
   image: string,
   gender: string,
+  colors: string[]   // 👈 thêm dòng này
   description: string,
   category_id: number,
   category: {
