@@ -7,10 +7,12 @@ import { Clothes } from "@/app/api/productsAPI";
 import { supabase } from "@/app/libs/supabaseClient";
 import Link from "next/link";
 
+type ClothesWithColors = Clothes & { colors?: string[] };
+
 export default function Main() {
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [menProducts, setMenProducts] = useState<Clothes[]>([]);
-  const [womenProducts, setWomenProducts] = useState<Clothes[]>([]);
+  const [menProducts, setMenProducts] = useState<ClothesWithColors[]>([]);
+  const [womenProducts, setWomenProducts] = useState<ClothesWithColors[]>([]);
 
   useEffect(() => {
     async function loadProducts() {
@@ -475,9 +477,9 @@ export default function Main() {
                     <div className="p-5">
                       <p className="p-name mb-1">{p.name}</p>
                       <p className="p-desc mb-3 line-clamp-2">{p.description}</p>
-                      {p.colors?.length > 0 && (
+                      {(p.colors ?? []).length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-4">
-                          {p.colors.slice(0, 3).map((c: string, idx: number) => (
+                          {(p.colors ?? []).slice(0, 3).map((c: string, idx: number) => (
                             <span key={idx} className="chip">{c}</span>
                           ))}
                         </div>

@@ -7,6 +7,7 @@ export interface Clothes {
   slug: string;
   base_price: number;
   image_url: string;
+  material: string;
   description: string;
   gender_id: number;
   category_id: number;
