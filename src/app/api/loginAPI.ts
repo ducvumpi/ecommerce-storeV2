@@ -64,7 +64,14 @@ const GetAPI = axios.create({
 // }
 
 export async function getProfile(token: string) {
-  // 1. Gọi API profile
+  // 1. Lấy user từ Supabase Auth
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  // 2. Gọi API ngoài (optional)
   const response = await GetAPI.get("/profile", {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -73,62 +80,49 @@ export async function getProfile(token: string) {
 
   const profile = response.data;
 
-  // 2. Upsert user vào bảng users
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .upsert({
-      id: profile.id,          // id từ API escuelajs
-      email: profile.email,
-      name: profile.name,
-      role: profile.role,
-      avatar: profile.avatar,
+  // 3. Upsert vào bảng users
+  const { data: userData, error } = await supabase
+    .from("profiles") // ⚠️ đổi từ users -> profiles
+    .update({
+      full_name: profile?.name || user.user_metadata?.name,
+      avatar_url: profile?.avatar || user.user_metadata?.avatar,
+      role: profile?.role || "user",
     })
+    .eq("id", user.id)
     .select()
     .single();
 
-  if (userError) {
-    console.error("Lỗi insert user:", userError);
+  if (error) {
+    console.error("Update user lỗi:", error);
     return profile;
   }
 
-  // 3. Kiểm tra user đã có cart chưa
+  // 4. Tạo cart nếu chưa có
   const { data: existingCart } = await supabase
-    .from("carts")
+    .from("cart")
     .select("id")
-    .eq("user_id", userData.id)
+    .eq("user_id", user.id)
     .maybeSingle();
-  // localStorage.setItem("user_id", userData.id)
 
-  // 4. Nếu chưa có → tạo cart mới
   if (!existingCart) {
-    const { data: newCart, error: cartError } = await supabase
-      .from("carts")
-      .insert({
-        user_id: userData.id,
-      })
-      .select()
-      .single();
-
-    if (cartError) {
-      console.error("Lỗi tạo cart:", cartError);
-    } else {
-      console.log("Cart mới đã tạo:", newCart);
-    }
+    await supabase.from("cart").insert({
+      user_id: user.id,
+    });
   }
 
-  return profile;
+  return userData;
 }
 export async function getOrCreateCart(userId: string) {
   // Kiểm tra cart đã tồn tại chưa
   let { data: cart } = await supabase
-    .from("carts")
+    .from("cart")
     .select("*")
     .eq("user_id", userId)
     .single();
   // Nếu chưa có → tạo cart mới
   if (!cart) {
     const { data: newCart, error } = await supabase
-      .from("carts")
+      .from("cart")
       .insert({ user_id: userId })
       .select()
       .single();
@@ -138,7 +132,8 @@ export async function getOrCreateCart(userId: string) {
   }
 
   return cart;
-} export async function addToCart(product_id: number, variantId: number, quantity: number) {
+}
+export async function addToCart(product_id: number, variantId: string, quantity: number) {
   const { data: authData } = await supabase.auth.getUser();
 
   if (!authData?.user) {
@@ -148,7 +143,6 @@ export async function getOrCreateCart(userId: string) {
 
   const cart = await getOrCreateCart(authData.user.id);
 
-  // 1️⃣ Kiểm tra item đã tồn tại chưa
   const { data: existingItem, error: fetchError } = await supabase
     .from("cart_items")
     .select("id, quantity")
@@ -162,7 +156,6 @@ export async function getOrCreateCart(userId: string) {
     return;
   }
 
-  // 2️⃣ Nếu đã tồn tại → CỘNG DỒN
   if (existingItem) {
     const { error } = await supabase
       .from("cart_items")
@@ -178,10 +171,8 @@ export async function getOrCreateCart(userId: string) {
     return;
   }
 
-  // 3️⃣ Nếu chưa tồn tại → INSERT
   const { error } = await supabase.from("cart_items").insert({
     cart_id: cart.id,
-    product_id: product_id,
     variant_id: variantId,
     quantity,
   });
@@ -190,6 +181,7 @@ export async function getOrCreateCart(userId: string) {
     console.error(error);
     toast.error("Không thể thêm vào giỏ");
   }
+
 }
 
 
@@ -212,21 +204,25 @@ export async function loginWithGoogle() {
   return data;
 }
 
-
-
-
 export async function GetUserProfile(): Promise<UserData | null> {
   const userId = localStorage.getItem("user_id");
+
+  if (!userId) {
+    console.warn("Không tìm thấy user_id trong localStorage");
+    return null;
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", userId)
-    .single()
-  if (error) {
-    console.error("Lỗi xóa sản phẩm:", error);
-  }
-  console.log("check Profile", data)
-  console.log("check userId", userId)
+    .maybeSingle(); // tránh lỗi "Cannot coerce..."
 
-  return data as null;
+  if (error) {
+    console.error("Lỗi lấy profile:", error);
+    return null;
+  }
+
+  console.log("check Profile", data);
+  return data as UserData | null;
 }

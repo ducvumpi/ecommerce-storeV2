@@ -1,106 +1,109 @@
 "use client";
-
 import Image from "next/image";
-import { useEffect } from "react";
-import feather from "feather-icons";
+import { useState } from "react";
 import { Clothes } from "@/app/api/productsAPI";
+import { Heart } from "lucide-react";
 
-export default function WomenListProduct({ clothes }: { clothes: Clothes[] }) {
+export default function WWomenListProduct({ clothes }: { clothes: Clothes[] }) {
+    const [hoveredId, setHoveredId] = useState<number | null>(null);
+    const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
 
-    useEffect(() => {
-        feather.replace();
-    }, [clothes]);
-
-    const formatImageUrl = (url: string) => {
+    const formatImageUrl = (url: any) => {
         if (!url) return "/no-image.jpg";
-        if (url.startsWith("http")) return url;
-        return `https://${url}`;
+        if (Array.isArray(url)) return url[0] || "/no-image.jpg";
+        if (typeof url === "string") {
+            try {
+                const parsed = JSON.parse(url);
+                if (Array.isArray(parsed)) return parsed[0] || "/no-image.jpg";
+            } catch { }
+            if (url.startsWith("http")) return url;
+            return `https://${url}`;
+        }
+        return "/no-image.jpg";
+    };
+
+    const getPrice = (item: any) => {
+        if (item.product_variants?.length > 0) {
+            const prices = item.product_variants.map((v: any) => Number(v.base_price)).filter((p: number) => !isNaN(p));
+            if (prices.length > 0) return Math.min(...prices);
+        }
+        return item.base_price || 0;
     };
 
     const formatPrice = (price: number) =>
-        new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-        }).format(price);
+        new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
     return (
-        <>
+        <div style={{ background: "#faf8f5", fontFamily: "var(--font-sans, Lora, serif)" }}>
             {/* Header */}
-            <div className="mb-12">
-                <h1 className="text-4xl font-bold mb-4">Thời trang Nữ</h1>
-                <div className="flex flex-wrap justify-between items-center">
-                    <p className="text-xl text-gray-600">
-                        Phong cách thời trang cho mọi dịp
-                    </p>
-                    <div className="flex gap-4 mt-4 sm:mt-0">
-                        <button className="bg-gray-100 px-4 py-2 rounded-lg">Lọc</button>
-                        <button className="bg-gray-100 px-4 py-2 rounded-lg">Sắp xếp</button>
+            <div style={{ marginBottom: 36 }}>
+                <h1 style={{ fontSize: 26, fontWeight: 500, color: "#3d2b1a", margin: "0 0 8px" }}>Thời trang Nữ</h1>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                    <p style={{ fontSize: 14, color: "#b0997e", margin: 0 }}>Phong cách thời trang cho mọi dịp</p>
+                    <div style={{ display: "flex", gap: 8 }}>
+                        {["Lọc", "Sắp xếp"].map(label => (
+                            <button key={label} style={{ fontSize: 13, color: "#7a6652", background: "#fff", border: "0.5px solid #e8ddd0", borderRadius: 50, padding: "7px 18px", cursor: "pointer", fontFamily: "inherit" }}>
+                                {label}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* Product Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {clothes.map((item) => (
-                    <div
-                        key={item.id}
-                        className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100"
-                    >
-                        {/* Image */}
-                        <div className="relative h-64 group overflow-hidden">
-                            <Image
-                                width={1200}
-                                height={630}
-                                src={formatImageUrl(item.image)}
-                                alt={item.category?.name ?? "none"}
-                                className="w-full h-full object-cover rounded-t-2xl transform group-hover:scale-110 transition duration-500"
-                            />
-
-                            {/* Heart Button */}
-                            <button className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-md hover:bg-white transition">
-                                <i data-feather="heart" className="text-gray-700"></i>
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-5">
-                            <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate">
-                                {item.title}
-                            </h3>
-
-                            <p className="text-gray-500 text-sm line-clamp-2 mb-3">
-                                {item.description}
-                            </p>
-
-                            <div className="flex justify-between items-center mt-4">
-                                <span className="font-bold text-xl text-black tracking-wide">
-                                    {formatPrice(item.price)}
-                                </span>
-
-                                <a
-                                    href={`/women/${item.slug}`}
-                                    className="px-4 py-2 rounded-full bg-gray-100 text-gray-800 text-sm font-medium hover:bg-gray-200 transition"
+            {/* Grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 18, marginBottom: 56 }}>
+                {clothes.map((item) => {
+                    const itemIdNum = typeof item.id === 'string' ? parseInt(item.id) : item.id;
+                    return (
+                        <div key={item.id}
+                            onMouseEnter={() => setHoveredId(itemIdNum)}
+                            onMouseLeave={() => setHoveredId(null)}
+                            style={{ background: "#fff", borderRadius: 16, border: "0.5px solid #e8ddd0", overflow: "hidden", boxShadow: hoveredId === itemIdNum ? "0 6px 24px rgba(100,60,20,.1)" : "none", transition: "box-shadow .25s" }}
+                        >
+                            <div style={{ position: "relative", height: 240, overflow: "hidden", background: "#f3ede6" }}>
+                                <Image
+                                    src={formatImageUrl(item.image_url)} alt={item.category?.name ?? ""}
+                                    width={400} height={240}
+                                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform .5s ease", transform: hoveredId === itemIdNum ? "scale(1.07)" : "scale(1)" }}
+                                />
+                                <button
+                                    onClick={() => setLikedIds(prev => { const s = new Set(prev); s.has(itemIdNum) ? s.delete(itemIdNum) : s.add(itemIdNum); return s; })}
+                                    style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,.92)", border: "0.5px solid #e8ddd0", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
                                 >
-                                    Xem BST
-                                </a>
+                                    <Heart size={14} strokeWidth={1.5} color={likedIds.has(itemIdNum) ? "#c07050" : "#c4956a"} fill={likedIds.has(itemIdNum) ? "#c07050" : "none"} />
+                                </button>
+                            </div>
+
+                            <div style={{ padding: "14px 16px 16px" }}>
+                                <p style={{ fontSize: 14, fontWeight: 500, color: "#3d2b1a", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {item.name}
+                                </p>
+                                <p style={{
+                                    fontSize: 12, color: "#b0997e", margin: "0 0 12px", lineHeight: 1.5,
+                                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden"
+                                }}>
+                                    {item.description || "Không có mô tả sản phẩm"}
+                                </p>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                    <span style={{ fontSize: 15, fontWeight: 500, color: "#8b5e3c" }}>{formatPrice(getPrice(item))}</span>
+                                    <a href={`/women/${item.slug}`} style={{ fontSize: 12, color: "#7a6652", background: "#f3ede6", padding: "7px 16px", borderRadius: 50, textDecoration: "none" }}>
+                                        Xem BST
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
-            {/* Footer */}
-            <div className="mt-16 text-center">
-                <h2 className="text-2xl font-bold mb-6">
-                    Bạn cần trợ giúp để tìm phong cách của mình?
-                </h2>
-                <a
-                    href="/men-style-guide.html"
-                    className="inline-block bg-gray-900 text-white px-8 py-3 rounded-full font-medium hover:bg-opacity-90 transition"
-                >
-                    Xem hướng dẫn về phong cách
+            {/* CTA */}
+            <div style={{ textAlign: "center", borderTop: "0.5px solid #e8ddd0", paddingTop: 48 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 500, color: "#3d2b1a", margin: "0 0 8px" }}>Cần trợ giúp tìm phong cách của bạn?</h2>
+                <p style={{ fontSize: 13, color: "#b0997e", margin: "0 0 20px" }}>Xem gợi ý phối đồ từ đội ngũ stylist của chúng tôi</p>
+                <a href="/men-style-guide" style={{ display: "inline-block", background: "#8b5e3c", color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 28px", borderRadius: 50, textDecoration: "none" }}>
+                    Xem hướng dẫn phong cách
                 </a>
             </div>
-        </>
+        </div>
     );
 }

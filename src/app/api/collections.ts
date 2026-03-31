@@ -5,6 +5,7 @@ import { Clothes } from "./productsAPI"
 export type Collection = {
   id: number;
   name: string;
+  description: string;
   slug: string;
   image: string;
 };
@@ -68,16 +69,27 @@ export async function fetchCollectionBySlug(slug: string): Promise<Collection | 
 export async function fetchProductsByCategory(categoryId: number) {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select(`
+      *,
+      product_variants (
+        id,
+        size,
+        color,
+        price,
+        stock
+      )
+    `)
     .eq("category_id", categoryId);
-  console.log("check datata", data)
+
+  console.log("check datata", data);
+
   if (error) {
     console.error("Lỗi lấy sản phẩm:", error);
     return [];
   }
+
   return data;
 }
-
 
 
 

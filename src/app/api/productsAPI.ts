@@ -2,25 +2,29 @@ import axios from "axios";
 import { supabase } from "../libs/supabaseClient";
 import toast from "react-hot-toast";
 export interface Clothes {
-  id: number,
-  title: string,
-  slug: string,
-  price: number,
-  image: string,
-  gender: string,
-  colors: string[]   // 👈 thêm dòng này
-  description: string,
-  category_id: number,
-  category: {
+  id: string;
+  name: string;
+  slug: string;
+  base_price: number;
+  image_url: string;
+  description: string;
+  gender_id: number;
+  category_id: number;
+  category?: {
     id: number;
     name: string;
     image: string;
-  },
-  variants: any;
-  instock: number;
-  images: string[]
-}
+  };
 
+  product_variants: {
+    id: string;
+    size: string;
+    color: string;
+    stock: number;
+  }[];
+
+  images?: string[];
+}
 export interface CategoryStore {
   product: Clothes[];
 
@@ -36,32 +40,31 @@ export interface CategoryStore {
 //     return [];
 //   }
 // }
-
 export async function fetchProduct(): Promise<Clothes[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
-    .order("id", { ascending: true })
-    .in("gender", ["male", "unisex"])
-  if (error) {
-    console.error("Lỗi lấy sản phẩm:", error);
-    return [];
-  }
+    .select(`
+      *,
+      genders(slug)
+    `)
+    .in("gender_id", [1, 3]) // nam + unisex
+    .order("id", { ascending: true });
 
-  return data as Clothes[];
+  console.log(data);
+  return data || [];
 }
 export async function fetchProductWoman(): Promise<Clothes[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
-    .order("id", { ascending: true })
-    .in("gender", ["female", "unisex"])
-  if (error) {
-    console.error("Lỗi lấy sản phẩm:", error);
-    return [];
-  }
+    .select(`
+      *,
+      genders(slug)
+    `)
+    .in("gender_id", [2, 3]) // nữ + unisex
+    .order("id", { ascending: true });
 
-  return data as Clothes[];
+  console.log(data);
+  return data || [];
 }
 export async function fetchProductDetail(id: number) {
   try {
@@ -105,7 +108,7 @@ export async function createCartIfNotExists(userId: number) {
     .maybeSingle();
 
   if (!existing) {
-    const { data, error } = await supabase.from("carts").insert({
+    const { data, error } = await supabase.from("cart").insert({
       user_id: userId
     }).select().single();
 

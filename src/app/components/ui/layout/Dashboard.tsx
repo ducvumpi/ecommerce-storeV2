@@ -73,8 +73,8 @@ export default function Dashboard() {
         >
           {user && profile ? (
             <>
-              <Avatar alt={profile.name} src="/avatar.png" />
-              <Typography variant="h6">{profile.name}</Typography>
+              <Avatar alt={profile.full_name} src="/avatar.png" />
+              <Typography variant="h6">{profile.full_name}</Typography>
               <Button
                 onClick={handleLogout}
                 variant="outlined"

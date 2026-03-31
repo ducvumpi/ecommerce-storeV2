@@ -21,9 +21,9 @@ import { addToCart } from "@/app/api/loginAPI";
 export default function CollectionProducts({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);   // 🔥 unwrap Promise params
   const [quantity, setQuantity] = useState<number>(1);
-
+  const [variantId, setVariantId] = useState<number | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState<number | 'all'>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1500000]);
   const [sortBy, setSortBy] = useState('default');
   const [sampleProducts, setSampleProducts] = useState<any[]>([]);
@@ -31,7 +31,7 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
   // Get unique categories
   const categories = useMemo(() => {
     return ['all', ...new Set(sampleProducts.map(p => p.category_id))];
-  }, []);
+  }, [sampleProducts]);
   const categoryId = Number(slug);
 
   const isOutOfStock = (product: any) => product.inStock <= 0;
@@ -42,34 +42,40 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
       setSampleProducts(res);
       console.log("Products in category:", res);
     }
-    if (categoryId) load();
+    if (!isNaN(categoryId)) load();
   }, [categoryId]);
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     let products = sampleProducts.filter(product => {
-      const matchCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
-      const matchPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const price = Number(product.price || 0);
+
+      const matchCategory =
+        selectedCategory === 'all' ||
+        String(product.category_id) === String(selectedCategory);
+
+      const matchPrice =
+        price >= priceRange[0] && price <= priceRange[1];
+
       return matchCategory && matchPrice;
     });
 
-    // Sort products
     switch (sortBy) {
       case 'price-asc':
-        products.sort((a, b) => a.price - b.price);
+        products.sort((a, b) => Number(a.price) - Number(b.price));
         break;
       case 'price-desc':
-        products.sort((a, b) => b.price - a.price);
+        products.sort((a, b) => Number(b.price) - Number(a.price));
         break;
       case 'title':
-        products.sort((a, b) => a.title.localeCompare(b.title));
+        products.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
         break;
       case 'rating':
-        products.sort((a, b) => b.rating - a.rating);
+        products.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
     }
 
     return products;
-  }, [selectedCategory, priceRange, sortBy]);
+  }, [sampleProducts, selectedCategory, priceRange, sortBy]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -83,7 +89,32 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
     setPriceRange([0, 1500000]);
     setSortBy('default');
   };
+  // Thêm state để track lựa chọn của từng sản phẩm
+  const [selections, setSelections] = useState<Record<string, { color?: string; size?: string }>>({});
 
+  const updateSelection = (productId: string, field: 'color' | 'size', value: string) => {
+    setSelections(prev => ({
+      ...prev,
+      [productId]: { ...prev[productId], [field]: value }
+    }));
+  };
+  const getImageUrl = (img: any) => {
+    if (!img) return "/no-image.png";
+
+    // nếu là array
+    if (Array.isArray(img)) return img[0];
+
+    // nếu là string
+    if (typeof img === "string") {
+      const cleaned = img.trim();
+      return cleaned ? cleaned : "/no-image.png";
+    }
+
+    return "/no-image.png";
+  };
+  // Giả sử mỗi product có colors và sizes (thêm vào type Product nếu chưa có)
+  // product.colors: string[]  e.g. ['#1a1a1a', '#f5f5dc', '#8b4513']
+  // product.sizes: string[]   e.g. ['S', 'M', 'L', 'XL']s
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -148,7 +179,7 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
                         type="radio"
                         name="category"
                         checked={selectedCategory === category_id}
-                        onChange={() => setSelectedCategory(category_id)}
+                        onChange={() => setSelectedCategory(String(category_id) as any)}
                         className="w-4 h-4 text-gray-900 focus:ring-gray-900"
                       />
                       <span className="text-sm text-gray-700 group-hover:text-gray-900 capitalize">
@@ -264,61 +295,142 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
             {/* Products Grid */}
             {filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="group">
-                    {/* Product Image */}
-                    <div className="relative aspect-square mb-4 overflow-hidden rounded-lg bg-gray-100">
-                      <Image
-                        src={product.image}
-                        alt={product.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {product.inStock === 0 && (
-                        <div className="absolute inset-0 bg-white/90 flex items-center justify-center">
-                          <span className="bg-white px-4 py-2 rounded-full text-sm font-medium text-gray-900 shadow">
-                            Hết hàng
-                          </span>
+                {filteredProducts.map((product) => {
+                  const sel = selections[product.id] || {};
+                  const colors = [
+                    ...new Set((product.product_variants ?? []).map((v: any) => v.color))
+                  ] as string[];
+
+                  const sizes = [
+                    ...new Set((product.product_variants ?? []).map((v: any) => v.size))
+                  ] as string[];
+
+                  const selectedVariant = product.product_variants?.find((v: any) => {
+                    const matchColor = !colors.length || v.color === sel.color;
+                    const matchSize = !sizes.length || v.size === sel.size;
+                    return matchColor && matchSize;
+                  });
+
+
+                  const canAddToCart = !isOutOfStock(product) && (!colors.length || sel.color) && (!sizes.length || sel.size);
+
+                  return (
+                    <div key={product.id} className="group">
+                      {/* Product Image */}
+                      <div className="relative aspect-square mb-4 overflow-hidden rounded-lg bg-gray-100">
+
+                        <Image
+                          src={getImageUrl(product.image_url)}
+                          alt={product.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {product.inStock === 0 && (
+                          <div className="absolute inset-0 bg-white/90 flex items-center justify-center">
+                            <span className="bg-white px-4 py-2 rounded-full text-sm font-medium text-gray-900 shadow">
+                              Hết hàng
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Product Info */}
+                      <div>
+                        <h3 className="text-base font-medium text-gray-900 mb-1 group-hover:text-gray-600 transition line-clamp-1">
+                          {product.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-2">{product.category}</p>
+
+                        {/* Rating */}
+                        <div className="flex items-center gap-1 mb-3">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-sm text-gray-700 font-medium">{product.rating}</span>
+                          <span className="text-xs text-gray-400">(128)</span>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Product Info */}
-                    <div>
-                      <h3 className="text-base font-medium text-gray-900 mb-1 group-hover:text-gray-600 transition line-clamp-1">
-                        {product.title}
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-2">{product.category}</p>
+                        {/* ─── Color Selector ─── */}
+                        {colors.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="text-xs font-medium text-gray-700">Màu sắc</span>
+                              {sel.color && (
+                                <span className="text-xs text-gray-400 capitalize">{sel.color}</span>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {colors.map((color: string, idx: number) => (
+                                <button
+                                  key={`${product.id}-${color}`}
+                                  title={color}
+                                  onClick={() => updateSelection(String(product.id), 'color', color)}
+                                  className={`w-6 h-6 rounded-full border-2 transition-all duration-150 focus:outline-none ${sel.color === color
+                                    ? 'border-gray-900 scale-110 shadow-sm'
+                                    : 'border-transparent hover:border-gray-400'
+                                    }`}
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                      {/* Rating */}
-                      <div className="flex items-center gap-1 mb-3">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-sm text-gray-700 font-medium">{product.rating}</span>
-                        <span className="text-xs text-gray-400">(128)</span>
+                        {/* ─── Size Selector ─── */}
+                        {sizes.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="text-xs font-medium text-gray-700">Kích thước</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {sizes.map((size: string, idx: number) => (
+                                <button
+                                  key={`${size}-${idx}`}
+                                  onClick={() => updateSelection(String(product.id), 'size', size)}
+                                  className={`min-w-[2rem] h-8 px-2.5 rounded-md text-xs font-medium border transition-all duration-150 focus:outline-none ${sel.size === size
+                                    ? 'bg-gray-900 text-white border-gray-900'
+                                    : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
+                                    }`}
+                                >
+                                  {size}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Price & Add to Cart */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-semibold text-gray-900">
+                            {formatPrice(product.base_price)}
+                          </span>
+
+                          <button
+                            disabled={!canAddToCart}
+                            onClick={() => {
+                              if (!selectedVariant) {
+                                alert("Vui lòng chọn biến thể");
+                                return;
+                              }
+
+                              addToCart(product.id, String(selectedVariant.id), quantity);
+                            }}
+                            className={`px-5 py-2 rounded-lg text-sm font-medium transition ${!canAddToCart
+                              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                              : 'bg-gray-900 text-white hover:bg-gray-800'
+                              }`}
+                          >
+                            {isOutOfStock(product)
+                              ? 'Hết hàng'
+                              : !sel.color && colors.length
+                                ? 'Chọn màu'
+                                : !sel.size && sizes.length
+                                  ? 'Chọn size'
+                                  : 'Thêm giỏ hàng'}
+                          </button>
+                        </div>
                       </div>
-
-                      {/* Price & Add to Cart */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-semibold text-gray-900">
-                          {formatPrice(product.price)}
-                        </span>
-
-                        <button
-                          disabled={isOutOfStock(product)}
-                          onClick={() => addToCart(product.id, quantity)}
-
-                          className={`px-5 py-2 rounded-lg text-sm font-medium transition ${isOutOfStock(product)
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-gray-900 text-white hover:bg-gray-800'
-                            }`}
-                        >
-                          {isOutOfStock(product) ? 'Hết hàng' : 'Thêm giỏ hàng'}
-                        </button>
-                      </div>
-
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               // Empty State

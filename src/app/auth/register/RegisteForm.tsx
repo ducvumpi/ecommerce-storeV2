@@ -1,233 +1,129 @@
 "use client";
-import { useEffect } from "react";
-import feather from "feather-icons";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { SignupForm, SignUpSchema } from "../../api/loginAPI";
-import { Button, TextField } from "@mui/material";
-import { useAuthStore } from "@/app/store/isLoggedIn"
+import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
-export default function RegisterForm() {
-    const router = useRouter()
 
-    const { onSignUp } = useAuthStore()
-    useEffect(() => {
-        feather.replace(); // <- quan trọng
-    }, []);
-    const {
-        control,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<SignupForm>({
+const inputStyle = (hasError?: boolean): React.CSSProperties => ({
+    height: 42, padding: "0 14px",
+    border: `1px solid ${hasError ? "#c07050" : "#e2d9ce"}`,
+    borderRadius: 10, background: "#fffdfb", color: "#3d2b1a",
+    fontSize: 14, outline: "none", width: "100%",
+    boxSizing: "border-box", fontFamily: "inherit",
+});
+const labelStyle: React.CSSProperties = {
+    fontSize: 12, color: "#8a7060", fontWeight: 500,
+    letterSpacing: "0.3px", display: "block", marginBottom: 5,
+};
+const errStyle: React.CSSProperties = { fontSize: 11, color: "#c07050", margin: "4px 0 0" };
+
+export default function RegisterForm() {
+    const router = useRouter();
+    const { onSignUp } = useAuthStore();
+
+    const { control, handleSubmit, formState: { errors } } = useForm<SignupForm>({
         resolver: yupResolver(SignUpSchema),
     });
+
     const handleSignUp = async (data: SignupForm) => {
-        await onSignUp(data)
+        await onSignUp(data);
         router.push("/auth/login");
+    };
 
-    }
     return (
-        <div className="bg-gray-50">
-            <main className="containersignup mx-auto px-4 py-20 max-w-md">
-                <div className="bg-white p-8 rounded-2xl shadow-lg">
-                    <h1 className="text-3xl font-bold text-center mb-8">
+        <div style={{ background: "#faf8f5", minHeight: "100vh", padding: "60px 16px", fontFamily: "var(--font-sans, Lora, serif)" }}>
+            <div style={{ background: "#fff", border: "0.5px solid #e8ddd0", borderRadius: 20, padding: "40px 36px", maxWidth: 420, margin: "0 auto" }}>
+
+                <p style={{ fontFamily: "'Lora', serif", fontSize: 22, color: "#3d2b1a", textAlign: "center", margin: "0 0 6px", fontWeight: 500 }}>
+                    Tạo tài khoản mới
+                </p>
+                <p style={{ fontSize: 13, color: "#b0997e", textAlign: "center", margin: "0 0 26px" }}>
+                    Tham gia Tiệm Mùa Chậm ngay hôm nay
+                </p>
+
+                <form onSubmit={handleSubmit(handleSignUp)}>
+                    {/* Họ + Tên */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                        {(["firstName", "lastName"] as const).map((name, i) => (
+                            <div key={name}>
+                                <label style={labelStyle}>{i === 0 ? "Họ" : "Tên"}</label>
+                                <Controller name={name} defaultValue="" control={control} render={({ field }) => (
+                                    <input {...field} placeholder={i === 0 ? "Nguyễn" : "Văn A"} style={inputStyle(!!errors[name])} />
+                                )} />
+                                {errors[name] && <p style={errStyle}>{errors[name]?.message}</p>}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Email */}
+                    <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Email</label>
+                        <Controller name="email" defaultValue="" control={control} render={({ field }) => (
+                            <input {...field} type="email" placeholder="ten@email.com" style={inputStyle(!!errors.email)} />
+                        )} />
+                        {errors.email && <p style={errStyle}>{errors.email.message}</p>}
+                    </div>
+
+                    {/* Mật khẩu */}
+                    <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Mật khẩu</label>
+                        <Controller name="password" defaultValue="" control={control} render={({ field }) => (
+                            <input {...field} type="password" placeholder="••••••••" style={inputStyle(!!errors.password)} />
+                        )} />
+                        {errors.password && <p style={errStyle}>{errors.password.message}</p>}
+                    </div>
+
+                    {/* Xác nhận mật khẩu */}
+                    <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Xác nhận mật khẩu</label>
+                        <Controller name="confirmPassword" defaultValue="" control={control} render={({ field }) => (
+                            <input {...field} type="password" placeholder="••••••••" style={inputStyle(!!errors.confirmPassword)} />
+                        )} />
+                        {errors.confirmPassword && <p style={errStyle}>{errors.confirmPassword.message}</p>}
+                    </div>
+
+                    {/* Terms */}
+                    <label style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "4px 0 20px", fontSize: 13, color: "#8a7060", lineHeight: 1.5, cursor: "pointer" }}>
+                        <input type="checkbox" style={{ width: 15, height: 15, accentColor: "#8b5e3c", marginTop: 1, flexShrink: 0 }} />
+                        <span>
+                            Tôi đồng ý với{" "}
+                            <a href="/terms" style={{ color: "#a07050", textDecoration: "none" }}>Điều khoản dịch vụ</a>
+                            {" "}và{" "}
+                            <a href="/privacy" style={{ color: "#a07050", textDecoration: "none" }}>Chính sách bảo mật</a>
+                        </span>
+                    </label>
+
+                    <button type="submit" style={{ width: "100%", height: 44, borderRadius: 50, background: "#8b5e3c", color: "#fff", border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
                         Đăng ký tài khoản
-                    </h1>
+                    </button>
+                </form>
 
-                    <form className="space-y-6" onSubmit={handleSubmit(handleSignUp)} >
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                {/* <label
-                  htmlFor="first-name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Họ
-                </label> */}
-                                <Controller
-                                    name="firstName"
-                                    defaultValue=""
-                                    control={control}
-                                    render={({ field }) => (
-                                        <TextField
-                                            {...field}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                            label="Nhập Họ của bạn"
-                                            error={!!errors.firstName}
-                                            helperText={errors.firstName?.message}
-                                        />
-                                    )}
-                                />
-                            </div>
-                            <div>
-                                {/* <label
-                  htmlFor="last-name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Tên
-                </label> */}
-                                <Controller
-                                    name="lastName"
-                                    defaultValue=""
-                                    control={control}
-                                    render={({ field }) => (
-                                        <TextField
-                                            {...field}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                            label="Nhập Tên của bạn"
-                                            error={!!errors.lastName}
-                                            helperText={errors.lastName?.message}
-                                        />
-                                    )}
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            {/* <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Email
-              </label> */}
-                            <Controller
-                                name="email"
-                                defaultValue=""
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                        label="Nhập email của bạn"
-                                        error={!!errors.email}
-                                        helperText={errors.email?.message}
-                                    />
-                                )}
-                            />
-                        </div>
-
-                        <div>
-                            {/* <label
-                htmlFor="Mật khẩu"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Password
-              </label> */}
-                            <Controller
-                                name="password"
-                                defaultValue=""
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        type="password"
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                        label="Nhập mật khẩu"
-                                        error={!!errors.password}
-                                        helperText={errors.password?.message}
-                                    />
-                                )}
-                            />
-                        </div>
-
-                        <div>
-                            {/* <label
-                htmlFor="Xác nhận "
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Confirm Password
-              </label> */}
-                            <Controller
-                                name="confirmPassword"
-                                defaultValue=""
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        type="password"
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                        label="Xác nhận mật khẩu"
-                                        error={!!errors.password}
-                                        helperText={errors.password?.message}
-                                    />
-                                )}
-                            />
-                        </div>
-
-                        <div className="flex items-center">
-                            <input
-                                id="terms"
-                                type="checkbox"
-                                className="h-4 w-4 text-purple-500 focus:ring-purple-500 border-gray-300 rounded"
-                            />
-                            <label
-                                htmlFor="terms"
-                                className="ml-2 block text-sm text-gray-700"
-                            >
-                                Tôi đồng ý với các{" "}
-                                <a
-                                    href="/terms.html"
-                                    className="text-purple-500 hover:text-purple-700"
-                                >
-                                    Điều khoản
-                                </a>{" "}
-                                và{" "}
-                                <a
-                                    href="/privacy.html"
-                                    className="text-purple-500 hover:text-purple-700"
-                                >
-                                    Chính sách bảo mật
-                                </a>
-                            </label>
-                        </div>
-
-                        <Button
-                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 rounded-lg font-medium hover:opacity-90 transition"
-                            type="submit"
-                            style={{ color: "white" }}
-                        >
-                            Đăng ký tài khoản
-                        </Button>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-500">
-                            Bạn đã có tài khoản?
-                            <a
-                                href="/login.html"
-                                className="text-purple-500 hover:text-purple-700 font-medium"
-                            >
-                                Đăng nhập
-                            </a>
-                        </p>
-                    </div>
-
-                    <div className="mt-8 pt-8 border-t border-gray-200">
-                        <p className="text-sm text-gray-500 text-center mb-4">
-                            Hoặc đăng nhập với
-                        </p>
-                        <div className="flex gap-4 justify-center">
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50"
-                            >
-                                <i data-feather="facebook" className="text-blue-600"></i>
-                            </a>
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50"
-                            >
-                                <i data-feather="twitter" className="text-blue-400"></i>
-                            </a>
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50"
-                            >
-                                <i data-feather="github" className="text-gray-800"></i>
-                            </a>
-                        </div>
-                    </div>
+                {/* Divider */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
+                    <div style={{ flex: 1, height: "0.5px", background: "#e8ddd0" }} />
+                    <span style={{ fontSize: 12, color: "#c4a882" }}>hoặc đăng ký với</span>
+                    <div style={{ flex: 1, height: "0.5px", background: "#e8ddd0" }} />
                 </div>
-            </main>
+
+                {/* Social */}
+                <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                    {[
+                        { title: "Facebook", path: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /> },
+                        { title: "Google", path: <path strokeWidth={0} fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z" /> },
+                        { title: "GitHub", path: <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" /> },
+                    ].map(({ title, path }) => (
+                        <a key={title} href="#" title={title} style={{ width: 40, height: 40, borderRadius: "50%", border: "0.5px solid #e8ddd0", display: "flex", alignItems: "center", justifyContent: "center", background: "#fffdfb", color: "#7a6652", textDecoration: "none" }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+                        </a>
+                    ))}
+                </div>
+
+                <p style={{ textAlign: "center", marginTop: 18, fontSize: 13, color: "#b0997e" }}>
+                    Đã có tài khoản?{" "}
+                    <a href="/auth/login" style={{ color: "#8b5e3c", textDecoration: "none", fontWeight: 500 }}>Đăng nhập</a>
+                </p>
+            </div>
         </div>
     );
 }

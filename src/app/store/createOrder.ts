@@ -1,109 +1,142 @@
 import { supabase } from "@/app/libs/supabaseClient";
-import { CartItem } from "../cart/page";
+// import { CartItem } from "../cart/page";
 
-type CustomerInfo = {
-    fullName: string;
-    email: string;
-    phone: string;
-    cartID: string;
-    address: string;
-    totalAmount: number;
-    city: string;
-    ward: string;
-    note: string;
-}
-export const createOrder = async (
-    customerInfo: CustomerInfo,
-    totalAmount: number
-) => {
-    const {
-        data: { user },
-        error,
-    } = await supabase.auth.getUser();
+// type CustomerInfo = {
+//     fullName: string;
+//     email: string;
+//     phone: string;
+//     cartID: string;
+//     address: string;
+//     city: string;
+//     ward: string;
+//     note: string;
+// }
 
-    if (error || !user) {
-        throw new Error("Chưa đăng nhập");
-    }
+// // Tạo order và chèn order_items từ cart
+// export const createOrder = async (customerInfo: CustomerInfo) => {
+//     // 1️⃣ Lấy user đang đăng nhập
+//     const { data: { user }, error: userError } = await supabase.auth.getUser();
+//     if (userError || !user) throw new Error("Chưa đăng nhập");
 
-    const { data, error: insertError } = await supabase
-        .from("orders")
-        .insert({
-            user_id: user.id,
-            cart_id: customerInfo.cartID,
-            receiver_name: customerInfo.fullName,
-            receiver_phone: customerInfo.phone,
-            receiver_address: customerInfo.address,
-            receiver_mail: customerInfo.email,
-            note: customerInfo.note ?? "",
-            status_id: 1,
-            total_amount: totalAmount,
-            final_amount: totalAmount,
-        })
-        .select("id")
-        .single();
+//     // 2️⃣ Lấy cart của user
+//     const { data: cart } = await supabase
+//         .from("cart")
+//         .select("id")
+//         .eq("user_id", user.id)
+//         .single();
+//     if (!cart) throw new Error("Không tìm thấy cart");
 
-    if (insertError) {
-        console.error("ORDER INSERT ERROR:", insertError);
-        throw insertError;
-    }
+//     // 3️⃣ Lấy cart_items và tính tổng tiền
+//     const { data: cartItems } = await supabase
+//         .from("cart_items")
+//         .select("variant_id, quantity")
+//         .eq("cart_id", cart.id);
+//     if (!cartItems?.length) throw new Error("Giỏ hàng trống");
 
-    return data.id;
-};
+//     const totalPrice = cartItems.reduce((sum, item: any) => sum + (item.price ?? 0) * item.quantity, 0);
 
+//     // 4️⃣ Insert địa chỉ
+//     const { data: addressData, error: addressError } = await supabase
+//         .from("addresses")
+//         .insert({
+//             user_id: user.id,
+//             full_name: customerInfo.fullName,
+//             phone: customerInfo.phone,
+//             address_line: customerInfo.address,
+//             city: customerInfo.city,
+//             ward: customerInfo.ward,
+//             mail: customerInfo.email,
+//         })
+//         .select("id")
+//         .single();
+//     if (addressError) throw addressError;
+//     const addressId = addressData.id;
 
+//     // 5️⃣ Insert order
+//     const { data: orderData, error: orderError } = await supabase
+//         .from("orders")
+//         .insert({
+//             user_id: user.id,
+//             address_id: addressId,
+//             total_price: totalPrice,
+//             status: 'pending',
+//             note: customerInfo.note,
+//         })
+//         .select("id")
+//         .single();
+//     if (orderError) throw orderError;
+//     const orderId = orderData.id;
 
+//     // 6️⃣ Insert order_items
+//     const itemsToInsert = cartItems.map((item: any) => ({
+//         order_id: orderId,           // FK → orders.id
+//         variant_id: item.variant_id, // FK → product_variant.id
+//         quantity: item.quantity,
+//         price: item.price ?? 0
+//     }));
+//     console.log("Cart ID:", cart.id);
+//     console.log("Cart items raw:", cartItems);
+//     const { error: insertItemsError } = await supabase
+//         .from("order_items")
+//         .insert(itemsToInsert);
+//     if (insertItemsError) throw insertItemsError;
 
-export const insertOrderItemsFromCart = async (orderId: string) => {
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+//     return orderId;
+// };
+// export const insertOrderItemsFromCart = async (orderId: string, userId: string) => {
+//     // 1️⃣ Lấy cart
+//     const { data: cart, error: cartError } = await supabase
+//         .from("cart")
+//         .select("id")
+//         .eq("user_id", userId)
+//         .single();
 
-    if (!user) throw new Error("Chưa đăng nhập");
+//     if (cartError || !cart) throw new Error("Không tìm thấy cart");
 
-    const { data: cart } = await supabase
-        .from("carts")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .single();
+//     // 2️⃣ JOIN luôn product_variants để lấy price
+//     const { data: cartItems, error: itemsError } = await supabase
+//         .from("cart_items")
+//         .select(`
+//             variant_id,
+//             quantity,
+//             product_variants:variant_id (
+//                 price
+//             )
+//         `)
+//         .eq("cart_id", cart.id);
 
-    if (!cart) throw new Error("Không tìm thấy cart");
+//     if (itemsError) throw itemsError;
+//     if (!cartItems?.length) throw new Error("Giỏ hàng trống");
 
-    const { data: cartItems } = await supabase
-        .from("cart_items")
-        .select("product_id,variant_id, quantity")
-        .eq("cart_id", cart.id);
+//     // 3️⃣ Map thẳng (KHÔNG tính toán gì)
+//     const orderItems = cartItems.map((item: any) => ({
+//         order_id: orderId,
+//         variant_id: item.variant_id,
+//         quantity: item.quantity,
+//         price: item.product_variants.price
+//     }));
 
-    if (!cartItems?.length) throw new Error("Giỏ hàng trống");
+//     console.log("orderItems:", orderItems);
 
-    const orderItems = cartItems.map(item => ({
-        order_id: orderId, // UUID ✔
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        quantity: item.quantity,
-    }));
+//     // 4️⃣ Insert
+//     const { error: insertError } = await supabase
+//         .from("order_items")
+//         .insert(orderItems);
 
+//     if (insertError) throw insertError;
+
+//     return true;
+// };
+// Khi thanh toán thành công, update status = 'success'
+export const handlePaymentSuccess = async (orderId: string, cartItems: { id: number; quantity: number; cart: { id: number; user_id: string; }; product_variant: { id: string; size: string; color: string; price: number; product: { id: number; name: string; image_url: string; }; }; }[]) => {
     const { error } = await supabase
-        .from("order_items")
-        .insert(orderItems);
+        .from("orders")
+        .update({ status: 'paid' }) // nếu status là text
+        .eq("id", orderId);
 
-    if (error) throw error;
-};
-
-export const handlePaymentSuccess = async (orderId: string) => {
-    try {
-
-
-        const { error } = await supabase
-            .from("orders")
-            .update({ status_id: 2 }) // success
-            .eq("id", orderId);
-
-        if (error) throw error;
-
-        return true;
-    } catch (err) {
-        console.error("PAYMENT ERROR:", err);
+    if (error) {
+        console.error("PAYMENT ERROR:", error);
         return false;
     }
+    return true;
 };

@@ -1,157 +1,102 @@
-"use client"
-import feather from "feather-icons";
-import { useEffect, useState } from "react";
-import { LoginData, LoginSchema } from "@/app/api/loginAPI";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Button, TextField } from "@mui/material";
+"use client";
 import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { LoginData, LoginSchema } from "@/app/api/loginAPI";
 import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/app/libs/supabaseClient";
-import toast from "react-hot-toast";
+
+const inputStyle: React.CSSProperties = {
+    height: 42, padding: "0 14px", border: "1px solid #e2d9ce",
+    borderRadius: 10, background: "#fffdfb", color: "#3d2b1a",
+    fontSize: 14, outline: "none", width: "100%", fontFamily: "inherit",
+    boxSizing: "border-box",
+};
+const labelStyle: React.CSSProperties = {
+    fontSize: 12, color: "#8a7060", fontWeight: 500, letterSpacing: "0.3px",
+    display: "block", marginBottom: 6,
+};
+
 export default function LoginFormAuth() {
     const { onSubmit } = useAuthStore();
-    const router = useRouter()
+    const router = useRouter();
 
-    const {
-        control,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<LoginData>({
+    const { control, handleSubmit, formState: { errors } } = useForm<LoginData>({
         resolver: yupResolver(LoginSchema),
     });
+
     const handleLogin = async (data: LoginData) => {
         const success = await onSubmit(data);
-
-        if (success) {
-            router.push("/");
-        }
+        if (success) router.push("/");
     };
 
-    useEffect(() => {
-        feather.replace();
-    }, []);
     return (
-        <div className="bg-gray-50">
-            <main className="containerlogin mx-auto px-4 py-20 max-w-md">
-                <div className="bg-white p-8 rounded-2xl shadow-lg">
-                    <h1 className="text-3xl font-bold text-center mb-8">
-                        Chào mừng trở lại
-                    </h1>
+        <div style={{ background: "#faf8f5", minHeight: "100vh", padding: "60px 16px", fontFamily: "var(--font-sans, Lora, serif)" }}>
+            <div style={{ background: "#fff", border: "0.5px solid #e8ddd0", borderRadius: 20, padding: "40px 36px", maxWidth: 400, margin: "0 auto" }}>
 
-                    <form onSubmit={handleSubmit(handleLogin)} className="space-y-6">
-                        <div>
-                            <label
-                                htmlFor="email"
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                            ></label>
-                            <Controller
-                                name="email"
-                                defaultValue=""
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                        label="Nhập email của bạn"
-                                        error={!!errors.email}
-                                        helperText={errors.email?.message}
-                                    />
-                                )}
-                            />
-                        </div>
-                        <div>
-                            <label
-                                htmlFor="password"
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                            ></label>
-                            <Controller
-                                name="password"
-                                defaultValue=""
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        type="password"
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                        label="Nhập mật khẩu của bạn"
-                                        error={!!errors.password}
-                                        helperText={errors.password?.message}
-                                    />
-                                )}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                                <input
-                                    id="remember-me"
-                                    type="checkbox"
-                                    className="h-4 w-4 text-purple-500 focus:ring-purple-500 border-gray-300 rounded"
-                                />
-                                <label
-                                    htmlFor="remember-me"
-                                    className="ml-2 block text-sm text-gray-700"
-                                >
-                                    Ghi nhớ
-                                </label>
-                            </div>
+                <p style={{ fontFamily: "'Lora', serif", fontSize: 22, color: "#3d2b1a", textAlign: "center", margin: "0 0 6px", fontWeight: 500 }}>
+                    Chào mừng trở lại
+                </p>
+                <p style={{ fontSize: 13, color: "#b0997e", textAlign: "center", margin: "0 0 28px" }}>
+                    Đăng nhập để tiếp tục mua sắm
+                </p>
 
-                            <a
-                                href="/forgotpassword"
-                                className="text-sm text-purple-500 hover:text-purple-700"
-                            >
-                                Quên mật khẩu?
-                            </a>
-                        </div>
-                        { }
-                        <Button
-                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 py-3 rounded-lg font-medium hover:opacity-90 transition"
-                            type="submit"
-                            style={{ color: "white" }}
-                        >
-                            Đăng nhập
-                        </Button>
-                    </form>
-
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-500">
-                            Bạn chưa có tài khoản?
-                            <a
-                                href="/signup"
-                                className="text-purple-500 hover:text-purple-700 font-medium"
-                            >
-                                Đăng ký
-                            </a>
-                        </p>
+                <form onSubmit={handleSubmit(handleLogin)}>
+                    {/* Email */}
+                    <div style={{ marginBottom: 16 }}>
+                        <label style={labelStyle}>Email</label>
+                        <Controller name="email" defaultValue="" control={control} render={({ field }) => (
+                            <input {...field} type="email" placeholder="ten@email.com" style={{ ...inputStyle, borderColor: errors.email ? "#c07050" : "#e2d9ce" }} />
+                        )} />
+                        {errors.email && <p style={{ fontSize: 12, color: "#c07050", margin: "4px 0 0" }}>{errors.email.message}</p>}
                     </div>
 
-                    <div className="mt-8 pt-8 border-t border-gray-200">
-                        <p className="text-sm text-gray-500 text-center mb-4">
-                            hoặc tiếp tục với
-                        </p>
-                        <div className="flex gap-4 justify-center">
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50"
-                            >
-                                <i data-feather="facebook" className="text-blue-600"></i>
-                            </a>
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50"
-                            >
-                                <i data-feather="twitter" className="text-blue-400"></i>
-                            </a>
-                            <a
-                                href="#"
-                                className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50"
-                            >
-                                <i data-feather="github" className="text-gray-800"></i>
-                            </a>
-                        </div>
+                    {/* Password */}
+                    <div style={{ marginBottom: 16 }}>
+                        <label style={labelStyle}>Mật khẩu</label>
+                        <Controller name="password" defaultValue="" control={control} render={({ field }) => (
+                            <input {...field} type="password" placeholder="••••••••" style={{ ...inputStyle, borderColor: errors.password ? "#c07050" : "#e2d9ce" }} />
+                        )} />
+                        {errors.password && <p style={{ fontSize: 12, color: "#c07050", margin: "4px 0 0" }}>{errors.password.message}</p>}
                     </div>
+
+                    {/* Remember + Forgot */}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: "#8a7060", cursor: "pointer" }}>
+                            <input type="checkbox" style={{ accentColor: "#8b5e3c", width: 15, height: 15 }} /> Ghi nhớ đăng nhập
+                        </label>
+                        <a href="/forgotpassword" style={{ fontSize: 13, color: "#a07050", textDecoration: "none" }}>Quên mật khẩu?</a>
+                    </div>
+
+                    <button type="submit" style={{ width: "100%", height: 44, borderRadius: 50, background: "#8b5e3c", color: "#fff", border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                        Đăng nhập
+                    </button>
+                </form>
+
+                {/* Divider */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "22px 0" }}>
+                    <div style={{ flex: 1, height: "0.5px", background: "#e8ddd0" }} />
+                    <span style={{ fontSize: 12, color: "#c4a882" }}>hoặc tiếp tục với</span>
+                    <div style={{ flex: 1, height: "0.5px", background: "#e8ddd0" }} />
                 </div>
-            </main>
+
+                {/* Social icons */}
+                <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                    {[
+                        { title: "Facebook", path: <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /> },
+                        { title: "Google", path: <path strokeWidth={0} fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z" /> },
+                        { title: "GitHub", path: <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" /> },
+                    ].map(({ title, path }) => (
+                        <a key={title} href="#" title={title} style={{ width: 40, height: 40, borderRadius: "50%", border: "0.5px solid #e8ddd0", display: "flex", alignItems: "center", justifyContent: "center", background: "#fffdfb", color: "#7a6652", textDecoration: "none" }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+                        </a>
+                    ))}
+                </div>
+
+                <p style={{ textAlign: "center", marginTop: 20, fontSize: 13, color: "#b0997e" }}>
+                    Chưa có tài khoản?{" "}
+                    <a href="/auth/register" style={{ color: "#8b5e3c", textDecoration: "none", fontWeight: 500 }}>Đăng ký ngay</a>
+                </p>
+            </div>
         </div>
     );
 }

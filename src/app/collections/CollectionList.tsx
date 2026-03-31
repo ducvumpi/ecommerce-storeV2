@@ -4,57 +4,55 @@ import { Collection } from "../api/collections";
 
 function formatImageUrl(url: string) {
     if (!url) return "";
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-        return url;
-    }
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
     return `https://${url}`;
 }
 
 export default function CollectionList({ LoadCollections }: { LoadCollections: Collection[] }) {
     return (
-        <div className="min-h-screen bg-white">
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div style={{ background: "#faf8f5", minHeight: "100vh", fontFamily: "var(--font-sans, Lora, serif)" }}>
+            <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 24px" }}>
+
                 {/* Header */}
-                <div className="mb-12 text-center">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                        Bộ Sưu Tập
+                <div style={{ textAlign: "center", marginBottom: 40 }}>
+                    <h1 style={{ fontFamily: "'Lora', serif", fontSize: 28, color: "#3d2b1a", margin: "0 0 10px", fontWeight: 500 }}>
+                        Bộ sưu tập
                     </h1>
-                    <p className="text-gray-600 max-w-2xl mx-auto">
+                    <p style={{ fontSize: 14, color: "#b0997e", maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
                         Khám phá những bộ sưu tập thời trang được tuyển chọn kỹ lưỡng cho mọi mùa và mọi dịp
                     </p>
                 </div>
 
-                {/* Collections Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                {/* Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20, marginBottom: 56 }}>
                     {LoadCollections.map((collection) => (
-                        <div
-                            key={collection.id}
-                            className="group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow"
+                        <div key={collection.id} style={{ borderRadius: 16, overflow: "hidden", border: "0.5px solid #e8ddd0", background: "#fff", position: "relative" }}
+                            onMouseEnter={e => (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1.05)"}
+                            onMouseLeave={e => (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1)"}
                         >
-                            {/* Image */}
-                            <div className="relative h-80 overflow-hidden">
+                            <div style={{ position: "relative", height: 300, overflow: "hidden" }}>
                                 <Image
-                                    width={1200}
-                                    height={630}
-                                    unoptimized
                                     src={formatImageUrl(collection.image)}
                                     alt={collection.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    width={600} height={300} unoptimized
+                                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease", display: "block" }}
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                {/* Overlay */}
+                                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(40,20,5,.72) 0%, rgba(40,20,5,.1) 55%, transparent 100%)" }} />
 
-                                {/* Content Overlay */}
-                                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                                    <h3 className="text-2xl font-semibold mb-2">
+                                {/* Content */}
+                                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, color: "#fff" }}>
+                                    <h3 style={{ fontFamily: "'Lora', serif", fontSize: 18, fontWeight: 500, margin: "0 0 6px" }}>
                                         {collection.name}
                                     </h3>
-                                    <p className="text-sm text-gray-200 mb-4 line-clamp-2">
-                                        {collection.description || collection.name}
+                                    <p style={{
+                                        fontSize: 12, color: "rgba(255,255,255,.78)", margin: "0 0 14px", lineHeight: 1.5,
+                                        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden"
+                                    }}>
+                                        {collection.description}
                                     </p>
-                                    <a
-                                        href={`/collections/${collection.id}`}
-                                        className="inline-block bg-white text-gray-900 px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition"
-                                    >
+                                    <a href={`/collections/${collection.id}`}
+                                        style={{ display: "inline-block", background: "rgba(255,255,255,.95)", color: "#3d2b1a", fontSize: 12, fontWeight: 500, padding: "7px 18px", borderRadius: 50, textDecoration: "none" }}>
                                         Xem chi tiết
                                     </a>
                                 </div>
@@ -63,18 +61,15 @@ export default function CollectionList({ LoadCollections }: { LoadCollections: C
                     ))}
                 </div>
 
-                {/* CTA Section */}
-                <div className="text-center mt-16 py-12">
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                        Không tìm thấy thông tin bạn đang tìm kiếm?
+                {/* CTA */}
+                <div style={{ textAlign: "center", borderTop: "0.5px solid #e8ddd0", paddingTop: 48 }}>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 20, color: "#3d2b1a", margin: "0 0 8px", fontWeight: 500 }}>
+                        Không tìm thấy bộ sưu tập bạn đang tìm kiếm?
                     </h2>
-                    <p className="text-gray-600 mb-6">
+                    <p style={{ fontSize: 13, color: "#b0997e", margin: "0 0 20px" }}>
                         Đội ngũ của chúng tôi luôn sẵn sàng hỗ trợ bạn
                     </p>
-                    <a
-                        href="/contact.html"
-                        className="inline-block bg-gray-900 text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition"
-                    >
+                    <a href="/contact" style={{ display: "inline-block", background: "#8b5e3c", color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 28px", borderRadius: 50, textDecoration: "none" }}>
                         Liên hệ với chúng tôi
                     </a>
                 </div>

@@ -18,10 +18,9 @@ const nextConfig = {
       'cdn.brvn.vn',
       'image.made-in-china.com',
       'file.hstatic.nets',
-      'images.unsplash.com',
       'file.hstatic.net',
       'picsum.photos',
-      "opjluoktkkgyqwujdhdu.supabase.co"
+      "pwezkmvuiuxvssaglkse.supabase.co",
     ],
     // protocol: "https",
     // pathname: "/storage/v1/object/public/**",

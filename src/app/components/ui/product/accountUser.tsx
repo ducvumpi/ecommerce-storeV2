@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProfile, UserData } from "../api/loginAPI";
-import { useAuthStore } from "../context/isLoggedIn";
+import { getProfile, UserData } from "@/app/api/loginAPI";
+import { useAuthStore } from "@/app/store/isLoggedIn";
 import Link from "next/link";
 import {
     AppBar,
@@ -58,13 +58,13 @@ export default function DashboardClient() {
                         <IconButton color="inherit" onClick={handleMenuOpen}>
                             <Avatar
                                 src={profile.avatar || "https://i.imgur.com/DTfowdu.jpg"}
-                                alt={profile.name}
+                                alt={profile.first_name}
                             />
                         </IconButton>
 
                         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                             <Box px={2} py={1}>
-                                <Typography variant="subtitle1">{profile.name}</Typography>
+                                <Typography variant="subtitle1">{profile.first_name}</Typography>
                                 <Typography variant="body2" color="text.secondary">
                                     {profile.role}
                                 </Typography>

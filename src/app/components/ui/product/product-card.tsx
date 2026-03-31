@@ -10,15 +10,11 @@ import { Star, Heart, Truck, Shield, RotateCcw } from "lucide-react";
 
 type Variant = {
   id: number;
+  base_price: number;
   price: number;
-  color_id: number;
-  color_name: string;
-  hex_code: string;
-  size_id: number;
-  size_name: string;
+  color: string;
+  size: string;
 };
-
-
 
 export default function ProductCard({ product }: { product: Clothes }) {
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -75,7 +71,7 @@ export default function ProductCard({ product }: { product: Clothes }) {
   useEffect(() => {
     if (variants.length === 0) return;
 
-    setSelectedColor(variants[0].color_name);
+    setSelectedColor(variants[0].color);
     setSelectedSize(null);
     setSelectedVariant(null);
   }, [variants]);
@@ -107,18 +103,24 @@ export default function ProductCard({ product }: { product: Clothes }) {
 
       setLoading(true);
 
-      const { data, error } = await supabase.rpc(
-        "get_variants_by_product",
-        { p_product_id: product.id }
-      );
+      const { data, error } = await supabase
+        .from("product_variants")
+        .select("id, price, color, size")
+        .eq("product_id", product.id);
 
-      console.log("variants raw:", data);
+      console.log("variants new:", data);
 
       if (error) {
-        console.error("RPC error:", error);
+        console.error(error);
         setVariants([]);
       } else {
-        setVariants(data ?? []);
+        const mapped = (data || []).map((v: any) => ({
+          id: v.id,
+          price: v.price,
+          color: v.color,
+          size: v.size,
+        }));
+        setVariants(mapped);
       }
 
       setLoading(false);
@@ -139,8 +141,8 @@ export default function ProductCard({ product }: { product: Clothes }) {
 
     const variant = variants.find(
       v =>
-        v.color_name === selectedColor &&
-        v.size_name === selectedSize
+        v.color === selectedColor &&
+        v.size === selectedSize
     );
 
     setSelectedVariant(variant || null);
@@ -149,7 +151,7 @@ export default function ProductCard({ product }: { product: Clothes }) {
 
   // const colors = [...new Set(variants.map(v => v.color))];
   const colors = Array.from(
-    new Set(variants.map(v => v.color_name))
+    new Set(variants.map(v => v.color))
   );
 
   // const sizes = selectedColor
@@ -157,8 +159,8 @@ export default function ProductCard({ product }: { product: Clothes }) {
   //   : [];
   const sizes = selectedColor
     ? variants
-      .filter(v => v.color_name === selectedColor)
-      .map(v => v.size_name)
+      .filter(v => v.color === selectedColor)
+      .map(v => v.size)
     : [];
 
   useEffect(() => {
@@ -169,8 +171,8 @@ export default function ProductCard({ product }: { product: Clothes }) {
 
     const variant = variants.find(
       v =>
-        v.color_name === selectedColor &&
-        v.size_name === selectedSize
+        v.color === selectedColor &&
+        v.size === selectedSize
     );
 
     setVariantId(variant?.id ?? null);
@@ -200,224 +202,140 @@ export default function ProductCard({ product }: { product: Clothes }) {
       </div>
     );
   }
+  const getMinPrice = (variants: Variant[]) => {
+    if (!variants || variants.length === 0) return 0;
+    return Math.min(...variants.map(v => v.price));
+  };
+  // Thay toàn bộ JSX return, giữ nguyên state và useEffect
+
+  const btnStyle = (active: boolean): React.CSSProperties => ({
+    padding: "7px 16px", borderRadius: 9,
+    border: `1.5px solid ${active ? "#8b5e3c" : "#e2d9ce"}`,
+    background: active ? "#fdf6ef" : "#fff",
+    color: active ? "#8b5e3c" : "#7a6652",
+    fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+    transition: "all .15s", position: "relative",
+  });
+
+  const sizeBtnStyle = (active: boolean): React.CSSProperties => ({
+    width: 52, height: 42, borderRadius: 9,
+    border: `1.5px solid ${active ? "#8b5e3c" : "#e2d9ce"}`,
+    background: active ? "#8b5e3c" : "#fff",
+    color: active ? "#fff" : "#7a6652",
+    fontSize: 13, fontWeight: 500, cursor: "pointer",
+    fontFamily: "inherit", transition: "all .15s",
+  });
 
   return (
-    <div className="max-w-4xl">
-      {/* Product Header */}
+    <div style={{ maxWidth: 520, fontFamily: "var(--font-sans, Lora, serif)" }}>
       {getInfo && (
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-                {getInfo.title}
-              </h1>
-
-              {/* Rating & Reviews */}
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                          }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">4.8</span>
-                </div>
-                <span className="text-sm text-gray-500">(124 đánh giá)</span>
-              </div>
-            </div>
-
-            {/* Favorite Button */}
-            <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className="p-3 rounded-full hover:bg-gray-100 transition"
-            >
-              <Heart
-                className={`w-6 h-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'
-                  }`}
-              />
+        <div style={{ marginBottom: 24 }}>
+          {/* Name + Fav */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 500, color: "#3d2b1a", margin: 0 }}>{getInfo.name}</h1>
+            <button onClick={() => setIsFavorite(!isFavorite)}
+              style={{ width: 36, height: 36, borderRadius: "50%", border: "0.5px solid #e8ddd0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+              <Heart size={16} strokeWidth={1.5} color={isFavorite ? "#c07050" : "#a07050"} fill={isFavorite ? "#c07050" : "none"} />
             </button>
           </div>
 
-          {/* Price */}
-          <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-3xl font-bold text-gray-900">
-              {formatPrice(getInfo.price)}
-            </span>
-            {/* Optional: Original price if on sale */}
-            {/* <span className="text-xl text-gray-400 line-through">
-              {formatPrice(getInfo.price * 1.2)}
-            </span>
-            <span className="px-3 py-1 bg-red-100 text-red-700 text-sm font-semibold rounded-full">
-              -20%
-            </span> */}
+          {/* Stars */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex" }}>
+              {[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < 4 ? "#e8a838" : "none"} color={i < 4 ? "#e8a838" : "#d0c0b0"} />)}
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#3d2b1a" }}>4.8</span>
+            <span style={{ fontSize: 13, color: "#b0997e" }}>(124 đánh giá)</span>
           </div>
 
-          {/* Description */}
-          <p className="text-gray-600 leading-relaxed mb-6">
-            {getInfo.description}
+          {/* Price */}
+          <p style={{ fontSize: 26, fontWeight: 500, color: "#8b5e3c", margin: "0 0 10px" }}>
+            {formatPrice(selectedVariant?.price || product.base_price)}
           </p>
 
+          {/* Desc */}
+          <p style={{ fontSize: 13, color: "#9a8472", lineHeight: 1.7, margin: "0 0 16px" }}>{getInfo.description}</p>
+
           {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-6 border-y border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <Truck className="w-5 h-5 text-gray-700" />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, padding: "14px 0", borderTop: "0.5px solid #e8ddd0", borderBottom: "0.5px solid #e8ddd0", marginBottom: 22 }}>
+            {[
+              { icon: <Truck size={14} color="#a07050" strokeWidth={1.5} />, title: "Miễn phí ship", sub: "Đơn từ 500k" },
+              { icon: <RotateCcw size={14} color="#a07050" strokeWidth={1.5} />, title: "Đổi trả dễ dàng", sub: "Trong 30 ngày" },
+              { icon: <Shield size={14} color="#a07050" strokeWidth={1.5} />, title: "Bảo hành", sub: "12 tháng" },
+            ].map(f => (
+              <div key={f.title} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ width: 30, height: 30, background: "#f3ede6", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{f.icon}</div>
+                <div>
+                  <p style={{ fontSize: 11, fontWeight: 500, color: "#3d2b1a", margin: "0 0 2px" }}>{f.title}</p>
+                  <p style={{ fontSize: 10, color: "#b0997e", margin: 0 }}>{f.sub}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Miễn phí vận chuyển</p>
-                <p className="text-xs text-gray-500">Đơn hàng từ 500k</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <RotateCcw className="w-5 h-5 text-gray-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Đổi trả dễ dàng</p>
-                <p className="text-xs text-gray-500">Trong vòng 30 ngày</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <Shield className="w-5 h-5 text-gray-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Bảo hành chính hãng</p>
-                <p className="text-xs text-gray-500">12 tháng</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Color Selection */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <label className="text-base font-semibold text-gray-900">
-            Màu sắc
-            {selectedColor && <span className="ml-2 text-gray-500 font-normal">({selectedColor})</span>}
-          </label>
+      {/* Colors */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: "#8a7060", marginBottom: 10 }}>
+          Màu sắc {selectedColor && <span style={{ fontWeight: 400, color: "#b0997e" }}>({selectedColor})</span>}
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {colors.map(color => (
-            <button
-              key={color}
-              onClick={() => {
-                setSelectedColor(color);
-                setSelectedSize(null);
-              }}
-              className={`
-                relative px-6 py-3 rounded-lg border-2 transition-all font-medium
-                ${selectedColor === color
-                  ? 'border-gray-900 bg-gray-50 text-gray-900'
-                  : 'border-gray-200 text-gray-700 hover:border-gray-400'
-                }
-              `}
-            >
+            <button key={color} onClick={() => { setSelectedColor(color); setSelectedSize(null); }} style={btnStyle(selectedColor === color)}>
               {color}
               {selectedColor === color && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+                <span style={{ position: "absolute", top: -6, right: -6, width: 16, height: 16, background: "#8b5e3c", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M5 13l4 4L19 7" /></svg>
+                </span>
               )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Size Selection */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <label className="text-base font-semibold text-gray-900">
-            Kích thước
-            {selectedSize && <span className="ml-2 text-gray-500 font-normal">({selectedSize})</span>}
-          </label>
-          <button className="text-sm text-gray-600 hover:text-gray-900 underline">
-            Hướng dẫn chọn size
-          </button>
+      {/* Sizes */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: "#8a7060", marginBottom: 10, display: "flex", justifyContent: "space-between" }}>
+          <span>Kích thước {selectedSize && <span style={{ fontWeight: 400, color: "#b0997e" }}>({selectedSize})</span>}</span>
+          <a href="#" style={{ fontSize: 12, color: "#a07050", textDecoration: "none", fontWeight: 400 }}>Hướng dẫn chọn size</a>
         </div>
-        <div className="flex flex-wrap gap-3">
-          {sizes.length > 0 ? (
-            sizes.map(size => (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`
-                  w-16 h-12 rounded-lg border-2 transition-all font-semibold
-                  ${selectedSize === size
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-gray-200 text-gray-700 hover:border-gray-400'
-                  }
-                `}
-              >
-                {size}
-              </button>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500 italic">Vui lòng chọn màu trước</p>
-          )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {sizes.length > 0
+            ? sizes.map(size => <button key={size} onClick={() => setSelectedSize(size)} style={sizeBtnStyle(selectedSize === size)}>{size}</button>)
+            : <p style={{ fontSize: 13, color: "#b0997e", fontStyle: "italic", margin: 0 }}>Vui lòng chọn màu trước</p>
+          }
         </div>
       </div>
 
-      {/* Quantity */}
-      <div className="mb-8">
-        <label className="block text-base font-semibold text-gray-900 mb-4">
-          Số lượng
-        </label>
-        <div className="inline-flex items-center border-2 border-gray-200 rounded-lg">
-          <button
-            onClick={decrement}
-            className="px-6 py-3 hover:bg-gray-50 transition font-semibold text-lg"
-          >
-            −
-          </button>
-          <span className="px-8 py-3 text-lg font-semibold border-x-2 border-gray-200 min-w-[80px] text-center">
-            {quantity}
-          </span>
-          <button
-            onClick={increment}
-            className="px-6 py-3 hover:bg-gray-50 transition font-semibold text-lg"
-          >
-            +
-          </button>
+      {/* Qty */}
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: "#8a7060", marginBottom: 10 }}>Số lượng</div>
+        <div style={{ display: "inline-flex", alignItems: "center", border: "1.5px solid #e2d9ce", borderRadius: 10, overflow: "hidden" }}>
+          {[{ label: "−", fn: decrement }, { label: "+", fn: increment }].map((btn, i) => (
+            <>
+              {i === 1 && <span style={{ padding: "0 20px", fontSize: 15, fontWeight: 500, color: "#3d2b1a", borderLeft: "1px solid #e2d9ce", borderRight: "1px solid #e2d9ce", height: 42, lineHeight: "42px", minWidth: 52, textAlign: "center" }}>{quantity}</span>}
+              <button key={btn.label} onClick={btn.fn} style={{ width: 42, height: 42, background: "#fff", border: "none", fontSize: 18, color: "#7a6652", cursor: "pointer", fontFamily: "inherit" }}>{btn.label}</button>
+            </>
+          ))}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <button
-          onClick={handleAddToCart}
-          disabled={!variantId}
-          className={`
-            flex-1 py-4 px-8 rounded-lg font-semibold text-base transition-all
-            ${variantId
-              ? 'bg-gray-900 text-white hover:bg-gray-800 active:scale-95'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }
-          `}
-        >
-          {variantId ? 'Thêm vào giỏ hàng' : 'Vui lòng chọn đầy đủ thuộc tính'}
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+        <button onClick={handleAddToCart} disabled={!variantId}
+          style={{ flex: 1, height: 46, borderRadius: 50, background: variantId ? "#8b5e3c" : "#e2d9ce", color: variantId ? "#fff" : "#c4b09a", border: "none", fontSize: 14, fontWeight: 500, cursor: variantId ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
+          {variantId ? "Thêm vào giỏ hàng" : "Vui lòng chọn đầy đủ thuộc tính"}
         </button>
-        <button className="sm:w-auto px-8 py-4 border-2 border-gray-900 text-gray-900 rounded-lg font-semibold hover:bg-gray-50 transition">
+        <button style={{ padding: "0 24px", height: 46, borderRadius: 50, border: "1.5px solid #8b5e3c", background: "transparent", color: "#8b5e3c", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
           Mua ngay
         </button>
       </div>
 
-      {/* Additional Info */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <p className="text-sm text-gray-600">
-          💡 <span className="font-medium">Mẹo:</span> Gọi ngay{' '}
-          <a href="tel:1900xxxx" className="text-gray-900 font-semibold hover:underline">
-            1900 xxxx
-          </a>{' '}
-          để được tư vấn size và màu phù hợp nhất
-        </p>
+      <div style={{ background: "#fdf8f3", border: "0.5px solid #ede6dc", borderRadius: 10, padding: "12px 14px", fontSize: 12, color: "#9a8472" }}>
+        💡 <strong>Mẹo:</strong> Gọi{" "}
+        <a href="tel:1900xxxx" style={{ color: "#8b5e3c", fontWeight: 500, textDecoration: "none" }}>1900 xxxx</a>
+        {" "}để được tư vấn size và màu phù hợp nhất.
       </div>
     </div>
   );

@@ -12,12 +12,9 @@ export default async function ProductDetailPage({ params }: { params: { slug: st
     }
 
     return (
-        <div className="flex pb-16 px-8 bg-background min-h-screen gap-10">
-
-            {/* LEFT: GALLERY */}
+        <div className="grid pb-16 px-16 pt-10 bg-background min-h-screen gap-12"
+            style={{ gridTemplateColumns: "1.1fr 0.9fr" }}>
             <ProductGallery collection={collection} />
-
-            {/* RIGHT: INFO */}
             <ProductCard product={collection} />
         </div>
     );

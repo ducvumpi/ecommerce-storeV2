@@ -34,11 +34,11 @@ export default function CartPage() {
                 }
 
                 // Query Supabase REST API
-                const url = `cart_items?select=id,quantity,product:product_id(id,title,price,description),cart:carts(user_id)&cart.user_id=eq.${userId}`;
+                const url = `cart_items?select=id,quantity,product:product_id(id,title,price,description),cart:cart(user_id)&cart.user_id=eq.${userId}`;
                 const { data, error } = await supabase
                     .from("cart_items")
                     .select(
-                        "id,quantity,total,product:product_id(id,title,price,description),cart:carts(user_id)"
+                        "id,quantity,total,product:product_id(id,title,price,description),cart:(user_id)"
                     )
                     .eq("cart.user_id", userId); // filter theo user_id
 
