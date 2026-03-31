@@ -31,6 +31,10 @@ function saveGuestCart(items: GuestCartItem[]) {
 type CartItem = {
   id: number;
   quantity: number;
+  cart: {
+    id: number;
+    user_id: string;
+  };
   product_variant: {
     id: string;
     size: string;
