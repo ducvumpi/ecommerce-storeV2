@@ -31,10 +31,6 @@ function saveGuestCart(items: GuestCartItem[]) {
 type CartItem = {
   id: number;
   quantity: number;
-  cart: {
-    id: number;
-    user_id: string;
-  };
   product_variant: {
     id: string;
     size: string;
@@ -142,11 +138,7 @@ export default function ShoppingCartUI() {
     `).eq('cart_id', cartData.id);
 
       if (error) { setCartItems([]); setLoading(false); return; }
-      setCartItems((data ?? []).map(item => ({
-        ...item,
-        variant: item.product_variant ?? null,
-        product: item.product_variant?.products ?? null
-      })));
+      setCartItems((data ?? []) as unknown as CartItem[]);
       setLoading(false);
     }
     fetchCart();
