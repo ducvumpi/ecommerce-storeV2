@@ -238,42 +238,43 @@ export default function ShoppingCartUI() {
       .select("*")
       .eq("code", couponCode.trim().toUpperCase())
 
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       alert("Mã không tồn tại");
       setAppliedCoupon(null);
       return;
     }
 
+    const coupon = data[0];
     const now = new Date();
 
-    if (data.start_date && new Date(data.start_date) > now) {
+    if (coupon.start_date && new Date(coupon.start_date) > now) {
       alert("Mã chưa bắt đầu");
       return;
     }
 
-    if (data.end_date && new Date(data.end_date) < now) {
+    if (coupon.end_date && new Date(coupon.end_date) < now) {
       alert("Mã đã hết hạn");
       return;
     }
 
-    if (subtotal < data.min_order_value) {
-      alert(`Đơn tối thiểu ${data.min_order_value}`);
+    if (subtotal < coupon.min_order_value) {
+      alert(`Đơn tối thiểu ${coupon.min_order_value}`);
       return;
     }
 
     let discountAmount = 0;
 
-    if (data.discount_type === "percent") {
-      discountAmount = subtotal * (data.discount_value / 100);
-      if (data.max_discount) {
-        discountAmount = Math.min(discountAmount, data.max_discount);
+    if (coupon.discount_type === "percent") {
+      discountAmount = subtotal * (coupon.discount_value / 100);
+      if (coupon.max_discount) {
+        discountAmount = Math.min(discountAmount, coupon.max_discount);
       }
-    } else if (data.discount_type === "fixed") {
-      discountAmount = data.discount_value;
+    } else if (coupon.discount_type === "fixed") {
+      discountAmount = coupon.discount_value;
     }
 
     setAppliedCoupon({
-      code: data.code,
+      code: coupon.code,
       discountAmount,
     });
   };
