@@ -116,6 +116,7 @@ export default function ProductCard({ product }: { product: Clothes }) {
       } else {
         const mapped = (data || []).map((v: any) => ({
           id: v.id,
+          base_price: v.price,
           price: v.price,
           color: v.color,
           size: v.size,
@@ -191,7 +192,7 @@ export default function ProductCard({ product }: { product: Clothes }) {
       toast.error("Vui lòng chọn size và màu trước khi thêm vào giỏ");
       return;
     }
-    addToCart(product_id, variantId, quantity);
+    addToCart(product_id, String(variantId), quantity);
     toast.success("Đã thêm vào giỏ hàng!");
   };
 
