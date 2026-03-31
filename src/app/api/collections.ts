@@ -5,6 +5,7 @@ import { Clothes } from "./productsAPI"
 export type Collection = {
   id: number;
   name: string;
+  tag: string;
   description: string;
   slug: string;
   image: string;
