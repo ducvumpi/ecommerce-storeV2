@@ -47,13 +47,19 @@ body {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-nav {
+.navbar-root nav {
   max-width: 1280px;
   margin: 0 auto;
   /* padding: 1.5rem 2rem; */
-  display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.navbar-container {
+  width: 100%;
+  padding: 1.5rem 2rem;
+  display: flex;
+
 }
 
 .logo {
@@ -310,14 +316,118 @@ nav {
   font-size: 0.875rem;
 }
 
+/* ===== MOBILE DRAWER ===== */
+.mobile-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+}
+
+.mobile-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.mobile-menu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100%;
+  background: #fffdfb;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  animation: slideIn 0.25s ease;
+}
+
+.mobile-menu-btn {
+  display: none;
+}
+
+
+.mobile-link {
+  padding: 12px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #5c3d22;
+  font-size: 14px;
+}
+
+.mobile-link:hover {
+  background: #f5ede3;
+}
+
+
+.mobile-menu {
+  overflow-y: auto;
+}
+
+/* ===== Responsive ===== */
+
+/* 📱 Tablet (≥ 640px) */
+@media (min-width: 640px) {
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 💻 Tablet lớn (≥ 768px) */
 @media (min-width: 768px) {
+  .footer-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+
+
+}
+
+/* 🖥️ Laptop (≥ 1024px) */
+@media (min-width: 1024px) {
   .footer-container {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
+/* 🖥️ Desktop lớn (≥ 1280px) */
 @media (min-width: 1280px) {
   .container {
     max-width: 1280px;
+  }
+}
+
+/* 🖥️ Màn siêu lớn (≥ 1536px) */
+@media (min-width: 1536px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+
+/* ===== Mobile (gộp lại) ===== */
+@media (max-width: 768px) {
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+}
+
+
+/* ===== Animation ===== */
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
   }
 }
