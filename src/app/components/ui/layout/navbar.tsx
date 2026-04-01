@@ -41,7 +41,35 @@ export default function Navbar() {
 
   // Đóng mobile menu khi đổi route
   useEffect(() => { setMobileOpen(false); }, [pathname]);
+  const [cartCount, setCartCount] = useState(0);
 
+  useEffect(() => {
+    async function fetchCartCount() {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (!currentUser) {
+        // Guest: đọc từ localStorage
+        try {
+          const guest = JSON.parse(localStorage.getItem("guest_cart") || "[]");
+          const total = guest.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
+          setCartCount(total);
+        } catch { setCartCount(0); }
+        return;
+      }
+
+      const { data: cartData } = await supabase
+        .from("cart").select("id").eq("user_id", currentUser.id).single();
+      if (!cartData) return;
+
+      const { data } = await supabase
+        .from("cart_items").select("quantity").eq("cart_id", cartData.id);
+      if (data) {
+        const total = data.reduce((sum, item) => sum + (item.quantity || 1), 0);
+        setCartCount(total);
+      }
+    }
+    fetchCartCount();
+  }, [user]); // re-fetch khi user thay đổi
   const handleLogOut = async () => {
     setDropdownOpen(false);
     setMobileOpen(false);
@@ -58,7 +86,16 @@ export default function Navbar() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap');
-
+.cart-badge-wrap { position: relative; }
+.cart-badge {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  background: #a07050; color: white;
+  border-radius: 50px; border: 2px solid #fffdfb;
+  font-size: 9px; font-weight: 700; line-height: 12px;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
         .navbar-root {
           background: rgba(255, 253, 251, 0.95);
           backdrop-filter: blur(16px);
@@ -330,8 +367,13 @@ export default function Navbar() {
               <Link href="/search" className="icon-btn" title="Tìm kiếm">
                 <Search size={17} strokeWidth={1.6} />
               </Link>
-              <Link href="/cart" className="icon-btn" title="Giỏ hàng">
+              <Link href="/cart" className="icon-btn cart-badge-wrap" title="Giỏ hàng">
                 <ShoppingBag size={17} strokeWidth={1.6} />
+                {cartCount > 0 && (
+                  <span className="cart-badge">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
               </Link>
             </div>
 

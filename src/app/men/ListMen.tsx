@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Clothes } from "@/app/api/productsAPI";
 import { Heart } from "lucide-react";
-
+import Link from "next/link";
 export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
     const [hoveredId, setHoveredId] = useState<number | null>(null);
     const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
@@ -61,11 +61,22 @@ export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
                             style={{ background: "#fff", borderRadius: 16, border: "0.5px solid #e8ddd0", overflow: "hidden", boxShadow: hoveredId === itemIdNum ? "0 6px 24px rgba(100,60,20,.1)" : "none", transition: "box-shadow .25s" }}
                         >
                             <div style={{ position: "relative", height: 240, overflow: "hidden", background: "#f3ede6" }}>
-                                <Image
-                                    src={formatImageUrl(item.image_url)} alt={item.category?.name ?? ""}
-                                    width={400} height={240}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform .5s ease", transform: hoveredId === itemIdNum ? "scale(1.07)" : "scale(1)" }}
-                                />
+                                <Link href={`/men/${item.slug}`}>
+                                    <Image
+                                        src={formatImageUrl(item.image_url)}
+                                        alt={item.category?.name ?? ""}
+                                        width={400}
+                                        height={240}
+                                        style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: "cover",
+                                            display: "block",
+                                            transition: "transform .5s ease",
+                                            transform: hoveredId === itemIdNum ? "scale(1.07)" : "scale(1)"
+                                        }}
+                                    />
+                                </Link>
                                 <button
                                     onClick={() => setLikedIds(prev => { const s = new Set(prev); s.has(itemIdNum) ? s.delete(itemIdNum) : s.add(itemIdNum); return s; })}
                                     style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,.92)", border: "0.5px solid #e8ddd0", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}

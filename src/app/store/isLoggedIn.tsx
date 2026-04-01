@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthContextType>()(
           });
 
         if (error) {
-          toast.error(error.message);
+          toast.error("Email chưa xác thực! Vui lòng kiểm tra hộp thư đến.");
           return false;
         }
 

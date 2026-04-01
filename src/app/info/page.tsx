@@ -2,12 +2,26 @@
 import React, { useEffect, useState } from 'react';
 import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight } from 'lucide-react';
 import { supabase } from '../libs/supabaseClient';
-
+import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI';
 export default function AccountProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [provinces, setProvinces] = useState<Commune[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addressData, setAddressData] = useState<Commune[]>([]);
+  const [wards, setWards] = useState<Commune[]>([]);
 
+  const [customerInfo, setCustomerInfo] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    totalAmount: 0,
+    city: '',
+    ward: '',
+    note: ''
+  });
   const [profileData, setProfileData] = useState({
     last_name: '',
     fullName: '',
@@ -18,6 +32,28 @@ export default function AccountProfile() {
     dateOfBirth: '',
     gender: 'Nam'
   });
+  useEffect(() => {
+    const fetchAddressData = async () => {
+      try {
+        setLoading(true);
+        const data = await DiaGioiHanhChinh2Cap();
+        setAddressData(data.communes || []);
+        setProvinces(data.provinces as Commune[]);
+      } catch (error) {
+        console.error('Error fetching address data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAddressData();
+  }, []);
+  useEffect(() => {
+    if (customerInfo.city && addressData.length > 0) {
+      const filtered = addressData.filter((item) => item.provinceCode === customerInfo.city);
+      setWards(filtered.map(item => ({ code: item.code, name: item.name })));
+      setCustomerInfo(prev => ({ ...prev, ward: '' }));
+    }
+  }, [customerInfo.city, addressData]);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -43,10 +79,32 @@ export default function AccountProfile() {
     email: true, sms: false, push: true, marketing: false
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleProfileChange = (field: string, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
+  const handleSaveProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        last_name: profileData.fullName,
+        email: profileData.email,
+        phone: profileData.phone,
+        address: profileData.address,
+        city: customerInfo.city,
+        ward: customerInfo.ward,
+        date_of_birth: profileData.dateOfBirth,
+      }, { onConflict: "id" });
+
+    if (error) {
+      console.error("Error saving profile:", error);
+      alert("Lưu thất bại: " + error.message);
+      return;
+    }
+  };
   const handleSave = () => {
     setIsEditing(false);
     setShowSuccess(true);
@@ -61,7 +119,10 @@ export default function AccountProfile() {
   ];
 
   const initials = (profileData.fullName || profileData.last_name || 'U').charAt(0).toUpperCase();
-
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setCustomerInfo(prev => ({ ...prev, [name]: value }));
+  };
   return (
     <>
       <style>{`
@@ -80,7 +141,7 @@ export default function AccountProfile() {
         }
 
         .ap-root {
-          font-family: 'DM Sans', Lora, serif;
+          font-family: 'DM Sans', sans-serif;
           background: var(--bg0);
           min-height: 100vh;
           padding: 2.5rem 1.25rem;
@@ -156,7 +217,7 @@ export default function AccountProfile() {
           display: flex; align-items: center; gap: 11px;
           padding: 10px 14px; border-radius: 12px;
           border: none; background: transparent; cursor: pointer;
-          font-family: 'DM Sans', Lora, serif; font-size: 13.5px;
+          font-family: 'DM Sans', sans-serif; font-size: 13.5px;
           color: var(--soft); font-weight: 400;
           transition: background 0.18s, color 0.18s;
           text-align: left; width: 100%;
@@ -191,7 +252,7 @@ export default function AccountProfile() {
           width: 100%; padding: 10px 14px;
           border: 1.5px solid var(--bg2); border-radius: 10px;
           background: var(--bg0); color: var(--bd);
-          font-family: 'DM Sans', Lora, serif; font-size: 14px;
+          font-family: 'DM Sans', sans-serif; font-size: 14px;
           outline: none; transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
           box-sizing: border-box;
         }
@@ -204,7 +265,7 @@ export default function AccountProfile() {
           padding: 9px 20px; border-radius: 50px;
           border: 1.5px solid var(--bg2); background: var(--white);
           color: var(--bm); font-size: 13px; font-weight: 500;
-          cursor: pointer; font-family: 'DM Sans', Lora, serif;
+          cursor: pointer; font-family: 'DM Sans', sans-serif;
           transition: background 0.18s, border-color 0.18s;
         }
         .btn-edit:hover { background: var(--bg1); border-color: var(--bxl); }
@@ -214,7 +275,7 @@ export default function AccountProfile() {
           padding: 9px 22px; border-radius: 50px; border: none;
           background: linear-gradient(135deg, #a07050, #7a5135);
           color: #fff; font-size: 13px; font-weight: 500;
-          cursor: pointer; font-family: 'DM Sans', Lora, serif;
+          cursor: pointer; font-family: 'DM Sans', sans-serif;
           box-shadow: 0 3px 12px rgba(120,75,45,0.25);
           transition: opacity 0.18s, transform 0.18s;
         }
@@ -225,7 +286,7 @@ export default function AccountProfile() {
           padding: 9px 18px; border-radius: 50px;
           border: 1.5px solid var(--bg2); background: var(--white);
           color: var(--soft); font-size: 13px; font-weight: 500;
-          cursor: pointer; font-family: 'DM Sans', Lora, serif;
+          cursor: pointer; font-family: 'DM Sans', sans-serif;
           transition: background 0.18s;
         }
         .btn-cancel:hover { background: var(--bg1); }
@@ -234,7 +295,7 @@ export default function AccountProfile() {
           padding: 10px 22px; border-radius: 50px; border: none;
           background: linear-gradient(135deg, #a07050, #7a5135);
           color: #fff; font-size: 13px; font-weight: 500;
-          cursor: pointer; font-family: 'DM Sans', Lora, serif;
+          cursor: pointer; font-family: 'DM Sans', sans-serif;
           box-shadow: 0 3px 12px rgba(120,75,45,0.25);
           transition: opacity 0.18s, transform 0.18s;
         }
@@ -352,7 +413,7 @@ export default function AccountProfile() {
                       <button className="btn-cancel" onClick={() => setIsEditing(false)}>
                         <X size={13} /> Hủy
                       </button>
-                      <button className="btn-save" onClick={handleSave}>
+                      <button className="btn-save" onClick={async () => { await handleSaveProfile(); handleSave(); }}>
                         <Check size={13} /> Lưu thay đổi
                       </button>
                     </div>
@@ -369,32 +430,46 @@ export default function AccountProfile() {
                     <div key={f.field}>
                       <label className="field-label">{f.label}</label>
                       <input type={f.type} value={(profileData as any)[f.field] || ""} placeholder={f.placeholder}
-                        onChange={e => handleInputChange(f.field, e.target.value)}
+                        onChange={e => handleProfileChange(f.field, e.target.value)}
                         disabled={!isEditing} className="field-input" />
                     </div>
                   ))}
 
                   <div>
                     <label className="field-label">Giới tính</label>
-                    <select value={profileData.gender} onChange={e => handleInputChange('gender', e.target.value)}
+                    <select value={profileData.gender} onChange={e => handleProfileChange('gender', e.target.value)}
                       disabled={!isEditing} className="field-input">
-                      <option>Nam</option>
-                      <option>Nữ</option>
-                      <option>Khác</option>
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="field-label">Địa chỉ</label>
                     <input type="text" value={profileData.address} placeholder="Số nhà, tên đường..."
-                      onChange={e => handleInputChange('address', e.target.value)}
+                      onChange={e => handleProfileChange('address', e.target.value)}
                       disabled={!isEditing} className="field-input" />
+                  </div>
+                  <div>
+                    <label className="field-label">Tỉnh / Thành phố <span style={{ color: '#c07050' }}>*</span></label>
+                    <select name="city" value={customerInfo.city} onChange={handleInputChange} className="field-input">
+                      <option className="field-input" value="">Chọn tỉnh / thành</option>
+                      {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="field-label">Phường / Xã</label>
+                    <select name="ward" value={customerInfo.ward} onChange={handleInputChange} disabled={!customerInfo.city} className="field-input" style={{ opacity: !customerInfo.city ? 0.5 : 1 }}>
+                      <option className="field-input" value="">Chọn phường / xã</option>
+                      {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
+                    </select>
                   </div>
 
                   <div className="field-full">
                     <label className="field-label">Giới thiệu</label>
                     <textarea value={profileData.bio} rows={3} placeholder="Vài dòng về bạn..."
-                      onChange={e => handleInputChange('bio', e.target.value)}
+                      onChange={e => handleProfileChange('bio', e.target.value)}
                       disabled={!isEditing}
                       className="field-input" style={{ resize: "none", lineHeight: 1.6 }} />
                   </div>

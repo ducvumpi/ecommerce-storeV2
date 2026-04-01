@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { Collection } from "../api/collections";
-
+import Link from "next/link";
 function formatImageUrl(url: string) {
     if (!url) return "";
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -31,12 +31,15 @@ export default function CollectionList({ LoadCollections }: { LoadCollections: C
                             onMouseLeave={e => (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1)"}
                         >
                             <div style={{ position: "relative", height: 300, overflow: "hidden" }}>
-                                <Image
-                                    src={formatImageUrl(collection.image)}
-                                    alt={collection.name}
-                                    width={600} height={300} unoptimized
-                                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease", display: "block" }}
-                                />
+                                <Link href={`/collections/${collection.id}`}>
+                                    <Image
+                                        src={formatImageUrl(collection.image)}
+                                        alt={collection.name}
+                                        width={600} height={300} unoptimized
+                                        style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease", display: "block" }}
+                                    />
+                                </Link>
+
                                 {/* Overlay */}
                                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(40,20,5,.72) 0%, rgba(40,20,5,.1) 55%, transparent 100%)" }} />
 
