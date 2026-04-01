@@ -1,8 +1,9 @@
 "use client"
-import React, { useEffect, useState } from 'react';
-import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight, Menu } from 'lucide-react';
 import { supabase } from '../libs/supabaseClient';
 import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI';
+
 export default function AccountProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -11,27 +12,19 @@ export default function AccountProfile() {
   const [loading, setLoading] = useState(true);
   const [addressData, setAddressData] = useState<Commune[]>([]);
   const [wards, setWards] = useState<Commune[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // mobile drawer
+  const isInitialLoad = useRef(true);
 
   const [customerInfo, setCustomerInfo] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    address: '',
-    totalAmount: 0,
-    city: '',
-    ward: '',
-    note: ''
+    fullName: '', email: '', phone: '', address: '',
+    totalAmount: 0, city: '', ward: '', note: ''
   });
+
   const [profileData, setProfileData] = useState({
-    last_name: '',
-    fullName: '',
-    email: '',
-    phone: '',
-    address: '',
-    bio: '',
-    dateOfBirth: '',
-    gender: 'Nam'
+    last_name: '', fullName: '', email: '', phone: '',
+    address: '', bio: '', dateOfBirth: '', gender: 'Nam'
   });
+
   useEffect(() => {
     const fetchAddressData = async () => {
       try {
@@ -47,11 +40,15 @@ export default function AccountProfile() {
     };
     fetchAddressData();
   }, []);
+
   useEffect(() => {
     if (customerInfo.city && addressData.length > 0) {
       const filtered = addressData.filter((item) => item.provinceCode === customerInfo.city);
       setWards(filtered.map(item => ({ code: item.code, name: item.name })));
-      setCustomerInfo(prev => ({ ...prev, ward: '' }));
+      if (!isInitialLoad.current) {
+        setCustomerInfo(prev => ({ ...prev, ward: '' }));
+      }
+      isInitialLoad.current = false;
     }
   }, [customerInfo.city, addressData]);
 
@@ -63,17 +60,33 @@ export default function AccountProfile() {
         .from("profiles").select("*")
         .eq("id", profile.data.user.id).single();
       if (error) { console.error("Error fetching profile:", error); return; }
+
       setProfileData(prev => ({
         ...prev,
-        fullName: data?.last_name || prev.last_name,
-        email: data.email || prev.email,
-        phone: data.phone || prev.phone,
-        address: data.address || prev.address,
-        dateOfBirth: data.date_of_birth || prev.dateOfBirth,
+        fullName: data?.last_name || "",
+        email: data?.email || "",
+        phone: data?.phone || "",
+        address: data?.address || "",
+        dateOfBirth: data?.date_of_birth || "",
+      }));
+
+      setCustomerInfo(prev => ({
+        ...prev,
+        city: data?.city || "",
+        ward: data?.ward || "",
       }));
     };
     fetchProfileData();
   }, []);
+
+  // Close sidebar when tab changes on mobile
+  useEffect(() => { setSidebarOpen(false); }, [activeTab]);
+
+  // Lock body scroll when sidebar open on mobile
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [sidebarOpen]);
 
   const [notifications, setNotifications] = useState({
     email: true, sms: false, push: true, marketing: false
@@ -82,29 +95,23 @@ export default function AccountProfile() {
   const handleProfileChange = (field: string, value: string) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
+
   const handleSaveProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        id: user.id,
-        last_name: profileData.fullName,
-        email: profileData.email,
-        phone: profileData.phone,
-        address: profileData.address,
-        city: customerInfo.city,
-        ward: customerInfo.ward,
-        date_of_birth: profileData.dateOfBirth,
-      }, { onConflict: "id" });
-
-    if (error) {
-      console.error("Error saving profile:", error);
-      alert("Lưu thất bại: " + error.message);
-      return;
-    }
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      last_name: profileData.fullName,
+      email: profileData.email,
+      phone: profileData.phone,
+      address: profileData.address,
+      city: customerInfo.city,
+      ward: customerInfo.ward,
+      date_of_birth: profileData.dateOfBirth,
+    }, { onConflict: "id" });
+    if (error) { console.error("Error saving profile:", error); alert("Lưu thất bại: " + error.message); return; }
   };
+
   const handleSave = () => {
     setIsEditing(false);
     setShowSuccess(true);
@@ -119,37 +126,64 @@ export default function AccountProfile() {
   ];
 
   const initials = (profileData.fullName || profileData.last_name || 'U').charAt(0).toUpperCase();
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setCustomerInfo(prev => ({ ...prev, [name]: value }));
   };
+
+  const SidebarContent = () => (
+    <>
+      <div className="sidebar-hero">
+        <div className="avatar-ring">
+          {initials}
+          <button className="avatar-cam">
+            <Camera size={12} color="#8b5e3c" strokeWidth={1.8} />
+          </button>
+        </div>
+      </div>
+      <div style={{ textAlign: "center", padding: "0 1.5rem 1rem" }}>
+        <div className="sidebar-name">{profileData.fullName || profileData.last_name || "Người dùng"}</div>
+        <div className="sidebar-email">{profileData.email}</div>
+      </div>
+      <nav className="sidebar-nav">
+        {tabs.map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button key={tab.id} className={`tab-btn${activeTab === tab.id ? " active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}>
+              <Icon size={15} strokeWidth={1.6} className="tab-icon" />
+              {tab.label}
+              <ChevronRight size={13} strokeWidth={1.8} className="tab-chevron" />
+            </button>
+          );
+        })}
+      </nav>
+    </>
+  );
+
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
         :root {
-          --bd:     #3d2b1a;
-          --bm:     #7a5135;
-          --bl:     #b08060;
-          --bxl:    #d4b090;
-          --bg0:    #faf7f4;
-          --bg1:    #f5ede3;
-          --bg2:    #ede6dc;
-          --white:  #ffffff;
-          --soft:   #9a8070;
+          --bd:   #3d2b1a; --bm: #7a5135; --bl: #b08060;
+          --bxl:  #d4b090; --bg0: #faf7f4; --bg1: #f5ede3;
+          --bg2:  #ede6dc; --white: #ffffff; --soft: #9a8070;
         }
+
+        * { box-sizing: border-box; }
 
         .ap-root {
           font-family: 'DM Sans', sans-serif;
-          background: var(--bg0);
-          min-height: 100vh;
+          background: var(--bg0); min-height: 100vh;
           padding: 2.5rem 1.25rem;
         }
 
         /* ── Toast ── */
         .toast {
-          position: fixed; top: 20px; right: 20px; z-index: 200;
+          position: fixed; top: 20px; right: 20px; z-index: 300;
           background: #4a7a50; color: #fff;
           padding: 12px 22px; border-radius: 50px;
           display: flex; align-items: center; gap: 9px;
@@ -163,27 +197,80 @@ export default function AccountProfile() {
         }
 
         /* ── Layout ── */
-        .ap-grid { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 260px 1fr; gap: 1.5rem; align-items: start; }
+        .ap-grid {
+          max-width: 1080px; margin: 0 auto;
+          display: grid; grid-template-columns: 260px 1fr;
+          gap: 1.5rem; align-items: start;
+        }
 
-        /* ── Sidebar ── */
+        /* ── Mobile top bar ── */
+        .mobile-topbar {
+          display: none;
+          align-items: center; gap: 12px;
+          margin-bottom: 1rem;
+          max-width: 1080px; margin-left: auto; margin-right: auto;
+        }
+        .mobile-menu-btn {
+          width: 40px; height: 40px; border-radius: 12px;
+          border: 1px solid var(--bg2); background: var(--white);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; color: var(--bm); flex-shrink: 0;
+          box-shadow: 0 2px 8px rgba(120,80,50,0.06);
+        }
+        .mobile-tab-label {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.2rem; font-weight: 600; color: var(--bd);
+        }
+
+        /* ── Mobile drawer overlay ── */
+        .drawer-overlay {
+          display: none;
+          position: fixed; inset: 0; z-index: 200;
+          background: rgba(40,22,10,0.45);
+          backdrop-filter: blur(3px);
+          animation: fadeIn 0.22s ease;
+        }
+        .drawer-overlay.open { display: block; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+        /* ── Mobile drawer ── */
+        .mobile-drawer {
+          position: fixed; top: 0; left: -100%; width: min(280px, 82vw);
+          height: 100dvh; z-index: 210;
+          background: var(--white);
+          border-right: 1px solid var(--bg2);
+          box-shadow: 8px 0 32px rgba(80,45,20,0.18);
+          overflow-y: auto;
+          transition: left 0.3s cubic-bezier(0.32,0.72,0,1);
+        }
+        .mobile-drawer.open { left: 0; }
+        .drawer-close-row {
+          display: flex; justify-content: flex-end;
+          padding: 12px 14px 0;
+        }
+        .drawer-close {
+          width: 32px; height: 32px; border-radius: 50%;
+          border: 1px solid var(--bg2); background: var(--white);
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; color: var(--soft);
+        }
+
+        /* ── Desktop sidebar ── */
         .sidebar {
           background: var(--white); border-radius: 20px;
           border: 1px solid var(--bg2);
           box-shadow: 0 2px 16px rgba(120,80,50,0.06);
-          overflow: hidden;
-          position: sticky; top: 24px;
+          overflow: hidden; position: sticky; top: 24px;
         }
 
         .sidebar-hero {
           background: linear-gradient(160deg, #5c3520 0%, #9a6040 55%, #c49070 100%);
           padding: 2rem 1.5rem 1.5rem;
-          text-align: center;
-          position: relative;
+          text-align: center; position: relative;
         }
         .sidebar-hero::after {
           content:''; position:absolute; bottom:-1px; left:0; right:0; height:24px;
-          background: var(--white);
-          border-radius: 24px 24px 0 0;
+          background: var(--white); border-radius: 24px 24px 0 0;
         }
 
         .avatar-ring {
@@ -191,8 +278,7 @@ export default function AccountProfile() {
           background: rgba(255,255,255,0.18);
           border: 2.5px solid rgba(255,255,255,0.5);
           display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 0;
-          position: relative;
+          margin: 0 auto; position: relative;
           font-family: 'Cormorant Garamond', serif;
           font-size: 2.2rem; font-weight: 600; color: #fff;
         }
@@ -266,7 +352,7 @@ export default function AccountProfile() {
           border: 1.5px solid var(--bg2); background: var(--white);
           color: var(--bm); font-size: 13px; font-weight: 500;
           cursor: pointer; font-family: 'DM Sans', sans-serif;
-          transition: background 0.18s, border-color 0.18s;
+          transition: background 0.18s, border-color 0.18s; white-space: nowrap;
         }
         .btn-edit:hover { background: var(--bg1); border-color: var(--bxl); }
 
@@ -277,7 +363,7 @@ export default function AccountProfile() {
           color: #fff; font-size: 13px; font-weight: 500;
           cursor: pointer; font-family: 'DM Sans', sans-serif;
           box-shadow: 0 3px 12px rgba(120,75,45,0.25);
-          transition: opacity 0.18s, transform 0.18s;
+          transition: opacity 0.18s, transform 0.18s; white-space: nowrap;
         }
         .btn-save:hover { opacity: 0.88; transform: translateY(-1px); }
 
@@ -287,7 +373,7 @@ export default function AccountProfile() {
           border: 1.5px solid var(--bg2); background: var(--white);
           color: var(--soft); font-size: 13px; font-weight: 500;
           cursor: pointer; font-family: 'DM Sans', sans-serif;
-          transition: background 0.18s;
+          transition: background 0.18s; white-space: nowrap;
         }
         .btn-cancel:hover { background: var(--bg1); }
 
@@ -306,7 +392,7 @@ export default function AccountProfile() {
           display: flex; align-items: center; justify-content: space-between;
           padding: 14px 18px; border-radius: 14px;
           background: var(--bg0); border: 1px solid var(--bg2);
-          transition: background 0.15s;
+          transition: background 0.15s; gap: 12px;
         }
         .notif-row:hover { background: var(--bg1); }
         .toggle-track {
@@ -334,7 +420,7 @@ export default function AccountProfile() {
         .card-item {
           border: 1.5px solid var(--bg2); border-radius: 14px; padding: 1.25rem 1.5rem;
           display: flex; align-items: center; gap: 1rem;
-          background: var(--bg0);
+          background: var(--bg0); flex-wrap: wrap;
         }
         .card-icon-wrap {
           width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
@@ -344,13 +430,68 @@ export default function AccountProfile() {
         .tx-row {
           display: flex; align-items: center; justify-content: space-between;
           padding: 12px 16px; border-radius: 12px; background: var(--bg0);
-          border: 1px solid var(--bg2);
+          border: 1px solid var(--bg2); gap: 8px;
         }
 
         .divider { height: 1px; background: var(--bg2); margin: 1.5rem 0; }
 
         .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
         .field-full { grid-column: 1 / -1; }
+
+        /* ── Section header ── */
+        .section-header {
+          display: flex; align-items: center;
+          justify-content: space-between;
+          margin-bottom: 1.75rem; gap: 12px; flex-wrap: wrap;
+        }
+        .section-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ══════════════════════════════
+           RESPONSIVE — Tablet (≤ 860px)
+        ══════════════════════════════ */
+        @media (max-width: 860px) {
+          .ap-grid { grid-template-columns: 1fr; }
+          .sidebar { display: none; } /* replaced by mobile drawer */
+          .mobile-topbar { display: flex; }
+          .ap-root { padding: 1.25rem 1rem; }
+        }
+
+        /* ══════════════════════════════
+           RESPONSIVE — Mobile (≤ 600px)
+        ══════════════════════════════ */
+        @media (max-width: 600px) {
+          .field-grid { grid-template-columns: 1fr; }
+          .field-full { grid-column: 1; }
+          .main-card { padding: 1.25rem 1rem; border-radius: 16px; }
+          .section-title { font-size: 1.35rem; }
+
+          /* Stack action buttons */
+          .section-header { flex-direction: column; align-items: flex-start; }
+          .section-header-actions { width: 100%; }
+          .section-header-actions .btn-cancel,
+          .section-header-actions .btn-save { flex: 1; justify-content: center; }
+          .btn-edit { width: 100%; justify-content: center; }
+
+          /* Security */
+          .security-block { padding: 1rem; }
+          .security-flex { flex-direction: column !important; gap: 12px !important; }
+          .btn-primary-full { width: 100% !important; }
+
+          /* Billing */
+          .card-item { padding: 1rem; }
+          .tx-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+          /* Notifications */
+          .notif-row { padding: 12px 14px; }
+        }
+
+        /* ══════════════════════════════
+           RESPONSIVE — Very small (≤ 380px)
+        ══════════════════════════════ */
+        @media (max-width: 380px) {
+          .ap-root { padding: 1rem 0.75rem; }
+          .avatar-ring { width: 68px; height: 68px; font-size: 1.8rem; }
+        }
       `}</style>
 
       <div className="ap-root">
@@ -358,42 +499,38 @@ export default function AccountProfile() {
         {/* Toast */}
         {showSuccess && (
           <div className="toast">
-            <Check size={15} strokeWidth={2} />
-            Cập nhật thành công!
+            <Check size={15} strokeWidth={2} /> Cập nhật thành công!
           </div>
         )}
 
+        {/* ── Mobile top bar ── */}
+        <div className="mobile-topbar">
+          <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} aria-label="Mở menu">
+            <Menu size={18} strokeWidth={1.8} />
+          </button>
+          <span className="mobile-tab-label">
+            {tabs.find(t => t.id === activeTab)?.label || 'Tài khoản'}
+          </span>
+        </div>
+
+        {/* ── Mobile drawer overlay ── */}
+        <div className={`drawer-overlay${sidebarOpen ? ' open' : ''}`} onClick={() => setSidebarOpen(false)} />
+
+        {/* ── Mobile drawer ── */}
+        <div className={`mobile-drawer${sidebarOpen ? ' open' : ''}`}>
+          <div className="drawer-close-row">
+            <button className="drawer-close" onClick={() => setSidebarOpen(false)} aria-label="Đóng">
+              <X size={15} strokeWidth={2} />
+            </button>
+          </div>
+          <SidebarContent />
+        </div>
+
         <div className="ap-grid">
 
-          {/* ── Sidebar ── */}
+          {/* ── Desktop Sidebar ── */}
           <aside className="sidebar">
-            <div className="sidebar-hero">
-              <div className="avatar-ring">
-                {initials}
-                <button className="avatar-cam">
-                  <Camera size={12} color="#8b5e3c" strokeWidth={1.8} />
-                </button>
-              </div>
-            </div>
-
-            <div style={{ textAlign: "center", padding: "0 1.5rem 1rem" }}>
-              <div className="sidebar-name">{profileData.fullName || profileData.last_name || "Người dùng"}</div>
-              <div className="sidebar-email">{profileData.email}</div>
-            </div>
-
-            <nav className="sidebar-nav">
-              {tabs.map(tab => {
-                const Icon = tab.icon;
-                return (
-                  <button key={tab.id} className={`tab-btn${activeTab === tab.id ? " active" : ""}`}
-                    onClick={() => setActiveTab(tab.id)}>
-                    <Icon size={15} strokeWidth={1.6} className="tab-icon" />
-                    {tab.label}
-                    <ChevronRight size={13} strokeWidth={1.8} className="tab-chevron" />
-                  </button>
-                );
-              })}
-            </nav>
+            <SidebarContent />
           </aside>
 
           {/* ── Main ── */}
@@ -402,14 +539,14 @@ export default function AccountProfile() {
             {/* ───── PROFILE ───── */}
             {activeTab === 'profile' && (
               <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.75rem" }}>
+                <div className="section-header">
                   <h2 className="section-title">Thông tin cá nhân</h2>
                   {!isEditing ? (
                     <button className="btn-edit" onClick={() => setIsEditing(true)}>
                       <Edit2 size={13} strokeWidth={1.8} /> Chỉnh sửa
                     </button>
                   ) : (
-                    <div style={{ display: "flex", gap: 8 }}>
+                    <div className="section-header-actions">
                       <button className="btn-cancel" onClick={() => setIsEditing(false)}>
                         <X size={13} /> Hủy
                       </button>
@@ -451,17 +588,21 @@ export default function AccountProfile() {
                       onChange={e => handleProfileChange('address', e.target.value)}
                       disabled={!isEditing} className="field-input" />
                   </div>
+
                   <div>
                     <label className="field-label">Tỉnh / Thành phố <span style={{ color: '#c07050' }}>*</span></label>
                     <select name="city" value={customerInfo.city} onChange={handleInputChange} className="field-input">
-                      <option className="field-input" value="">Chọn tỉnh / thành</option>
+                      <option value="">Chọn tỉnh / thành</option>
                       {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
                     </select>
                   </div>
+
                   <div>
                     <label className="field-label">Phường / Xã</label>
-                    <select name="ward" value={customerInfo.ward} onChange={handleInputChange} disabled={!customerInfo.city} className="field-input" style={{ opacity: !customerInfo.city ? 0.5 : 1 }}>
-                      <option className="field-input" value="">Chọn phường / xã</option>
+                    <select name="ward" value={customerInfo.ward} onChange={handleInputChange}
+                      disabled={!customerInfo.city} className="field-input"
+                      style={{ opacity: !customerInfo.city ? 0.5 : 1 }}>
+                      <option value="">Chọn phường / xã</option>
                       {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
                     </select>
                   </div>
@@ -491,7 +632,7 @@ export default function AccountProfile() {
                         <input type="password" placeholder="••••••••" className="field-input" />
                       </div>
                     ))}
-                    <button className="btn-primary" style={{ marginTop: 4, alignSelf: "flex-start" }}>
+                    <button className="btn-primary btn-primary-full" style={{ marginTop: 4, alignSelf: "flex-start" }}>
                       Cập nhật mật khẩu
                     </button>
                   </div>
@@ -500,7 +641,7 @@ export default function AccountProfile() {
                 <div className="divider" />
 
                 <div className="security-block">
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div className="security-flex" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
                     <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                       <ShieldCheck size={22} color="var(--bl)" strokeWidth={1.6} style={{ flexShrink: 0, marginTop: 2 }} />
                       <div>
@@ -508,7 +649,7 @@ export default function AccountProfile() {
                         <p style={{ fontSize: "13px", color: "var(--soft)" }}>Tăng cường bảo mật cho tài khoản qua SMS</p>
                       </div>
                     </div>
-                    <button className="btn-primary">Kích hoạt</button>
+                    <button className="btn-primary btn-primary-full" style={{ flexShrink: 0 }}>Kích hoạt</button>
                   </div>
                 </div>
               </div>
@@ -526,14 +667,12 @@ export default function AccountProfile() {
                     ["marketing", "Tin khuyến mãi", "Nhận ưu đãi và chương trình đặc biệt"],
                   ] as [keyof typeof notifications, string, string][]).map(([key, label, desc]) => (
                     <div key={key} className="notif-row">
-                      <div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontWeight: 500, color: "var(--bd)", fontSize: "14px", marginBottom: 2 }}>{label}</p>
                         <p style={{ fontSize: "12.5px", color: "var(--soft)" }}>{desc}</p>
                       </div>
-                      <button
-                        className={`toggle-track${notifications[key] ? " on" : ""}`}
-                        onClick={() => setNotifications(prev => ({ ...prev, [key]: !prev[key] }))}
-                      >
+                      <button className={`toggle-track${notifications[key] ? " on" : ""}`}
+                        onClick={() => setNotifications(prev => ({ ...prev, [key]: !prev[key] }))}>
                         <div className="toggle-thumb" />
                       </button>
                     </div>
@@ -551,14 +690,14 @@ export default function AccountProfile() {
                   <div className="card-icon-wrap">
                     <CreditCard size={20} color="#fff" strokeWidth={1.6} />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 600, color: "var(--bd)", fontSize: "14px" }}>•••• •••• •••• 4242</p>
                     <p style={{ fontSize: "12px", color: "var(--soft)", marginTop: 2 }}>Hết hạn 12/25</p>
                   </div>
-                  <span style={{ fontSize: "11px", padding: "3px 12px", borderRadius: 50, background: "#eef5e8", color: "#5a8050", fontWeight: 500 }}>
+                  <span style={{ fontSize: "11px", padding: "3px 12px", borderRadius: 50, background: "#eef5e8", color: "#5a8050", fontWeight: 500, whiteSpace: 'nowrap' }}>
                     Mặc định
                   </span>
-                  <button style={{ fontSize: "13px", color: "var(--bm)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>
+                  <button style={{ fontSize: "13px", color: "var(--bm)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 500, whiteSpace: 'nowrap' }}>
                     Sửa
                   </button>
                 </div>
@@ -586,11 +725,11 @@ export default function AccountProfile() {
                     { date: "15/10/2024", desc: "Thanh toán tháng 10", amount: "99.000đ" },
                   ].map((tx, i) => (
                     <div key={i} className="tx-row">
-                      <div>
-                        <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--bd)" }}>{tx.desc}</p>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: "14px", fontWeight: 500, color: "var(--bd)", wordBreak: 'break-word' }}>{tx.desc}</p>
                         <p style={{ fontSize: "12px", color: "var(--soft)", marginTop: 2 }}>{tx.date}</p>
                       </div>
-                      <p style={{ fontWeight: 600, color: "var(--bm)", fontSize: "14px" }}>{tx.amount}</p>
+                      <p style={{ fontWeight: 600, color: "var(--bm)", fontSize: "14px", flexShrink: 0 }}>{tx.amount}</p>
                     </div>
                   ))}
                 </div>
