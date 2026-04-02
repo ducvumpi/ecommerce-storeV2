@@ -93,16 +93,236 @@ type Coupon = {
   discountAmount: number;
 };
 
+// ─────────────────────────────────────────────────────────
+// SearchableSelect — đặt NGOÀI component cha để tránh remount
+// ─────────────────────────────────────────────────────────
+const SearchableSelect = ({
+  options, value, onChange, placeholder, disabled = false, type = 'province'
+}: {
+  options: { code: string; name: string }[];
+  value: string;
+  onChange: (code: string) => void;
+  placeholder: string;
+  disabled?: boolean;
+  type?: 'province' | 'ward';
+}) => {
+  const sorted = [...options].sort((a, b) => {
+    if (type === 'province') {
+      const isCity = (name: string) =>
+        name.startsWith('Thành phố') || name.startsWith('Thị xã');
+      const aCity = isCity(a.name);
+      const bCity = isCity(b.name);
+      if (aCity && !bCity) return -1;
+      if (!aCity && bCity) return 1;
+      return a.name.localeCompare(b.name, 'vi');
+    } else {
+      const rank = (name: string) => {
+        if (name.startsWith('Phường')) return 0;
+        if (name.startsWith('Thị trấn')) return 1;
+        return 2;
+      };
+      const diff = rank(a.name) - rank(b.name);
+      return diff !== 0 ? diff : a.name.localeCompare(b.name, 'vi');
+    }
+  });
+
+  const getBadge = (name: string) => {
+    if (type === 'province') {
+      const isCity = name.startsWith('Thành phố') || name.startsWith('Thị xã');
+      return {
+        label: isCity ? 'TP/TX' : 'Tỉnh',
+        bg: isCity ? '#eef5e8' : '#f5ede3',
+        color: isCity ? '#5a8050' : '#a07050'
+      };
+    } else {
+      if (name.startsWith('Phường')) return { label: 'Phường', bg: '#eef5e8', color: '#5a8050' };
+      if (name.startsWith('Thị trấn')) return { label: 'TT', bg: '#eef0f8', color: '#5060a0' };
+      return { label: 'Xã', bg: '#f5ede3', color: '#a07050' };
+    }
+  };
+
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = sorted.filter(o =>
+    o.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const selected = options.find(o => o.code === value);
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <div
+        onClick={() => { if (!disabled) setOpen(p => !p); }}
+        className="input-warm"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          cursor: disabled ? 'default' : 'pointer',
+          opacity: disabled ? 0.5 : 1,
+          userSelect: 'none', gap: 8
+        }}
+      >
+        <span style={{ color: selected ? '#1a1a1a' : '#c4b09a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selected ? selected.name : placeholder}
+        </span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+          style={{ flexShrink: 0, transition: 'transform .2s', transform: open ? 'rotate(180deg)' : 'none' }}>
+          <path d="M2 4l4 4 4-4" stroke="#c0a080" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 999,
+          background: '#fff', border: '1.5px solid #e2d9ce', borderRadius: 12,
+          boxShadow: '0 8px 24px rgba(120,80,40,.12)', overflow: 'hidden'
+        }}>
+          <div style={{ padding: '8px 10px', borderBottom: '1px solid #f0e8e0' }}>
+            <input
+              autoFocus
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Tìm kiếm..."
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%', padding: '6px 10px',
+                border: '1.5px solid #e2d9ce', borderRadius: 8,
+                fontSize: '.85rem', outline: 'none', fontFamily: 'inherit',
+                color: '#1a1a1a', background: '#faf8f5', boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding: '12px 14px', fontSize: '.85rem', color: '#c0a080' }}>Không tìm thấy</div>
+            ) : filtered.map(o => {
+              const badge = getBadge(o.name);
+              return (
+                <div key={o.code}
+                  onClick={() => { onChange(o.code); setSearch(''); setOpen(false); }}
+                  style={{
+                    padding: '9px 14px', fontSize: '.88rem', cursor: 'pointer',
+                    background: o.code === value ? '#fdf6ef' : 'transparent',
+                    color: o.code === value ? '#8b5e3c' : '#3d2b1a',
+                    fontWeight: o.code === value ? 600 : 400,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    transition: 'background .15s'
+                  }}
+                  onMouseEnter={e => { if (o.code !== value) (e.currentTarget as HTMLDivElement).style.background = '#faf3ea'; }}
+                  onMouseLeave={e => { if (o.code !== value) (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                >
+                  <span style={{
+                    fontSize: '.68rem', padding: '1px 7px', borderRadius: 50, flexShrink: 0,
+                    background: badge.bg, color: badge.color, fontWeight: 500
+                  }}>
+                    {badge.label}
+                  </span>
+                  {o.name}
+                  {o.code === value && (
+                    <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="13" height="13" viewBox="0 0 12 12" fill="none">
+                      <path d="M10 3L4.5 8.5L2 6" stroke="#8b5e3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────
+// CustomerForm — đặt NGOÀI component cha để tránh remount
+// ─────────────────────────────────────────────────────────
+type CustomerInfoType = {
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  totalAmount: number;
+  city: string;
+  ward: string;
+  note: string;
+};
+
+const CustomerForm = ({
+  customerInfo, handleInputChange, provinces, wards, setCustomerInfo
+}: {
+  customerInfo: CustomerInfoType;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  provinces: Commune[];
+  wards: Commune[];
+  setCustomerInfo: React.Dispatch<React.SetStateAction<CustomerInfoType>>;
+}) => (
+  <>
+    <div className="form-grid-2" style={{ marginBottom: '1.5rem' }}>
+      <div>
+        <label className="label-warm">Họ và tên <span style={{ color: '#c07050' }}>*</span></label>
+        <input name="fullName" value={customerInfo.fullName} onChange={handleInputChange} className="input-warm" placeholder="Nguyễn Văn A" />
+      </div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <label className="label-warm">Email <span style={{ color: '#c07050' }}>*</span></label>
+        <input name="email" type="email" value={customerInfo.email} onChange={handleInputChange} className="input-warm" placeholder="example@email.com" />
+      </div>
+
+      <div>
+        <label className="label-warm">Số điện thoại <span style={{ color: '#c07050' }}>*</span></label>
+        <input name="phone" value={customerInfo.phone} onChange={handleInputChange} className="input-warm" placeholder="0912 345 678" />
+      </div>
+    </div>
+
+    <div style={{ marginBottom: '1.5rem' }}>
+      <label className="label-warm">Địa chỉ <span style={{ color: '#c07050' }}>*</span></label>
+      <input name="address" value={customerInfo.address} onChange={handleInputChange} className="input-warm" placeholder="Số nhà, tên đường..." />
+    </div>
+
+    <div className="form-grid-2" style={{ marginBottom: '1.5rem' }}>
+      <div>
+        <label className="label-warm">Tỉnh / Thành phố <span style={{ color: '#c07050' }}>*</span></label>
+        <SearchableSelect
+          type="province" options={provinces} value={customerInfo.city}
+          onChange={code => setCustomerInfo(prev => ({ ...prev, city: code, ward: '' }))}
+          placeholder="Chọn tỉnh / thành"
+        />
+      </div>
+      <div>
+        <label className="label-warm">Phường / Xã</label>
+        <SearchableSelect
+          type="ward" options={wards} value={customerInfo.ward}
+          onChange={code => setCustomerInfo(prev => ({ ...prev, ward: code }))}
+          placeholder="Chọn phường / xã"
+          disabled={!customerInfo.city}
+        />
+      </div>
+    </div>
+  </>
+);
+
+// ─────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────
 export default function ShoppingCartUI() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const router = useRouter(); // thêm dòng này
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
-  const [customerInfo, setCustomerInfo] = useState({
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfoType>({
     fullName: '',
     email: '',
     phone: '',
@@ -114,7 +334,8 @@ export default function ShoppingCartUI() {
   });
 
   const [openDeleteAll, setOpenDeleteAll] = useState(false);
-
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -125,14 +346,65 @@ export default function ShoppingCartUI() {
   const [provinces, setProvinces] = useState<Commune[]>([]);
   const [wards, setWards] = useState<Commune[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showSummary, setShowSummary] = useState(false); // mobile: toggle order summary
-  // MỚI
+  const [showSummary, setShowSummary] = useState(false);
+  const [addressTab, setAddressTab] = useState<'saved' | 'new'>('saved');
+
+  // FIX 2: ref để bỏ qua reset ward khi auto-fill địa chỉ đã lưu
+  const skipWardReset = useRef(false);
+
+  // Load địa chỉ đã lưu khi vào step 2
+  useEffect(() => {
+    if (currentStep !== 2) return;
+    const loadSavedAddresses = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('addresses')
+        .select(`
+    *,
+    commune:communes!fk_addresses_ward (
+      code,
+      name,
+      province:provinces!fk_communes_province (
+        code,
+        name
+      )
+    )
+  `)
+        .eq('user_id', user.id)
+      if (!data?.length) return;
+      setSavedAddresses(data);
+
+      const def = data.find((a: any) => a.is_default) || data[0];
+      if (def) {
+        setSelectedAddressId(def.id);
+        skipWardReset.current = true; // bỏ qua reset ward lần này
+        setCustomerInfo(prev => ({
+          ...prev,
+          fullName: def.full_name || prev.fullName,
+          email: def.mail || prev.email,
+          phone: def.phone || prev.phone,
+          address: def.address_line || '',
+          city: def.city || '',
+          ward: def.ward || '',
+        }));
+      }
+    };
+    loadSavedAddresses();
+  }, [currentStep]);
+
+  // Reset tab khi vào step 2
+  useEffect(() => {
+    if (currentStep === 2) {
+      setAddressTab(savedAddresses.length > 0 ? 'saved' : 'new');
+    }
+  }, [currentStep, savedAddresses.length]);
+
   useEffect(() => {
     const step = searchParams.get('step');
     const variantId = searchParams.get('variantId');
     if (step === '2' && cartItems.length > 0 && !loading) {
       if (variantId) {
-        // Chỉ chọn item vừa "Mua ngay"
         const matched = cartItems.filter(
           item => String(item.product_variant?.id) === String(variantId)
         );
@@ -145,6 +417,7 @@ export default function ShoppingCartUI() {
       setCurrentStep(2);
     }
   }, [searchParams, cartItems, loading]);
+
   const handlePlaceOrder = async () => {
     if (!orderId) { alert("Không tìm thấy đơn hàng"); return; }
     const success = await handlePaymentSuccess(orderId, selectedCartItems);
@@ -161,168 +434,6 @@ export default function ShoppingCartUI() {
       localStorage.removeItem("order_id");
     }, 3000);
   };
-  const SearchableSelect = ({
-    options, value, onChange, placeholder, disabled = false, type = 'province'
-  }: {
-    options: { code: string; name: string }[];
-    value: string;
-    onChange: (code: string) => void;
-    placeholder: string;
-    disabled?: boolean;
-    type?: 'province' | 'ward';
-  }) => {
-    // ...state, ref, useEffect giữ nguyên...
-
-    const sorted = [...options].sort((a, b) => {
-      if (type === 'province') {
-        const isCity = (name: string) =>
-          name.startsWith('Thành phố') || name.startsWith('Thị xã');
-        const aCity = isCity(a.name);
-        const bCity = isCity(b.name);
-        if (aCity && !bCity) return -1;
-        if (!aCity && bCity) return 1;
-        return a.name.localeCompare(b.name, 'vi');
-      } else {
-        // Ward: Phường → Thị trấn → Xã
-        const rank = (name: string) => {
-          if (name.startsWith('Phường')) return 0;
-          if (name.startsWith('Thị trấn')) return 1;
-          return 2;
-        };
-        const diff = rank(a.name) - rank(b.name);
-        return diff !== 0 ? diff : a.name.localeCompare(b.name, 'vi');
-      }
-    });
-
-    // Badge
-    const getBadge = (name: string) => {
-      if (type === 'province') {
-        const isCity = name.startsWith('Thành phố') || name.startsWith('Thị xã');
-        return {
-          label: isCity ? 'TP/TX' : 'Tỉnh',
-          bg: isCity ? '#eef5e8' : '#f5ede3',
-          color: isCity ? '#5a8050' : '#a07050'
-        };
-      } else {
-        if (name.startsWith('Phường')) return { label: 'Phường', bg: '#eef5e8', color: '#5a8050' };
-        if (name.startsWith('Thị trấn')) return { label: 'TT', bg: '#eef0f8', color: '#5060a0' };
-        return { label: 'Xã', bg: '#f5ede3', color: '#a07050' };
-      }
-    };
-
-
-    const [search, setSearch] = useState('');
-    const [open, setOpen] = useState(false);
-    const ref = useRef<HTMLDivElement>(null);
-
-    // Đóng khi click ngoài
-    useEffect(() => {
-      const handler = (e: MouseEvent) => {
-        if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-      };
-      document.addEventListener('mousedown', handler);
-      return () => document.removeEventListener('mousedown', handler);
-    }, []);
-
-
-    const filtered = sorted.filter(o =>
-      o.name.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const selected = options.find(o => o.code === value);
-
-    return (
-      <div ref={ref} style={{ position: 'relative' }}>
-        <div
-          onClick={() => { if (!disabled) setOpen(p => !p); }}
-          className="input-warm"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            cursor: disabled ? 'default' : 'pointer',
-            opacity: disabled ? 0.5 : 1,
-            userSelect: 'none', gap: 8
-          }}
-        >
-          <span style={{ color: selected ? '#1a1a1a' : '#c4b09a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {selected ? selected.name : placeholder}
-          </span>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
-            style={{ flexShrink: 0, transition: 'transform .2s', transform: open ? 'rotate(180deg)' : 'none' }}>
-            <path d="M2 4l4 4 4-4" stroke="#c0a080" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-
-        {open && (
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 999,
-            background: '#fff', border: '1.5px solid #e2d9ce', borderRadius: 12,
-            boxShadow: '0 8px 24px rgba(120,80,40,.12)', overflow: 'hidden'
-          }}>
-            {/* Search input */}
-            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f0e8e0' }}>
-              <input
-                autoFocus
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Tìm kiếm..."
-                onClick={e => e.stopPropagation()}
-                style={{
-                  width: '100%', padding: '6px 10px',
-                  border: '1.5px solid #e2d9ce', borderRadius: 8,
-                  fontSize: '.85rem', outline: 'none', fontFamily: 'inherit',
-                  color: '#1a1a1a', background: '#faf8f5', boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            {/* Options list */}
-            <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-              {filtered.length === 0 ? (
-                <div style={{ padding: '12px 14px', fontSize: '.85rem', color: '#c0a080' }}>Không tìm thấy</div>
-              ) :
-                filtered.map(o => {
-                  const badge = getBadge(o.name);  // ✅ dùng getBadge đã có type
-                  return (
-                    <div key={o.code}
-                      onClick={() => { onChange(o.code); setSearch(''); setOpen(false); }}
-                      style={{
-                        padding: '9px 14px', fontSize: '.88rem', cursor: 'pointer',
-                        background: o.code === value ? '#fdf6ef' : 'transparent',
-                        color: o.code === value ? '#8b5e3c' : '#3d2b1a',
-                        fontWeight: o.code === value ? 600 : 400,
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        transition: 'background .15s'
-                      }}
-                      onMouseEnter={e => { if (o.code !== value) (e.currentTarget as HTMLDivElement).style.background = '#faf3ea'; }}
-                      onMouseLeave={e => { if (o.code !== value) (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
-                    >
-                      <span style={{                          // ✅ dùng badge từ getBadge
-                        fontSize: '.68rem', padding: '1px 7px', borderRadius: 50, flexShrink: 0,
-                        background: badge.bg,
-                        color: badge.color,
-                        fontWeight: 500
-                      }}>
-                        {badge.label}
-                      </span>
-                      {o.name}
-                      {o.code === value && (
-                        <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="13" height="13" viewBox="0 0 12 12" fill="none">
-                          <path d="M10 3L4.5 8.5L2 6" stroke="#8b5e3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </div>
-                  );
-                })
-              }
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Dùng chung SearchableSelect nhưng sort khác cho ward
 
   const removeSelectedItems = async () => {
     const idsToDelete = [...selectedItems];
@@ -334,14 +445,14 @@ export default function ShoppingCartUI() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { saveGuestCart(updated as any); setOpenDeleteAll(false); return; }
 
-    // Xóa tuần tự từng item
     const results = await Promise.all(idsToDelete.map(id => deleteCartItems(id)));
     if (results.some(r => !r)) {
-      setCartItems(oldItems); // rollback nếu có lỗi
+      setCartItems(oldItems);
       alert("Có lỗi khi xóa, vui lòng thử lại!");
     }
     setOpenDeleteAll(false);
   };
+
   useEffect(() => {
     const fetchAddressData = async () => {
       try {
@@ -357,17 +468,16 @@ export default function ShoppingCartUI() {
     };
     fetchAddressData();
   }, []);
+
   useEffect(() => {
     async function fetchUserProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       const { data } = await supabase
         .from("profiles")
         .select("full_name, email, phone, address, city, ward")
         .eq("id", user.id)
         .single();
-
       if (data) {
         setCustomerInfo(prev => ({
           ...prev,
@@ -382,6 +492,21 @@ export default function ShoppingCartUI() {
     }
     fetchUserProfile();
   }, []);
+
+  // FIX 2: useEffect ward — dùng skipWardReset để không xóa ward khi auto-fill
+  useEffect(() => {
+    if (customerInfo.city && addressData.length > 0) {
+      const filtered = addressData.filter((item) => item.provinceCode === customerInfo.city);
+      setWards(filtered.map(item => ({ code: item.code, name: item.name })));
+
+      if (skipWardReset.current) {
+        skipWardReset.current = false; // đã bỏ qua, reset flag
+      } else {
+        setCustomerInfo(prev => ({ ...prev, ward: '' }));
+      }
+    }
+  }, [customerInfo.city, addressData]);
+
   const toggleSelectItem = (id: number) => {
     setSelectedItems(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -425,23 +550,24 @@ export default function ShoppingCartUI() {
     fetchCart();
   }, []);
 
-  useEffect(() => {
-    if (customerInfo.city && addressData.length > 0) {
-      const filtered = addressData.filter((item) => item.provinceCode === customerInfo.city);
-      setWards(filtered.map(item => ({ code: item.code, name: item.name })));
-      setCustomerInfo(prev => ({ ...prev, ward: '' }));
-    }
-  }, [customerInfo.city, addressData]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setCustomerInfo(prev => ({ ...prev, [name]: value }));
   };
 
   const validateStep1 = () => selectedItems.length > 0;
-  const validateStep2 = () => customerInfo.fullName && customerInfo.email && customerInfo.phone && customerInfo.address && customerInfo.city;
-
+  const validateStep2 = () => {
+    const base = customerInfo.fullName && customerInfo.phone && customerInfo.address && customerInfo.city;
+    if (savedAddresses.length > 0 && addressTab === 'saved') {
+      // Tab địa chỉ đã lưu: không cần email, chỉ cần đã chọn 1 địa chỉ
+      return base && !!selectedAddressId;
+    }
+    // Form nhập tay hoặc địa chỉ mới: cần email
+    return base && !!customerInfo.email;
+  };
   const handleContinue = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       if (orderId) { setCurrentStep(3); return; }
       const { data: { user } } = await supabase.auth.getUser();
@@ -451,6 +577,10 @@ export default function ShoppingCartUI() {
         return;
       }
       if (!validateStep2()) { alert("Vui lòng điền đầy đủ thông tin giao hàng"); return; }
+
+      // Nếu đang dùng địa chỉ đã lưu → truyền address_id, backend skip insert mới
+      const isUsingSavedAddress = savedAddresses.length > 0 && addressTab === 'saved' && selectedAddressId;
+
       const { data, error } = await supabase.rpc("create_order_from_cart_full", {
         p_user_id: user.id,
         p_full_name: customerInfo.fullName,
@@ -459,13 +589,19 @@ export default function ShoppingCartUI() {
         p_city: customerInfo.city,
         p_ward: customerInfo.ward,
         p_mail: customerInfo.email,
-        p_selected_items: selectedItems
+        p_selected_items: selectedItems,
+        // Thêm 2 param này — backend dùng address_id có sẵn nếu được truyền
+        p_address_id: isUsingSavedAddress ? selectedAddressId : null,
+        p_save_address: !isUsingSavedAddress, // chỉ save khi nhập mới
       });
+
       if (error) throw error;
       setOrderId(data);
       setCurrentStep(3);
     } catch (err: any) {
       alert(err?.message || "Không thể tạo đơn hàng");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -501,13 +637,9 @@ export default function ShoppingCartUI() {
     if (!couponCode) return;
     const { data, error } = await supabase
       .from("coupons").select("*").eq("code", couponCode.trim().toUpperCase());
-    console.log("Query code:", couponCode.trim().toUpperCase());
-    console.log("Data:", data);
-    console.log("Error:", error);
     if (error || !data || data.length === 0) { alert("Mã không tồn tại"); setAppliedCoupon(null); return; }
     const coupon = data[0];
     const now = new Date();
-
     if (coupon.start_date && new Date(coupon.start_date) > now) { alert("Mã chưa bắt đầu"); return; }
     if (coupon.end_date && new Date(coupon.end_date) < now) { alert("Mã đã hết hạn"); return; }
     if (subtotal < coupon.min_order_value) { alert(`Đơn tối thiểu ${coupon.min_order_value}`); return; }
@@ -519,14 +651,12 @@ export default function ShoppingCartUI() {
       discountAmount = coupon.discount_value;
     }
     setAppliedCoupon({ code: coupon.code, discountAmount });
-    console.log("Áp dụng mã:", coupon.code, "Giảm:", discountAmount);
   };
 
   const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
   const subtotal = selectedCartItems.reduce((sum, item) => sum + (item.product_variant?.price ?? 0) * item.quantity, 0);
   const discount = appliedCoupon?.discountAmount || 0;
   const shipping = (appliedCoupon as any)?.freeShip ? 0 : 30000;
-  const total = subtotal - discount;
   const calculation = subtotal - discount + shipping;
 
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
@@ -571,7 +701,6 @@ export default function ShoppingCartUI() {
         .cart-root { font-family: 'DM Sans', Lora, serif; background: #faf8f5; min-height: 100vh; }
         .cart-heading { font-family: 'Playfair Display', serif; }
 
-        /* ── Layout grids ── */
         .cart-grid-main {
           display: grid;
           grid-template-columns: 1fr 360px;
@@ -591,7 +720,6 @@ export default function ShoppingCartUI() {
           align-items: start;
         }
 
-        /* ── Form grids ── */
         .form-grid-2 {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -599,7 +727,6 @@ export default function ShoppingCartUI() {
           margin-bottom: 1rem;
         }
 
-        /* ── Step header ── */
         .step-indicator {
           display: flex;
           align-items: center;
@@ -608,10 +735,8 @@ export default function ShoppingCartUI() {
           overflow-x: auto;
         }
 
-        /* ── Sticky sidebar ── */
         .sidebar-sticky { position: sticky; top: 24px; }
 
-        /* ── Mobile summary toggle ── */
         .mobile-summary-toggle {
           display: none;
           width: 100%;
@@ -629,7 +754,6 @@ export default function ShoppingCartUI() {
           margin-bottom: 1rem;
         }
 
-        /* ── Bottom sticky bar (mobile checkout) ── */
         .mobile-checkout-bar {
           display: none;
           position: fixed;
@@ -645,7 +769,6 @@ export default function ShoppingCartUI() {
           box-shadow: 0 -4px 20px rgba(80,40,0,.1);
         }
 
-        /* ── Inputs ── */
         .input-warm {
           width: 100%; padding: 0.75rem 1rem;
           border: 1.5px solid #e2d9ce; border-radius: 10px;
@@ -657,7 +780,6 @@ export default function ShoppingCartUI() {
         .input-warm:focus { border-color: #b8926a; box-shadow: 0 0 0 3px rgba(184,146,106,.15); }
         .input-warm::placeholder { color: #c4b09a; }
 
-        /* ── Buttons ── */
         .btn-primary {
           background: linear-gradient(135deg, #a07050 0%, #7a5135 100%);
           color: white; border-radius: 50px; font-weight: 500;
@@ -673,17 +795,14 @@ export default function ShoppingCartUI() {
         }
         .btn-ghost:hover { background: #f3ede6; }
 
-        /* ── Cards ── */
         .card-warm {
           background: #ffffff; border-radius: 18px;
           border: 1px solid #ede6dc; box-shadow: 0 2px 12px rgba(140,100,60,.06);
         }
 
-        /* ── Steps ── */
         .step-line { height: 2px; width: 56px; background: #e4d9ce; transition: background .4s; flex-shrink: 0; }
         .step-line.active { background: #a07050; }
 
-        /* ── Qty ── */
         .qty-btn {
           width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
           background: #f3ede6; color: #7a5135; font-size: 16px;
@@ -692,7 +811,6 @@ export default function ShoppingCartUI() {
         }
         .qty-btn:hover { background: #e4d4c0; }
 
-        /* ── Payment ── */
         .payment-card {
           border: 1.5px solid #e4d9ce; border-radius: 14px; cursor: pointer;
           transition: all .2s; background: #fffdfb;
@@ -700,7 +818,6 @@ export default function ShoppingCartUI() {
         .payment-card:hover { border-color: #c4956a; }
         .payment-card.selected { border-color: #a07050; background: #fdf6ef; }
 
-        /* ── Misc ── */
         .badge-tag {
           display: inline-flex; align-items: center; gap: 6px;
           background: #fdf0e4; color: #a07050; font-size: .78rem;
@@ -718,7 +835,6 @@ export default function ShoppingCartUI() {
         }
         .textarea-warm:focus { border-color: #b8926a; box-shadow: 0 0 0 3px rgba(184,146,106,.15); }
 
-        /* ── Success ── */
         .success-overlay {
           position: fixed; inset: 0; background: rgba(80,50,20,.45);
           backdrop-filter: blur(4px); display: flex; align-items: center;
@@ -733,131 +849,44 @@ export default function ShoppingCartUI() {
         @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
         @keyframes scaleUp { from { transform:scale(.85); opacity:0 } to { transform:scale(1); opacity:1 } }
 
-        /* ══════════════════════════════════════
-           RESPONSIVE — Tablet (≤ 900px)
-        ══════════════════════════════════════ */
         @media (max-width: 900px) {
           .cart-grid-main,
           .cart-grid-step2,
           .cart-grid-step3 {
             grid-template-columns: 1fr;
           }
-
-          .sidebar-sticky {
-            position: static;
-          }
-
-          /* On tablet/mobile, sidebar comes AFTER the main content naturally */
+          .sidebar-sticky { position: static; }
         }
 
-        /* ══════════════════════════════════════
-           RESPONSIVE — Mobile (≤ 640px)
-        ══════════════════════════════════════ */
         @media (max-width: 640px) {
-          /* Container padding */
-          .cart-container {
-            padding: 1rem 0.75rem !important;
-            padding-bottom: 100px !important; /* room for sticky bar */
-          }
-
-          /* Heading */
-          .cart-heading-main {
-            font-size: 1.35rem !important;
-          }
-
-          /* Step text — hide on very small screens */
-          .step-label {
-            display: none;
-          }
-          .step-line {
-            width: 32px;
-          }
-
-          /* Form 2-col → 1-col */
-          .form-grid-2 {
-            grid-template-columns: 1fr;
-          }
-
-          /* Card padding tighter */
-          .card-warm {
-            border-radius: 14px;
-          }
-
-          /* Cart item image smaller */
-          .cart-item-img {
-            width: 72px !important;
-            height: 72px !important;
-          }
-
-          /* Product name smaller */
-          .cart-item-name {
-            font-size: .9rem !important;
-          }
-
-          /* Sidebar: show as collapsible on step 1 */
-          .mobile-summary-toggle {
-            display: flex;
-          }
-
-          /* Hide sidebar by default on mobile; controlled by JS state */
-          .sidebar-mobile-hidden {
-            display: none;
-          }
-
-          /* Mobile checkout bar */
-          .mobile-checkout-bar {
-            display: flex;
-          }
-
-          /* Hide desktop checkout button on step 1 */
-          .desktop-checkout-btn {
-            display: none;
-          }
-
-          /* Payment step: action buttons stack */
-          .action-row {
-            flex-direction: column;
-          }
+          .cart-container { padding: 1rem 0.75rem !important; padding-bottom: 100px !important; }
+          .cart-heading-main { font-size: 1.35rem !important; }
+          .step-label { display: none; }
+          .step-line { width: 32px; }
+          .form-grid-2 { grid-template-columns: 1fr; }
+          .card-warm { border-radius: 14px; }
+          .cart-item-img { width: 72px !important; height: 72px !important; }
+          .cart-item-name { font-size: .9rem !important; }
+          .mobile-summary-toggle { display: flex; }
+          .sidebar-mobile-hidden { display: none; }
+          .mobile-checkout-bar { display: flex; }
+          .desktop-checkout-btn { display: none; }
+          .action-row { flex-direction: column; }
           .action-row .btn-ghost,
-          .action-row .btn-primary {
-            flex: unset !important;
-            width: 100%;
-          }
-
-          /* Info recap grid */
-          .info-recap-row {
-            flex-direction: column;
-            gap: 2px !important;
-          }
-          .info-recap-label {
-            min-width: unset !important;
-          }
-
-          /* Success modal */
-          .success-modal {
-            padding: 1.75rem 1.25rem;
-          }
+          .action-row .btn-primary { flex: unset !important; width: 100%; }
+          .info-recap-row { flex-direction: column; gap: 2px !important; }
+          .info-recap-label { min-width: unset !important; }
+          .success-modal { padding: 1.75rem 1.25rem; }
         }
-.back-btn {
-  display: none;
-}
-@media (max-width: 900px) {
-  .back-btn {
-    display: flex;
-  }
-}
-        /* ══════════════════════════════════════
-           RESPONSIVE — Very small (≤ 380px)
-        ══════════════════════════════════════ */
+
+        .back-btn { display: none; }
+        @media (max-width: 900px) {
+          .back-btn { display: flex; }
+        }
+
         @media (max-width: 380px) {
-          .cart-item-img {
-            width: 60px !important;
-            height: 60px !important;
-          }
-          .qty-btn {
-            width: 26px;
-            height: 26px;
-          }
+          .cart-item-img { width: 60px !important; height: 60px !important; }
+          .qty-btn { width: 26px; height: 26px; }
         }
       `}</style>
 
@@ -879,7 +908,6 @@ export default function ShoppingCartUI() {
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = '#f3ede6'; e.currentTarget.style.borderColor = '#c4956a'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#e2d9ce'; }}
-                title="Quay lại"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M10 13L5 8L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -893,7 +921,6 @@ export default function ShoppingCartUI() {
               </h1>
             </div>
 
-            {/* Step indicator */}
             <div className="step-indicator">
               {steps.map((s, i) => (
                 <React.Fragment key={s}>
@@ -920,9 +947,7 @@ export default function ShoppingCartUI() {
           {/* ═══════════════ STEP 1 ═══════════════ */}
           {currentStep === 1 && (
             <div className="cart-grid-main">
-              {/* Cart items */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {/* Select All Header */}
                 <div className="card-warm" style={{ padding: '1rem 1.5rem', background: '#fdf8f3' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -999,7 +1024,6 @@ export default function ShoppingCartUI() {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem', gap: 8, flexWrap: 'wrap' }}>
-                          {/* Qty control */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8f2ec', borderRadius: 50, padding: '4px 8px', border: '1px solid #ede6dc' }}>
                             <button className="qty-btn" onClick={() => updateQuantity(item.id, -1)}><Minus size={13} /></button>
                             <input
@@ -1019,7 +1043,6 @@ export default function ShoppingCartUI() {
                             />
                             <button className="qty-btn" onClick={() => updateQuantity(item.id, 1)}><Plus size={13} /></button>
                           </div>
-                          {/* Price */}
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: 700, color: '#8b5e3c', fontSize: '1.05rem', whiteSpace: 'nowrap' }}>
                               {formatPrice((item.product_variant?.price ?? 0) * item.quantity)}
@@ -1037,13 +1060,11 @@ export default function ShoppingCartUI() {
 
               {/* Summary sidebar */}
               <div>
-                {/* Mobile toggle button */}
                 <button className="mobile-summary-toggle" onClick={() => setShowSummary(p => !p)}>
                   <span>Tóm tắt đơn hàng — {formatPrice(calculation)}</span>
                   <span style={{ fontSize: '.75rem', color: '#a07050' }}>{showSummary ? '▲ Ẩn' : '▼ Xem'}</span>
                 </button>
 
-                {/* Sidebar content — hidden on mobile unless toggled */}
                 <div className={showSummary ? '' : 'sidebar-mobile-hidden'}>
                   <div className="card-warm sidebar-sticky" style={{ padding: '1.5rem' }}>
                     <h2 className="cart-heading" style={{ fontSize: '1.15rem', color: '#4a3728', marginBottom: '1.25rem' }}>Tóm tắt đơn hàng</h2>
@@ -1057,7 +1078,6 @@ export default function ShoppingCartUI() {
                       </div>
                     )}
 
-                    {/* Coupon */}
                     <div style={{ marginBottom: '1.25rem' }}>
                       <label className="label-warm"><Tag size={12} style={{ display: 'inline', marginRight: 4 }} />Mã giảm giá</label>
                       <div style={{ display: 'flex', gap: 8 }}>
@@ -1073,7 +1093,6 @@ export default function ShoppingCartUI() {
                       )}
                     </div>
 
-                    {/* Price breakdown */}
                     <div style={{ borderTop: '1px dashed #e8ddd0', paddingTop: '1rem', marginBottom: '1rem' }}>
                       {[
                         { label: 'Tạm tính', value: formatPrice(subtotal), color: '#5c4a38' },
@@ -1092,7 +1111,6 @@ export default function ShoppingCartUI() {
                       <span style={{ fontWeight: 700, fontSize: '1.2rem', color: '#8b5e3c' }}>{formatPrice(calculation)}</span>
                     </div>
 
-                    {/* Desktop checkout button */}
                     <button
                       className="desktop-checkout-btn btn-primary"
                       onClick={() => setCurrentStep(2)}
@@ -1121,83 +1139,145 @@ export default function ShoppingCartUI() {
                   <User size={20} color="#a07050" /> Thông tin khách hàng
                 </h2>
 
-                <div className="form-grid-2">
-                  <div>
-                    <label className="label-warm">Họ và tên <span style={{ color: '#c07050' }}>*</span></label>
-                    <input type="text" name="fullName" value={customerInfo.fullName} onChange={handleInputChange} placeholder="Nguyễn Văn A" className="input-warm" />
-                  </div>
-                  <div>
-                    <label className="label-warm">Email <span style={{ color: '#c07050' }}>*</span></label>
-                    <div style={{ position: 'relative' }}>
-                      <Mail size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#c0a080' }} />
-                      <input type="email" name="email" value={customerInfo.email} onChange={handleInputChange} placeholder="email@example.com" className="input-warm" style={{ paddingLeft: '2.2rem' }} />
+                {/* ── PHÂN NHÁNH: chưa có địa chỉ → form thẳng | có địa chỉ → 2 tab ── */}
+                {savedAddresses.length === 0 ? (
+                  <CustomerForm
+                    customerInfo={customerInfo}
+                    handleInputChange={handleInputChange}
+                    provinces={provinces}
+                    wards={wards}
+                    setCustomerInfo={setCustomerInfo}
+                  />
+                ) : (
+                  <>
+                    {/* Tab bar */}
+                    <div style={{ display: 'flex', marginBottom: '1.5rem', borderBottom: '1.5px solid #f0e8e0' }}>
+                      {(['saved', 'new'] as const).map(tab => (
+                        <button
+                          key={tab}
+                          onClick={() => {
+                            setAddressTab(tab);
+                            // FIX 3: reset form khi chuyển sang tab nhập mới
+                            if (tab === 'new') {
+                              setSelectedAddressId(null);
+                              setCustomerInfo(prev => ({
+                                ...prev,
+                                fullName: '', phone: '', address: '', city: '', ward: ''
+                              }));
+                            }
+                          }}
+                          style={{
+                            padding: '8px 20px', fontSize: 13, fontFamily: 'inherit',
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            borderBottom: addressTab === tab ? '2px solid #a07050' : '2px solid transparent',
+                            color: addressTab === tab ? '#a07050' : '#a09080',
+                            fontWeight: addressTab === tab ? 600 : 400,
+                            marginBottom: -1.5, transition: 'color 0.15s',
+                          }}
+                        >
+                          {tab === 'saved' ? `Địa chỉ đã lưu (${savedAddresses.length})` : '+ Địa chỉ mới'}
+                        </button>
+                      ))}
                     </div>
-                  </div>
-                </div>
 
-                <div style={{ marginBottom: '1rem' }}>
-                  <label className="label-warm">Số điện thoại <span style={{ color: '#c07050' }}>*</span></label>
-                  <div style={{ position: 'relative' }}>
-                    <Phone size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#c0a080' }} />
-                    <input type="tel" name="phone" value={customerInfo.phone} onChange={handleInputChange} placeholder="0912 345 678" className="input-warm" style={{ paddingLeft: '2.2rem' }} />
-                  </div>
-                </div>
+                    {/* Tab: Địa chỉ đã lưu */}
+                    {addressTab === 'saved' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1.5rem' }}>
+                        {savedAddresses.map(addr => {
+                          const isSelected = selectedAddressId === addr.id;
+                          return (
+                            <div
+                              key={addr.id}
+                              onClick={() => {
+                                setSelectedAddressId(addr.id);
+                                skipWardReset.current = true; // FIX 2: bỏ qua reset ward
+                                setCustomerInfo(prev => ({
+                                  ...prev,
+                                  fullName: addr.full_name || prev.fullName,
+                                  phone: addr.phone || prev.phone,
+                                  address: addr.address_line || '',
+                                  city: addr.city || '',
+                                  ward: addr.ward || '',
+                                }));
+                              }}
+                              style={{
+                                display: 'flex', alignItems: 'flex-start', gap: 10,
+                                padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
+                                border: `1.5px solid ${isSelected ? '#a07050' : '#e8ddd0'}`,
+                                background: isSelected ? '#fdf6ef' : '#fdfbf7',
+                                transition: 'border-color 0.15s, background 0.15s'
+                              }}
+                            >
+                              <div style={{
+                                width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 1,
+                                border: `2px solid ${isSelected ? '#a07050' : '#d4c4b0'}`,
+                                background: isSelected ? '#a07050' : 'transparent',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              }}>
+                                {isSelected && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                  <span style={{ fontWeight: 500, fontSize: 13, color: '#4a3728' }}>{addr.full_name}</span>
+                                  <span style={{ fontSize: 12, color: '#a09080' }}>{addr.phone}</span>
+                                  {addr.is_default && (
+                                    <span style={{ fontSize: 10, padding: '1px 8px', borderRadius: 50, background: '#eef5e8', color: '#5a8050', fontWeight: 500 }}>
+                                      Mặc định
+                                    </span>
+                                  )}
+                                </div>
+                                <p style={{ margin: '3px 0 0', fontSize: 12, color: '#a09080', lineHeight: 1.5 }}>
+                                  {addr.address_line},
+                                  {addr.commune?.name ? `, ${addr.commune.name}` : ''},
+                                  {addr.commune?.province?.name ? `, ${addr.commune.province.name}` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
-                <div style={{ marginBottom: '1rem' }}>
-                  <label className="label-warm">Địa chỉ <span style={{ color: '#c07050' }}>*</span></label>
-                  <div style={{ position: 'relative' }}>
-                    <MapPin size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#c0a080' }} />
-                    <input type="text" name="address" value={customerInfo.address} onChange={handleInputChange} placeholder="Số nhà, tên đường" className="input-warm" style={{ paddingLeft: '2.2rem' }} />
-                  </div>
-                </div>
+                    {/* Tab: Địa chỉ mới */}
+                    {addressTab === 'new' && (
+                      <CustomerForm
+                        customerInfo={customerInfo}
+                        handleInputChange={handleInputChange}
+                        provinces={provinces}
+                        wards={wards}
+                        setCustomerInfo={setCustomerInfo}
+                      />
+                    )}
+                  </>
+                )}
 
-                <div className="form-grid-2">
-                  <div>
-                    <label className="label-warm">Tỉnh / Thành phố <span style={{ color: '#c07050' }}>*</span></label>
-                    <SearchableSelect
-                      type="province"
-                      options={provinces}
-                      value={customerInfo.city}
-                      onChange={code => setCustomerInfo(prev => ({ ...prev, city: code }))}
-                      placeholder="Chọn tỉnh / thành"
-                    />
-                  </div>
-                  <div>
-                    <label className="label-warm">Phường / Xã</label>
-                    <SearchableSelect
-                      type="ward"
-                      options={wards}
-                      value={customerInfo.ward}
-                      onChange={code => setCustomerInfo(prev => ({ ...prev, ward: code }))}
-                      placeholder="Chọn phường / xã"
-                      disabled={!customerInfo.city}
-                    />
-                  </div>
-                </div>
-
+                {/* Ghi chú — luôn hiển thị */}
                 <div style={{ marginBottom: '1.5rem' }}>
                   <label className="label-warm">Ghi chú đơn hàng</label>
-                  <textarea name="note" value={customerInfo.note} onChange={handleInputChange} rows={3} placeholder="Ghi chú về thời gian, địa điểm giao hàng..." className="textarea-warm" />
+                  <textarea
+                    name="note" value={customerInfo.note} onChange={handleInputChange}
+                    rows={3} placeholder="Ghi chú về thời gian, địa điểm giao hàng..."
+                    className="textarea-warm"
+                  />
                 </div>
 
                 <div className="action-row" style={{ display: 'flex', gap: '1rem' }}>
                   <button onClick={() => setCurrentStep(1)} className="btn-ghost" style={{ flex: 1, padding: '12px' }}>
                     ← Quay lại
                   </button>
-                  <button onClick={handleContinue} disabled={!!orderId} className="btn-primary" style={{ flex: 2, padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    Tiếp tục thanh toán <ArrowRight size={16} />
+                  <button onClick={handleContinue} disabled={isSubmitting} className="btn-primary"
+                    style={{ flex: 2, padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    {isSubmitting ? 'Đang xử lý...' : <> Tiếp tục thanh toán <ArrowRight size={16} /> </>}
                   </button>
                 </div>
               </div>
 
               {/* Mini order summary sidebar */}
               <div>
-                {/* Mobile toggle */}
                 <button className="mobile-summary-toggle" onClick={() => setShowSummary(p => !p)}>
                   <span>Đơn hàng — {formatPrice(calculation)}</span>
                   <span style={{ fontSize: '.75rem', color: '#a07050' }}>{showSummary ? '▲ Ẩn' : '▼ Xem'}</span>
                 </button>
-
                 <div className={showSummary ? '' : 'sidebar-mobile-hidden'}>
                   <div className="card-warm sidebar-sticky" style={{ padding: '1.25rem' }}>
                     <h2 className="cart-heading" style={{ fontSize: '1rem', color: '#4a3728', marginBottom: '1rem' }}>Đơn hàng</h2>
@@ -1217,10 +1297,12 @@ export default function ShoppingCartUI() {
                         <span style={{ color: '#a09080', fontSize: '.85rem' }}>Tạm tính</span>
                         <span style={{ fontSize: '.85rem', color: '#5c4a38' }}>{formatPrice(subtotal)}</span>
                       </div>
-                      {discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.4rem' }}>
-                        <span style={{ color: '#a09080', fontSize: '.85rem' }}>Giảm giá</span>
-                        <span style={{ fontSize: '.85rem', color: '#7a9060' }}>-{formatPrice(discount)}</span>
-                      </div>}
+                      {discount > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.4rem' }}>
+                          <span style={{ color: '#a09080', fontSize: '.85rem' }}>Giảm giá</span>
+                          <span style={{ fontSize: '.85rem', color: '#7a9060' }}>-{formatPrice(discount)}</span>
+                        </div>
+                      )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.8rem' }}>
                         <span style={{ color: '#a09080', fontSize: '.85rem' }}>Phí vận chuyển</span>
                         <span style={{ fontSize: '.85rem', color: shipping === 0 ? '#7a9060' : '#5c4a38' }}>{shipping === 0 ? 'Miễn phí' : formatPrice(shipping)}</span>
@@ -1282,7 +1364,6 @@ export default function ShoppingCartUI() {
                   ))}
                 </div>
 
-                {/* Customer info recap */}
                 <div style={{ background: '#fdf8f3', border: '1px solid #ede6dc', borderRadius: 12, padding: '1.25rem', marginBottom: '1.5rem' }}>
                   <h3 style={{ fontWeight: 600, color: '#4a3728', marginBottom: '0.75rem', fontSize: '.95rem' }}>Thông tin nhận hàng</h3>
                   {[
@@ -1308,14 +1389,11 @@ export default function ShoppingCartUI() {
                 </div>
               </div>
 
-              {/* Sidebar summary */}
               <div>
-                {/* Mobile toggle */}
                 <button className="mobile-summary-toggle" onClick={() => setShowSummary(p => !p)}>
                   <span>Tóm tắt — {formatPrice(calculation)}</span>
                   <span style={{ fontSize: '.75rem', color: '#a07050' }}>{showSummary ? '▲ Ẩn' : '▼ Xem'}</span>
                 </button>
-
                 <div className={showSummary ? '' : 'sidebar-mobile-hidden'}>
                   <div className="card-warm sidebar-sticky" style={{ padding: '1.25rem' }}>
                     <h2 className="cart-heading" style={{ fontSize: '1rem', color: '#4a3728', marginBottom: '1rem' }}>Tóm tắt đơn hàng</h2>
@@ -1340,10 +1418,12 @@ export default function ShoppingCartUI() {
                         <span style={{ color: '#a09080', fontSize: '.85rem' }}>Tạm tính</span>
                         <span style={{ fontSize: '.85rem', color: '#5c4a38' }}>{formatPrice(subtotal)}</span>
                       </div>
-                      {discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.4rem' }}>
-                        <span style={{ color: '#a09080', fontSize: '.85rem' }}>Giảm giá</span>
-                        <span style={{ fontSize: '.85rem', color: '#7a9060' }}>-{formatPrice(discount)}</span>
-                      </div>}
+                      {discount > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.4rem' }}>
+                          <span style={{ color: '#a09080', fontSize: '.85rem' }}>Giảm giá</span>
+                          <span style={{ fontSize: '.85rem', color: '#7a9060' }}>-{formatPrice(discount)}</span>
+                        </div>
+                      )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                         <span style={{ color: '#a09080', fontSize: '.85rem' }}>Phí vận chuyển</span>
                         <span style={{ fontSize: '.85rem', color: shipping === 0 ? '#7a9060' : '#5c4a38' }}>{shipping === 0 ? 'Miễn phí' : formatPrice(shipping)}</span>
@@ -1363,24 +1443,6 @@ export default function ShoppingCartUI() {
             </div>
           )}
         </div>
-
-        {/* ── Mobile sticky bottom bar (Step 1) ── */}
-        {/* {currentStep === 1 && (
-          <div className="mobile-checkout-bar">
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '.75rem', color: '#a09080' }}>Tổng cộng</div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: '#8b5e3c' }}>{formatPrice(calculation)}</div>
-            </div>
-            <button
-              onClick={() => setCurrentStep(2)}
-              disabled={!validateStep1()}
-              className="btn-primary"
-              style={{ padding: '12px 24px', fontSize: '.9rem', display: 'flex', alignItems: 'center', gap: 6 }}
-            >
-              Tiếp tục <ArrowRight size={16} />
-            </button>
-          </div>
-        )} */}
 
         {/* ── Success modal ── */}
         {orderSuccess && (
@@ -1403,15 +1465,7 @@ export default function ShoppingCartUI() {
           open={openDeleteAll}
           keepMounted
           aria-describedby="delete-all-confirm"
-          PaperProps={{
-            style: {
-              borderRadius: 18, padding: '8px',
-              boxShadow: '0 8px 32px rgba(80,40,0,.14)',
-              border: '1px solid #ede6dc',
-              minWidth: 300,
-              margin: '16px'
-            }
-          }}
+          PaperProps={{ style: { borderRadius: 18, padding: '8px', boxShadow: '0 8px 32px rgba(80,40,0,.14)', border: '1px solid #ede6dc', minWidth: 300, margin: '16px' } }}
         >
           <DialogTitle>
             <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.15rem', color: '#3d2b1a' }}>
@@ -1420,17 +1474,12 @@ export default function ShoppingCartUI() {
           </DialogTitle>
           <DialogActions>
             <div style={{ display: 'flex', gap: 10, padding: '0 8px 8px', width: '100%', justifyContent: 'flex-end' }}>
-              <button onClick={() => setOpenDeleteAll(false)} className="btn-ghost" style={{ padding: '8px 20px', fontSize: '.88rem' }}>
-                Hủy
-              </button>
-              <button
-                onClick={removeSelectedItems}
+              <button onClick={() => setOpenDeleteAll(false)} className="btn-ghost" style={{ padding: '8px 20px', fontSize: '.88rem' }}>Hủy</button>
+              <button onClick={removeSelectedItems}
                 style={{ padding: '8px 20px', fontSize: '.88rem', borderRadius: 50, background: '#c05040', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'background .2s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#a03020')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#c05040')}
-              >
-                Xóa tất cả
-              </button>
+              >Xóa tất cả</button>
             </div>
           </DialogActions>
         </Dialog>
@@ -1439,15 +1488,7 @@ export default function ShoppingCartUI() {
           open={open}
           keepMounted
           aria-describedby="delete-confirm"
-          PaperProps={{
-            style: {
-              borderRadius: 18, padding: '8px',
-              boxShadow: '0 8px 32px rgba(80,40,0,.14)',
-              border: '1px solid #ede6dc',
-              minWidth: 280,
-              margin: '16px'
-            }
-          }}
+          PaperProps={{ style: { borderRadius: 18, padding: '8px', boxShadow: '0 8px 32px rgba(80,40,0,.14)', border: '1px solid #ede6dc', minWidth: 280, margin: '16px' } }}
         >
           <DialogTitle>
             <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.15rem', color: '#3d2b1a' }}>
@@ -1456,17 +1497,12 @@ export default function ShoppingCartUI() {
           </DialogTitle>
           <DialogActions>
             <div style={{ display: 'flex', gap: 10, padding: '0 8px 8px', width: '100%', justifyContent: 'flex-end' }}>
-              <button onClick={() => setOpen(false)} className="btn-ghost" style={{ padding: '8px 20px', fontSize: '.88rem' }}>
-                Hủy
-              </button>
-              <button
-                onClick={() => selectedItemId !== null && removeItem(selectedItemId)}
+              <button onClick={() => setOpen(false)} className="btn-ghost" style={{ padding: '8px 20px', fontSize: '.88rem' }}>Hủy</button>
+              <button onClick={() => selectedItemId !== null && removeItem(selectedItemId)}
                 style={{ padding: '8px 20px', fontSize: '.88rem', borderRadius: 50, background: '#c05040', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'background .2s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#a03020')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#c05040')}
-              >
-                Xóa
-              </button>
+              >Xóa</button>
             </div>
           </DialogActions>
         </Dialog>

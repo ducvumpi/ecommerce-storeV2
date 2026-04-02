@@ -17,6 +17,8 @@ interface Order {
     estimatedDelivery: string;
     items: { title: string; quantity: number; price: number; image: string; color: string; size: string }[];
     address_line: string;
+    ward_name: string;
+    city_name: string;
     receiver_name: string;
     phone: string;
     mail: string;
@@ -113,12 +115,21 @@ const OrderTracking = () => {
     const loadOrders = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+
         const { data, error } = await supabase
             .from("orders")
-            .select(`id,total_price,created_at,status,
-        addresses(full_name,phone,address_line,mail),
-        order_items(quantity,price,product_variants(id,size,color,price,products(name,image_url)))`)
-            .eq("user_id", user.id).order("created_at", { ascending: false });
+            .select(`
+                id, total_price, created_at, status,
+                addresses(full_name, phone, address_line, mail, ward, city),
+                order_items(quantity, price,
+                    product_variants(id, size, color, price,
+                        products(name, image_url)
+                    )
+                )
+            `)
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
+
         if (error) { console.error(error); return; }
 
         const fmtDate = (iso: string) => iso ? new Date(iso).toLocaleDateString("vi-VN") : "";
@@ -138,15 +149,55 @@ const OrderTracking = () => {
             }));
         };
 
+        // ── Lấy ward codes và city codes ──
+        const wardCodes = [...new Set((data || []).map((o: any) => o.addresses?.ward).filter(Boolean))] as string[];
+        const cityCodes = [...new Set((data || []).map((o: any) => o.addresses?.city).filter(Boolean))] as string[];
+
+        // ── Query communes theo ward codes ──
+        const { data: communesData } = wardCodes.length > 0
+            ? await supabase.from("communes").select("code, name, province_code").in("code", wardCodes)
+            : { data: [] };
+
+        // ── Gộp tất cả province codes cần lấy ──
+        const communeProvinceCodes = [...new Set((communesData || []).map((c: any) => c.province_code).filter(Boolean))] as string[];
+        const allProvinceCodes = [...new Set([...cityCodes, ...communeProvinceCodes])];
+
+        // ── Query provinces ──
+        const { data: provincesData } = allProvinceCodes.length > 0
+            ? await supabase.from("provinces").select("code, name").in("code", allProvinceCodes)
+            : { data: [] };
+
+        // ── Lookup maps ──
+        const provinceMap: Record<string, string> = {};
+        (provincesData || []).forEach((p: any) => {
+            provinceMap[p.code] = p.name;
+        });
+
+        const communeMap: Record<string, { name: string; provinceName: string }> = {};
+        (communesData || []).forEach((c: any) => {
+            communeMap[c.code] = {
+                name: c.name,
+                provinceName: provinceMap[c.provinceCode] || "",
+            };
+        });
+
+        // ── Map orders ──
         const mapped: Order[] = (data || []).map((o: any) => {
+            const wardCode = o.addresses?.ward || "";
+            const cityCode = o.addresses?.city || "";
+            const commune = communeMap[wardCode] || { name: "", provinceName: "" };
+            // ward_name từ communes, city_name ưu tiên từ commune.provinceName, fallback sang provinceMap[cityCode]
+            const cityName = commune.provinceName || provinceMap[cityCode] || "";
+
             const items = (o.order_items || []).map((i: any) => ({
                 title: i.product_variants?.products?.name || "Không tên",
                 image: i.product_variants?.products?.image_url || "",
                 quantity: i.quantity,
-                price: i.total_price ?? i.product_variants?.price ?? 0,
+                price: i.price ?? i.product_variants?.price ?? 0,
                 color: i.product_variants?.color || "",
                 size: i.product_variants?.size || "",
             }));
+
             return {
                 id: o.id, status: o.status,
                 orderDate: fmtDate(o.created_at),
@@ -156,10 +207,15 @@ const OrderTracking = () => {
                 receiver_name: o.addresses?.full_name || "",
                 phone: o.addresses?.phone || "",
                 mail: o.addresses?.mail || "",
+                ward_name: commune.name,
+                city_name: cityName,
                 total_price: o.total_price ?? items.reduce((s: number, i: any) => s + i.price * i.quantity, 0),
             };
         });
-        setOrders(mapped); setFilteredOrders(mapped); setSelectedOrder(mapped[0] || null);
+
+        setOrders(mapped);
+        setFilteredOrders(mapped);
+        setSelectedOrder(mapped[0] || null);
     };
 
     const canCancel = (s: string) => s === 'pending' || s === 'paid';
@@ -196,7 +252,6 @@ const OrderTracking = () => {
     return (
         <>
             <FontLoader />
-            {/* Nền tổng: trắng ngà ấm */}
             <div className="min-h-screen bg-[#f7f4f0] p-4 md:p-6 lg:p-8">
 
                 {cancelModalOrder && (
@@ -204,7 +259,6 @@ const OrderTracking = () => {
                         onClose={() => setCancelModalOrder(null)} isLoading={isCancelling} />
                 )}
 
-                {/* Toast */}
                 {cancelSuccess && (
                     <div className="fixed top-6 right-6 z-50 bg-stone-700 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-sm font-medium">
                         <CheckCircle size={16} className="text-amber-300" />
@@ -216,10 +270,8 @@ const OrderTracking = () => {
 
                     {/* ── Header ── */}
                     <div className="relative overflow-hidden rounded-2xl bg-[#3d2f20] px-7 py-6 shadow-md">
-                        {/* Soft glow blobs */}
                         <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-amber-700/25 blur-3xl pointer-events-none" />
                         <div className="absolute -bottom-6 left-10 w-32 h-32 rounded-full bg-stone-600/20 blur-2xl pointer-events-none" />
-
                         <div className="relative flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
@@ -242,7 +294,6 @@ const OrderTracking = () => {
                         {/* ── Sidebar ── */}
                         <div className="lg:col-span-2">
                             <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden sticky top-6">
-
                                 <div className="px-5 pt-5 pb-4 border-b border-stone-100">
                                     <div className="flex items-center justify-between mb-3.5">
                                         <h2 className="text-base font-semibold text-stone-800">Đơn hàng của tôi</h2>
@@ -325,7 +376,6 @@ const OrderTracking = () => {
                         ) : (
                             <div className="lg:col-span-3 space-y-4">
 
-                                {/* Cancelled banner */}
                                 {selectedOrder.status === 'cancelled' && (
                                     <div className="flex items-center gap-3 px-5 py-4 bg-red-50 border border-red-100 rounded-2xl">
                                         <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -362,7 +412,6 @@ const OrderTracking = () => {
                                             </div>
                                         </div>
 
-                                        {/* Progress bar */}
                                         {selectedOrder.status !== 'cancelled' && (
                                             <div className="mt-4">
                                                 <div className="flex justify-between text-xs text-stone-400 mb-1.5">
@@ -431,7 +480,11 @@ const OrderTracking = () => {
                                             <div>
                                                 <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1">Người nhận</p>
                                                 <p className="text-sm font-semibold text-stone-800">{selectedOrder.receiver_name}</p>
-                                                <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{selectedOrder.address_line}</p>
+                                                <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
+                                                    {selectedOrder.address_line}
+                                                    {selectedOrder.ward_name && `, ${selectedOrder.ward_name}`}
+                                                    {selectedOrder.city_name && `, ${selectedOrder.city_name}`}
+                                                </p>
                                             </div>
                                             <div className="h-px bg-stone-100" />
                                             <div className="flex items-center gap-2.5">

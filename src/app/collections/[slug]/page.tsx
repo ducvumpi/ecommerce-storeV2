@@ -15,7 +15,14 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000000]);
   const [sortBy, setSortBy] = useState('default');
   const [sampleProducts, setSampleProducts] = useState<any[]>([]);
-
+  const [loadingCart, setLoadingCart] = useState<string | null>(null);
+  const handleAddToCart = (product: any, selectedVariant: any, quantity: number) => {
+    if (!selectedVariant?.id || !product?.id) {
+      alert("Vui lòng chọn đầy đủ màu sắc và kích thước");
+      return;
+    }
+    addToCart(product.id, String(selectedVariant.id), quantity);
+  };
   const categories = useMemo(() => {
     return ['all', ...new Set(sampleProducts.map(p => p.category_id))];
   }, [sampleProducts]);
@@ -396,27 +403,24 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
                           <div className="mb-2 sm:mb-3">
                             <div className="flex items-center gap-1.5 mb-1.5">
                               <span className="text-xs font-medium text-[#6a5a4a]">Màu sắc</span>
-                              {sel.color && (
-                                <span className="text-xs text-[#a89580] capitalize">({sel.color})</span>
-                              )}
+
                             </div>
                             <div className="flex flex-wrap gap-1.5 sm:gap-2">
                               {colors.map((color: string) => (
                                 <button
                                   key={`${product.id}-${color}`}
-                                  title={color}
                                   onClick={() => updateSelection(String(product.id), 'color', color)}
-                                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 transition-all duration-150 focus:outline-none ${sel.color === color
-                                    ? 'border-[#8b5e3c] scale-110 shadow-md'
-                                    : 'border-[#e8ddd0] hover:border-[#c4b5a0]'
+                                  className={`px-2.5 py-1 rounded-md border text-xs capitalize transition-all duration-150 focus:outline-none ${sel.color === color
+                                    ? 'border-[#8b5e3c] bg-[#8b5e3c] text-white font-medium'
+                                    : 'border-[#e8ddd0] text-[#6a5a4a] hover:border-[#c4b5a0] hover:bg-[#f5ede6]'
                                     }`}
-                                  style={{ backgroundColor: color }}
-                                />
+                                >
+                                  {color}
+                                </button>
                               ))}
                             </div>
                           </div>
                         )}
-
                         {/* Size Selector */}
                         {sizes.length > 0 && (
                           <div className="mb-2 sm:mb-3">
@@ -448,13 +452,7 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
 
                           <button
                             disabled={!canAddToCart}
-                            onClick={() => {
-                              if (!selectedVariant) {
-                                alert("Vui lòng chọn biến thể");
-                                return;
-                              }
-                              addToCart(product.id, String(selectedVariant.id), quantity);
-                            }}
+                            onClick={() => handleAddToCart(product, selectedVariant, quantity)}
                             className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium transition whitespace-nowrap shadow-sm ${!canAddToCart
                               ? 'bg-[#f0e8dc] text-[#c4b5a0] cursor-not-allowed'
                               : 'bg-[#8b5e3c] text-white hover:bg-[#7a4e2f] hover:shadow-md'

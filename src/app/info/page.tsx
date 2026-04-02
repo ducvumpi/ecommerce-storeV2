@@ -16,12 +16,12 @@ export default function AccountProfile() {
   const isInitialLoad = useRef(true);
 
   const [customerInfo, setCustomerInfo] = useState({
-    fullName: '', email: '', phone: '', address: '',
+    fullName: '', email: '', phone: 0, address: '',
     totalAmount: 0, city: '', ward: '', note: ''
   });
 
   const [profileData, setProfileData] = useState({
-    last_name: '', fullName: '', email: '', phone: '',
+    last_name: '', first_name: '', email: '', phone: 0,
     address: '', bio: '', dateOfBirth: '', gender: 'Nam'
   });
 
@@ -63,9 +63,10 @@ export default function AccountProfile() {
 
       setProfileData(prev => ({
         ...prev,
-        fullName: data?.last_name || "",
+        last_name: data?.last_name || "",
+        first_name: data?.first_name || "",
         email: data?.email || "",
-        phone: data?.phone || "",
+        phone: data?.phone || 0,
         address: data?.address || "",
         dateOfBirth: data?.date_of_birth || "",
       }));
@@ -101,7 +102,8 @@ export default function AccountProfile() {
     if (!user) return;
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
-      last_name: profileData.fullName,
+      last_name: profileData.last_name,
+      first_name: profileData.first_name,
       email: profileData.email,
       phone: profileData.phone,
       address: profileData.address,
@@ -123,9 +125,11 @@ export default function AccountProfile() {
     { id: 'security', label: 'Bảo mật', icon: Lock },
     { id: 'notifications', label: 'Thông báo', icon: Bell },
     { id: 'billing', label: 'Thanh toán', icon: CreditCard },
+    { id: 'addresses', label: 'Địa chỉ', icon: MapPin },
+
   ];
 
-  const initials = (profileData.fullName || profileData.last_name || 'U').charAt(0).toUpperCase();
+  const initials = (profileData.first_name || profileData.last_name || 'U').charAt(0).toUpperCase();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -143,7 +147,7 @@ export default function AccountProfile() {
         </div>
       </div>
       <div style={{ textAlign: "center", padding: "0 1.5rem 1rem" }}>
-        <div className="sidebar-name">{profileData.fullName || profileData.last_name || "Người dùng"}</div>
+        <div className="sidebar-name">{profileData.first_name || profileData.last_name || "Người dùng"}</div>
         <div className="sidebar-email">{profileData.email}</div>
       </div>
       <nav className="sidebar-nav">
@@ -162,6 +166,140 @@ export default function AccountProfile() {
     </>
   );
 
+  // 2. Thêm types:
+  type Address = {
+    id: string;
+    full_name: string;
+    phone: string;
+    address_line: string;
+    ward: string;
+    city: string;
+    is_default: boolean;
+  };
+
+  // 3. Thêm states (cùng chỗ với các state khác):
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [addressForm, setAddressForm] = useState({
+    full_name: '', phone: '', address_line: '', ward: '', city: ''
+  });
+  const [addressWards, setAddressWards] = useState<Commune[]>([]);
+
+  // 4. Thêm useEffect load addresses:
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('is_default', { ascending: false });
+      if (data) setAddresses(data);
+    };
+    fetchAddresses();
+  }, []);
+
+  // 5. Thêm useEffect cho ward trong form địa chỉ:
+  useEffect(() => {
+    if (addressForm.city && addressData.length > 0) {
+      const filtered = addressData.filter(item => item.provinceCode === addressForm.city);
+      setAddressWards(filtered.map(item => ({ code: item.code, name: item.name })));
+      if (!editingAddress) {
+        setAddressForm(prev => ({ ...prev, ward: '' }));
+      }
+    }
+  }, [addressForm.city, addressData]);
+
+  // 6. Thêm các hàm xử lý:
+  const handleSaveAddress = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (editingAddress) {
+      const { error } = await supabase
+        .from('addresses')
+        .update({
+          full_name: addressForm.full_name,
+          phone: addressForm.phone,
+          address_line: addressForm.address_line,
+          ward: addressForm.ward,
+          city: addressForm.city,
+        })
+        .eq('id', editingAddress.id);
+      if (error) { alert('Lỗi: ' + error.message); return; }
+    } else {
+      const isFirst = addresses.length === 0;
+      const { error } = await supabase
+        .from('addresses')
+        .insert({
+          user_id: user.id,
+          full_name: addressForm.full_name,
+          phone: addressForm.phone,
+          address_line: addressForm.address_line,
+          ward: addressForm.ward,
+          city: addressForm.city,
+          is_default: isFirst,
+        });
+      if (error) { alert('Lỗi: ' + error.message); return; }
+
+      // Nếu là địa chỉ đầu tiên → link vào profiles
+      if (isFirst) {
+        const { data: newAddr } = await supabase
+          .from('addresses')
+          .select('id')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (newAddr) {
+          await supabase.from('profiles').update({ address_id: newAddr.id }).eq('id', user.id);
+        }
+      }
+    }
+
+    // Reload
+    const { data } = await supabase
+      .from('addresses').select('*').eq('user_id', user.id)
+      .order('is_default', { ascending: false });
+    if (data) setAddresses(data);
+    setShowAddressForm(false);
+    setEditingAddress(null);
+    setAddressForm({ full_name: '', phone: '', address_line: '', ward: '', city: '' });
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    if (!confirm('Xóa địa chỉ này?')) return;
+    await supabase.from('addresses').delete().eq('id', id);
+    setAddresses(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleSetDefault = async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    // Bỏ default cũ
+    await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
+    // Set default mới
+    await supabase.from('addresses').update({ is_default: true }).eq('id', id);
+    // Update profiles.address_id
+    await supabase.from('profiles').update({ address_id: id }).eq('id', user.id);
+    setAddresses(prev => prev.map(a => ({ ...a, is_default: a.id === id })));
+  };
+
+  const openEditAddress = (addr: Address) => {
+    setEditingAddress(addr);
+    setAddressForm({
+      full_name: addr.full_name,
+      phone: addr.phone,
+      address_line: addr.address_line,
+      ward: addr.ward,
+      city: addr.city,
+    });
+    setShowAddressForm(true);
+  };
   return (
     <>
       <style>{`
@@ -559,7 +697,8 @@ export default function AccountProfile() {
 
                 <div className="field-grid">
                   {[
-                    { label: "Họ và tên", field: "fullName", type: "text", placeholder: "Nguyễn Văn A" },
+                    { label: "Họ", field: "last_name", type: "text", placeholder: "Nguyễn" },
+                    { label: "Tên", field: "first_name", type: "text", placeholder: "Văn A" },
                     { label: "Email", field: "email", type: "email", placeholder: "email@example.com" },
                     { label: "Số điện thoại", field: "phone", type: "tel", placeholder: "0912 345 678" },
                     { label: "Ngày sinh", field: "dateOfBirth", type: "date", placeholder: "" },
@@ -582,30 +721,7 @@ export default function AccountProfile() {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="field-label">Địa chỉ</label>
-                    <input type="text" value={profileData.address} placeholder="Số nhà, tên đường..."
-                      onChange={e => handleProfileChange('address', e.target.value)}
-                      disabled={!isEditing} className="field-input" />
-                  </div>
 
-                  <div>
-                    <label className="field-label">Tỉnh / Thành phố <span style={{ color: '#c07050' }}>*</span></label>
-                    <select name="city" value={customerInfo.city} onChange={handleInputChange} className="field-input">
-                      <option value="">Chọn tỉnh / thành</option>
-                      {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="field-label">Phường / Xã</label>
-                    <select name="ward" value={customerInfo.ward} onChange={handleInputChange}
-                      disabled={!customerInfo.city} className="field-input"
-                      style={{ opacity: !customerInfo.city ? 0.5 : 1 }}>
-                      <option value="">Chọn phường / xã</option>
-                      {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
-                    </select>
-                  </div>
 
                   <div className="field-full">
                     <label className="field-label">Giới thiệu</label>
@@ -735,7 +851,162 @@ export default function AccountProfile() {
                 </div>
               </div>
             )}
+            {/* ───── ADDRESSES ───── */}
+            {activeTab === 'addresses' && (
+              <div>
+                <div className="section-header">
+                  <h2 className="section-title">Sổ địa chỉ</h2>
+                  {!showAddressForm && (
+                    <button className="btn-edit" onClick={() => {
+                      setEditingAddress(null);
+                      setAddressForm({ full_name: '', phone: '', address_line: '', ward: '', city: '' });
+                      setShowAddressForm(true);
+                    }}>
+                      + Thêm địa chỉ
+                    </button>
+                  )}
+                </div>
 
+                {/* Form thêm / sửa */}
+                {showAddressForm && (
+                  <div style={{
+                    background: 'var(--bg1)', border: '1px solid var(--bg2)',
+                    borderRadius: 14, padding: '1.25rem', marginBottom: '1.5rem'
+                  }}>
+                    <p style={{ fontWeight: 500, color: 'var(--bd)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                      {editingAddress ? 'Chỉnh sửa địa chỉ' : 'Thêm địa chỉ mới'}
+                    </p>
+                    <div className="field-grid">
+                      <div>
+                        <label className="field-label">Họ và tên</label>
+                        <input className="field-input" placeholder="Nguyễn Văn A"
+                          value={addressForm.full_name}
+                          onChange={e => setAddressForm(p => ({ ...p, full_name: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="field-label">Số điện thoại</label>
+                        <input className="field-input" placeholder="0912 345 678"
+                          value={addressForm.phone}
+                          onChange={e => setAddressForm(p => ({ ...p, phone: e.target.value }))} />
+                      </div>
+                      <div className="field-full">
+                        <label className="field-label">Địa chỉ cụ thể</label>
+                        <input className="field-input" placeholder="Số nhà, tên đường..."
+                          value={addressForm.address_line}
+                          onChange={e => setAddressForm(p => ({ ...p, address_line: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="field-label">Tỉnh / Thành phố</label>
+                        <select className="field-input" value={addressForm.city}
+                          onChange={e => setAddressForm(p => ({ ...p, city: e.target.value }))}>
+                          <option value="">Chọn tỉnh / thành</option>
+                          {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="field-label">Phường / Xã</label>
+                        <select className="field-input" value={addressForm.ward}
+                          disabled={!addressForm.city}
+                          style={{ opacity: !addressForm.city ? 0.5 : 1 }}
+                          onChange={e => setAddressForm(p => ({ ...p, ward: e.target.value }))}>
+                          <option value="">Chọn phường / xã</option>
+                          {addressWards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: '1rem', flexWrap: 'wrap' }}>
+                      <button className="btn-save" onClick={handleSaveAddress}>
+                        <Check size={13} /> Lưu địa chỉ
+                      </button>
+                      <button className="btn-cancel" onClick={() => {
+                        setShowAddressForm(false);
+                        setEditingAddress(null);
+                      }}>
+                        <X size={13} /> Hủy
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Danh sách địa chỉ */}
+                {addresses.length === 0 && !showAddressForm ? (
+                  <div style={{
+                    textAlign: 'center', padding: '2.5rem 1rem',
+                    background: 'var(--bg0)', border: '1px dashed var(--bg2)',
+                    borderRadius: 14, color: 'var(--soft)', fontSize: 14
+                  }}>
+                    <MapPin size={28} color="var(--bxl)" strokeWidth={1.4} style={{ marginBottom: 10 }} />
+                    <p style={{ margin: 0 }}>Chưa có địa chỉ nào. Thêm địa chỉ để mua hàng nhanh hơn!</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {addresses.map(addr => {
+                      const cityName = provinces.find(p => p.code === addr.city)?.name || addr.city;
+                      const wardName = addressData.find(w => w.code === addr.ward)?.name || addr.ward;
+                      return (
+                        <div key={addr.id} style={{
+                          border: `1.5px solid ${addr.is_default ? 'var(--bm)' : 'var(--bg2)'}`,
+                          borderRadius: 14, padding: '1rem 1.25rem',
+                          background: addr.is_default ? 'var(--bg1)' : 'var(--bg0)',
+                          display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start'
+                        }}>
+                          <div style={{
+                            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                            background: addr.is_default ? 'var(--bm)' : 'var(--bg2)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}>
+                            <MapPin size={16} color={addr.is_default ? '#fff' : 'var(--soft)'} strokeWidth={1.6} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                              <span style={{ fontWeight: 500, color: 'var(--bd)', fontSize: 14 }}>{addr.full_name}</span>
+                              <span style={{ fontSize: 13, color: 'var(--soft)' }}>{addr.phone}</span>
+                              {addr.is_default && (
+                                <span style={{
+                                  fontSize: 11, padding: '2px 10px', borderRadius: 50,
+                                  background: '#eef5e8', color: '#5a8050', fontWeight: 500
+                                }}>Mặc định</span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: 13, color: 'var(--soft)', margin: 0 }}>
+                              {addr.address_line}{wardName ? `, ${wardName}` : ''}{cityName ? `, ${cityName}` : ''}
+                            </p>
+                          </div>
+                          <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
+                            {!addr.is_default && (
+                              <button onClick={() => handleSetDefault(addr.id)}
+                                style={{
+                                  fontSize: 12, padding: '5px 12px', borderRadius: 50,
+                                  border: '1px solid var(--bg2)', background: 'var(--white)',
+                                  color: 'var(--bm)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500
+                                }}>
+                                Đặt mặc định
+                              </button>
+                            )}
+                            <button onClick={() => openEditAddress(addr)}
+                              style={{
+                                fontSize: 12, padding: '5px 12px', borderRadius: 50,
+                                border: '1px solid var(--bg2)', background: 'var(--white)',
+                                color: 'var(--soft)', cursor: 'pointer', fontFamily: 'inherit'
+                              }}>
+                              Sửa
+                            </button>
+                            <button onClick={() => handleDeleteAddress(addr.id)}
+                              style={{
+                                fontSize: 12, padding: '5px 12px', borderRadius: 50,
+                                border: '1px solid #fdd', background: 'var(--white)',
+                                color: '#c07050', cursor: 'pointer', fontFamily: 'inherit'
+                              }}>
+                              Xóa
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </main>
         </div>
       </div>

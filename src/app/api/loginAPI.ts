@@ -175,7 +175,9 @@ export async function addToCart(product_id: number, variantId: string, quantity:
     cart_id: cart.id,
     variant_id: variantId,
     quantity,
+
   });
+  toast.success("Đã thêm vào giỏ hàng!");
 
   if (error) {
     console.error(error);
