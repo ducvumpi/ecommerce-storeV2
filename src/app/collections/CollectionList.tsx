@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { Collection } from "../api/collections";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 function formatImageUrl(url: string) {
     if (!url) return "";
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
@@ -9,6 +10,8 @@ function formatImageUrl(url: string) {
 }
 
 export default function CollectionList({ LoadCollections }: { LoadCollections: Collection[] }) {
+    const router = useRouter();
+
     return (
         <div style={{ background: "#faf8f5", minHeight: "100vh", fontFamily: "var(--font-sans, Lora, serif)" }}>
             <main style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 24px" }}>
@@ -16,7 +19,24 @@ export default function CollectionList({ LoadCollections }: { LoadCollections: C
                 {/* Header */}
                 <div style={{ textAlign: "center", marginBottom: 40 }}>
                     <h1 style={{ fontFamily: "'Lora', serif", fontSize: 28, color: "#3d2b1a", margin: "0 0 10px", fontWeight: 500 }}>
-                        Bộ sưu tập
+                        <button
+                            className="back-btn"
+                            onClick={() => router.back()}
+                            style={{
+                                width: 38, height: 38, borderRadius: 10,
+                                border: '1.5px solid #e2d9ce', background: '#ffffff',
+                                alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', color: '#a07050', flexShrink: 0,
+                                transition: 'all .2s', boxShadow: '0 1px 4px rgba(140,100,60,.08)'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#f3ede6'; e.currentTarget.style.borderColor = '#c4956a'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#e2d9ce'; }}
+                            title="Quay lại"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M10 13L5 8L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </button> Bộ sưu tập
                     </h1>
                     <p style={{ fontSize: 14, color: "#b0997e", maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
                         Khám phá những bộ sưu tập thời trang được tuyển chọn kỹ lưỡng cho mọi mùa và mọi dịp

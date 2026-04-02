@@ -4,7 +4,9 @@ import { useState } from "react";
 import { Clothes } from "@/app/api/productsAPI";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 export default function WomenListProduct({ clothes }: { clothes: Clothes[] }) {
+    const router = useRouter();
     const [hoveredId, setHoveredId] = useState<number | null>(null);
     const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
 
@@ -34,10 +36,41 @@ export default function WomenListProduct({ clothes }: { clothes: Clothes[] }) {
         new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
     return (
+
         <div style={{ background: "#faf8f5", fontFamily: "var(--font-sans, Lora, serif)" }}>
+            <style jsx>{`
+                .back-btn {
+            display: none;
+            }
+            @media (max-width: 900px) {
+            .back-btn {
+                display: flex;
+                margin-right: 12px;
+            }
+            }
+      `}</style>
             {/* Header */}
             <div style={{ marginBottom: 36 }}>
-                <h1 style={{ fontSize: 26, fontWeight: 500, color: "#3d2b1a", margin: "0 0 8px" }}>Thời trang Nữ</h1>
+
+                <h1 style={{ display: "flex", alignItems: "center", fontSize: 26, fontWeight: 500, color: "#3d2b1a", margin: "0 0 8px" }}>
+                    <button
+                        className="back-btn"
+                        onClick={() => router.back()}
+                        style={{
+                            width: 38, height: 38, borderRadius: 10,
+                            border: '1.5px solid #e2d9ce', background: '#ffffff',
+                            alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: '#a07050', flexShrink: 0,
+                            transition: 'all .2s', boxShadow: '0 1px 4px rgba(140,100,60,.08)'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#f3ede6'; e.currentTarget.style.borderColor = '#c4956a'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#e2d9ce'; }}
+                        title="Quay lại"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M10 13L5 8L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </button>Thời trang Nữ</h1>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
                     <p style={{ fontSize: 14, color: "#b0997e", margin: 0 }}>Phong cách thời trang cho mọi dịp</p>
                     <div style={{ display: "flex", gap: 8 }}>

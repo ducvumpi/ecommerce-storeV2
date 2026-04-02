@@ -440,3 +440,13 @@ input[type=number] {
     transform: translateX(0);
   }
 }
+
+.back-btn {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .back-btn {
+    display: flex;
+  }
+}

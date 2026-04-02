@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ShoppingCart, Trash2, Plus, Minus, Tag, ArrowRight, Package, User, MapPin, Phone, Mail, CreditCard, Wallet, Building2, Check } from 'lucide-react';
 import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI'
 import { supabase } from "../libs/supabaseClient";
@@ -10,6 +10,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogTitle from '@mui/material/DialogTitle';
 import { handlePaymentSuccess } from '../store/createOrder';
 import { string } from 'yup';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 // Custom Checkbox Component
 const CustomCheckbox = ({ checked, onChange, indeterminate = false }: {
@@ -93,6 +94,10 @@ type Coupon = {
 };
 
 export default function ShoppingCartUI() {
+  const searchParams = useSearchParams();
+
+  const router = useRouter(); // thêm dòng này
+
   const [open, setOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -108,6 +113,8 @@ export default function ShoppingCartUI() {
     note: ''
   });
 
+  const [openDeleteAll, setOpenDeleteAll] = useState(false);
+
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -119,7 +126,25 @@ export default function ShoppingCartUI() {
   const [wards, setWards] = useState<Commune[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSummary, setShowSummary] = useState(false); // mobile: toggle order summary
-
+  // MỚI
+  useEffect(() => {
+    const step = searchParams.get('step');
+    const variantId = searchParams.get('variantId');
+    if (step === '2' && cartItems.length > 0 && !loading) {
+      if (variantId) {
+        // Chỉ chọn item vừa "Mua ngay"
+        const matched = cartItems.filter(
+          item => String(item.product_variant?.id) === String(variantId)
+        );
+        setSelectedItems(
+          matched.length > 0 ? matched.map(i => i.id) : cartItems.map(i => i.id)
+        );
+      } else {
+        setSelectedItems(cartItems.map(i => i.id));
+      }
+      setCurrentStep(2);
+    }
+  }, [searchParams, cartItems, loading]);
   const handlePlaceOrder = async () => {
     if (!orderId) { alert("Không tìm thấy đơn hàng"); return; }
     const success = await handlePaymentSuccess(orderId, selectedCartItems);
@@ -136,7 +161,187 @@ export default function ShoppingCartUI() {
       localStorage.removeItem("order_id");
     }, 3000);
   };
+  const SearchableSelect = ({
+    options, value, onChange, placeholder, disabled = false, type = 'province'
+  }: {
+    options: { code: string; name: string }[];
+    value: string;
+    onChange: (code: string) => void;
+    placeholder: string;
+    disabled?: boolean;
+    type?: 'province' | 'ward';
+  }) => {
+    // ...state, ref, useEffect giữ nguyên...
 
+    const sorted = [...options].sort((a, b) => {
+      if (type === 'province') {
+        const isCity = (name: string) =>
+          name.startsWith('Thành phố') || name.startsWith('Thị xã');
+        const aCity = isCity(a.name);
+        const bCity = isCity(b.name);
+        if (aCity && !bCity) return -1;
+        if (!aCity && bCity) return 1;
+        return a.name.localeCompare(b.name, 'vi');
+      } else {
+        // Ward: Phường → Thị trấn → Xã
+        const rank = (name: string) => {
+          if (name.startsWith('Phường')) return 0;
+          if (name.startsWith('Thị trấn')) return 1;
+          return 2;
+        };
+        const diff = rank(a.name) - rank(b.name);
+        return diff !== 0 ? diff : a.name.localeCompare(b.name, 'vi');
+      }
+    });
+
+    // Badge
+    const getBadge = (name: string) => {
+      if (type === 'province') {
+        const isCity = name.startsWith('Thành phố') || name.startsWith('Thị xã');
+        return {
+          label: isCity ? 'TP/TX' : 'Tỉnh',
+          bg: isCity ? '#eef5e8' : '#f5ede3',
+          color: isCity ? '#5a8050' : '#a07050'
+        };
+      } else {
+        if (name.startsWith('Phường')) return { label: 'Phường', bg: '#eef5e8', color: '#5a8050' };
+        if (name.startsWith('Thị trấn')) return { label: 'TT', bg: '#eef0f8', color: '#5060a0' };
+        return { label: 'Xã', bg: '#f5ede3', color: '#a07050' };
+      }
+    };
+
+
+    const [search, setSearch] = useState('');
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    // Đóng khi click ngoài
+    useEffect(() => {
+      const handler = (e: MouseEvent) => {
+        if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      };
+      document.addEventListener('mousedown', handler);
+      return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+
+    const filtered = sorted.filter(o =>
+      o.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const selected = options.find(o => o.code === value);
+
+    return (
+      <div ref={ref} style={{ position: 'relative' }}>
+        <div
+          onClick={() => { if (!disabled) setOpen(p => !p); }}
+          className="input-warm"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            cursor: disabled ? 'default' : 'pointer',
+            opacity: disabled ? 0.5 : 1,
+            userSelect: 'none', gap: 8
+          }}
+        >
+          <span style={{ color: selected ? '#1a1a1a' : '#c4b09a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {selected ? selected.name : placeholder}
+          </span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+            style={{ flexShrink: 0, transition: 'transform .2s', transform: open ? 'rotate(180deg)' : 'none' }}>
+            <path d="M2 4l4 4 4-4" stroke="#c0a080" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+
+        {open && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 999,
+            background: '#fff', border: '1.5px solid #e2d9ce', borderRadius: 12,
+            boxShadow: '0 8px 24px rgba(120,80,40,.12)', overflow: 'hidden'
+          }}>
+            {/* Search input */}
+            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f0e8e0' }}>
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Tìm kiếm..."
+                onClick={e => e.stopPropagation()}
+                style={{
+                  width: '100%', padding: '6px 10px',
+                  border: '1.5px solid #e2d9ce', borderRadius: 8,
+                  fontSize: '.85rem', outline: 'none', fontFamily: 'inherit',
+                  color: '#1a1a1a', background: '#faf8f5', boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Options list */}
+            <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+              {filtered.length === 0 ? (
+                <div style={{ padding: '12px 14px', fontSize: '.85rem', color: '#c0a080' }}>Không tìm thấy</div>
+              ) :
+                filtered.map(o => {
+                  const badge = getBadge(o.name);  // ✅ dùng getBadge đã có type
+                  return (
+                    <div key={o.code}
+                      onClick={() => { onChange(o.code); setSearch(''); setOpen(false); }}
+                      style={{
+                        padding: '9px 14px', fontSize: '.88rem', cursor: 'pointer',
+                        background: o.code === value ? '#fdf6ef' : 'transparent',
+                        color: o.code === value ? '#8b5e3c' : '#3d2b1a',
+                        fontWeight: o.code === value ? 600 : 400,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        transition: 'background .15s'
+                      }}
+                      onMouseEnter={e => { if (o.code !== value) (e.currentTarget as HTMLDivElement).style.background = '#faf3ea'; }}
+                      onMouseLeave={e => { if (o.code !== value) (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                    >
+                      <span style={{                          // ✅ dùng badge từ getBadge
+                        fontSize: '.68rem', padding: '1px 7px', borderRadius: 50, flexShrink: 0,
+                        background: badge.bg,
+                        color: badge.color,
+                        fontWeight: 500
+                      }}>
+                        {badge.label}
+                      </span>
+                      {o.name}
+                      {o.code === value && (
+                        <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="13" height="13" viewBox="0 0 12 12" fill="none">
+                          <path d="M10 3L4.5 8.5L2 6" stroke="#8b5e3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                  );
+                })
+              }
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Dùng chung SearchableSelect nhưng sort khác cho ward
+
+  const removeSelectedItems = async () => {
+    const idsToDelete = [...selectedItems];
+    const oldItems = cartItems;
+    const updated = cartItems.filter(item => !idsToDelete.includes(item.id));
+    setCartItems(updated);
+    setSelectedItems([]);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { saveGuestCart(updated as any); setOpenDeleteAll(false); return; }
+
+    // Xóa tuần tự từng item
+    const results = await Promise.all(idsToDelete.map(id => deleteCartItems(id)));
+    if (results.some(r => !r)) {
+      setCartItems(oldItems); // rollback nếu có lỗi
+      alert("Có lỗi khi xóa, vui lòng thử lại!");
+    }
+    setOpenDeleteAll(false);
+  };
   useEffect(() => {
     const fetchAddressData = async () => {
       try {
@@ -633,7 +838,14 @@ export default function ShoppingCartUI() {
             padding: 1.75rem 1.25rem;
           }
         }
-
+.back-btn {
+  display: none;
+}
+@media (max-width: 900px) {
+  .back-btn {
+    display: flex;
+  }
+}
         /* ══════════════════════════════════════
            RESPONSIVE — Very small (≤ 380px)
         ══════════════════════════════════════ */
@@ -655,6 +867,24 @@ export default function ShoppingCartUI() {
           {/* ── Header ── */}
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1.5rem' }}>
+              <button
+                className="back-btn"
+                onClick={() => router.back()}
+                style={{
+                  width: 38, height: 38, borderRadius: 10,
+                  border: '1.5px solid #e2d9ce', background: '#ffffff',
+                  alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#a07050', flexShrink: 0,
+                  transition: 'all .2s', boxShadow: '0 1px 4px rgba(140,100,60,.08)'
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = '#f3ede6'; e.currentTarget.style.borderColor = '#c4956a'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#e2d9ce'; }}
+                title="Quay lại"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M10 13L5 8L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
               <div style={{ width: 38, height: 38, background: '#f3ede6', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <ShoppingCart size={20} color="#a07050" />
               </div>
@@ -694,13 +924,31 @@ export default function ShoppingCartUI() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {/* Select All Header */}
                 <div className="card-warm" style={{ padding: '1rem 1.5rem', background: '#fdf8f3' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <CustomCheckbox checked={isAllSelected} onChange={handleSelectAll} indeterminate={isIndeterminate} />
-                    <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#4a3728' }}>
-                      {selectedItems.length > 0
-                        ? `Đã chọn ${selectedItems.length}/${cartItems.length} sản phẩm`
-                        : 'Chọn tất cả sản phẩm'}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <CustomCheckbox checked={isAllSelected} onChange={handleSelectAll} indeterminate={isIndeterminate} />
+                      <span style={{ fontSize: '.9rem', fontWeight: 600, color: '#4a3728' }}>
+                        {selectedItems.length > 0
+                          ? `Đã chọn ${selectedItems.length}/${cartItems.length} sản phẩm`
+                          : 'Chọn tất cả sản phẩm'}
+                      </span>
+                    </div>
+                    {selectedItems.length > 0 && (
+                      <button
+                        onClick={() => setOpenDeleteAll(true)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '6px 14px', borderRadius: 50,
+                          border: '1px solid #f0cfc0', background: '#fff8f4',
+                          color: '#c07050', fontSize: '.8rem', fontWeight: 500,
+                          cursor: 'pointer', transition: 'all .2s', whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#ffe8e0'; e.currentTarget.style.borderColor = '#e0a090'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = '#fff8f4'; e.currentTarget.style.borderColor = '#f0cfc0'; }}
+                      >
+                        <Trash2 size={13} /> Xóa đã chọn
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -906,17 +1154,24 @@ export default function ShoppingCartUI() {
                 <div className="form-grid-2">
                   <div>
                     <label className="label-warm">Tỉnh / Thành phố <span style={{ color: '#c07050' }}>*</span></label>
-                    <select name="city" value={customerInfo.city} onChange={handleInputChange} className="input-warm">
-                      <option value="">Chọn tỉnh / thành</option>
-                      {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
-                    </select>
+                    <SearchableSelect
+                      type="province"
+                      options={provinces}
+                      value={customerInfo.city}
+                      onChange={code => setCustomerInfo(prev => ({ ...prev, city: code }))}
+                      placeholder="Chọn tỉnh / thành"
+                    />
                   </div>
                   <div>
                     <label className="label-warm">Phường / Xã</label>
-                    <select name="ward" value={customerInfo.ward} onChange={handleInputChange} disabled={!customerInfo.city} className="input-warm" style={{ opacity: !customerInfo.city ? 0.5 : 1 }}>
-                      <option value="">Chọn phường / xã</option>
-                      {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
-                    </select>
+                    <SearchableSelect
+                      type="ward"
+                      options={wards}
+                      value={customerInfo.ward}
+                      onChange={code => setCustomerInfo(prev => ({ ...prev, ward: code }))}
+                      placeholder="Chọn phường / xã"
+                      disabled={!customerInfo.city}
+                    />
                   </div>
                 </div>
 
@@ -950,7 +1205,7 @@ export default function ShoppingCartUI() {
                       {selectedCartItems.map(item => (
                         <div key={item.id} style={{ display: 'flex', gap: 10, paddingBottom: 10, borderBottom: '1px solid #f0e8e0' }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ margin: 0, fontSize: '.82rem', fontWeight: 600, color: '#4a3728', wordBreak: 'break-word' }}>{item.product_variant?.product?.description || "Sản phẩm"}</p>
+                            <p style={{ margin: 0, fontSize: '.82rem', fontWeight: 600, color: '#4a3728', wordBreak: 'break-word' }}>{item.product_variant?.product?.name || "Sản phẩm"}</p>
                             <p style={{ margin: '2px 0 0', fontSize: '.75rem', color: '#a09080' }}>SL: {item.quantity} · {item.product_variant?.color} · {item.product_variant?.size}</p>
                             <p style={{ margin: '3px 0 0', fontSize: '.82rem', fontWeight: 600, color: '#8b5e3c' }}>{formatPrice((item.product_variant?.price ?? 0) * item.quantity)}</p>
                           </div>
@@ -1144,7 +1399,42 @@ export default function ShoppingCartUI() {
           </div>
         )}
 
-        {/* ── Delete confirm dialog ── */}
+        <Dialog
+          open={openDeleteAll}
+          keepMounted
+          aria-describedby="delete-all-confirm"
+          PaperProps={{
+            style: {
+              borderRadius: 18, padding: '8px',
+              boxShadow: '0 8px 32px rgba(80,40,0,.14)',
+              border: '1px solid #ede6dc',
+              minWidth: 300,
+              margin: '16px'
+            }
+          }}
+        >
+          <DialogTitle>
+            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.15rem', color: '#3d2b1a' }}>
+              Xóa {selectedItems.length} sản phẩm đã chọn?
+            </span>
+          </DialogTitle>
+          <DialogActions>
+            <div style={{ display: 'flex', gap: 10, padding: '0 8px 8px', width: '100%', justifyContent: 'flex-end' }}>
+              <button onClick={() => setOpenDeleteAll(false)} className="btn-ghost" style={{ padding: '8px 20px', fontSize: '.88rem' }}>
+                Hủy
+              </button>
+              <button
+                onClick={removeSelectedItems}
+                style={{ padding: '8px 20px', fontSize: '.88rem', borderRadius: 50, background: '#c05040', color: 'white', border: 'none', fontWeight: 600, cursor: 'pointer', transition: 'background .2s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#a03020')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#c05040')}
+              >
+                Xóa tất cả
+              </button>
+            </div>
+          </DialogActions>
+        </Dialog>
+
         <Dialog
           open={open}
           keepMounted

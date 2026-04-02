@@ -1,6 +1,8 @@
+"use client";
 import Image from "next/image";
-
+import { useRouter } from "next/navigation";
 export default function AboutPage() {
+  const router = useRouter();
   return (
     <div style={{ fontFamily: "'DM Sans', Lora, serif", background: "#faf7f4", minHeight: "100vh" }}>
       <style>{`
@@ -307,9 +309,37 @@ export default function AboutPage() {
           .team-grid     { grid-template-columns: 1fr 1fr; gap: 1rem; }
           .team-img-wrap { width: 76px; height: 76px; }
         }
+          
+        .back-btn {
+            display: none;
+            }
+        @media (max-width: 900px) {
+            .back-btn {
+                display: flex;
+                margin-bottom: 12px;
+            }
+
       `}</style>
 
       <main style={{ maxWidth: 1100, margin: "0 auto", padding: "3rem 1.5rem" }}>
+        <button
+          className="back-btn"
+          onClick={() => router.back()}
+          style={{
+            width: 38, height: 38, borderRadius: 10,
+            border: '1.5px solid #e2d9ce', background: '#ffffff',
+            alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#a07050', flexShrink: 0,
+            transition: 'all .2s', boxShadow: '0 1px 4px rgba(140,100,60,.08)'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#f3ede6'; e.currentTarget.style.borderColor = '#c4956a'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.borderColor = '#e2d9ce'; }}
+          title="Quay lại"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M10 13L5 8L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
 
         {/* ── Hero Banner ── */}
         <section className="hero-section">

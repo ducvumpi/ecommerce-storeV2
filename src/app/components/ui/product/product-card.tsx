@@ -593,12 +593,9 @@ export default function ProductCard({ product }: { product: Clothes }) {
         <button
           className="buy-now-btn"
           onClick={() => {
-            if (!variantId) {
-              toast.error("Vui lòng chọn size");
-              return;
-            }
+            if (!variantId) { toast.error("Vui lòng chọn size"); return; }
             handleAddToCart();
-            router.push("/cart");
+            router.push(`/cart?step=2&variantId=${variantId}`);
           }}
           style={{
             padding: "0 24px",
