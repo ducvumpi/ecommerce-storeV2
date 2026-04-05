@@ -1410,9 +1410,12 @@ export default function ShoppingCartUI() {
                   {[
                     { key: 'cod', icon: <Wallet size={20} color="#8b6343" />, title: 'Thanh toán khi nhận hàng (COD)', desc: 'Thanh toán bằng tiền mặt khi nhận hàng' },
                     { key: 'bank', icon: <Building2 size={20} color="#8b6343" />, title: 'Chuyển khoản ngân hàng', desc: 'Chuyển khoản trực tiếp vào tài khoản' },
-                    { key: 'card', icon: <CreditCard size={20} color="#8b6343" />, title: 'Thẻ tín dụng / ghi nợ', desc: 'Visa, Mastercard, JCB' },
+                    { key: 'vnpay', icon: <img src="https://sandbox.vnpayment.vn/paymentv2/Images/brands/logo.svg" style={{ width: 20, height: 20, objectFit: 'contain' }} />, title: 'Thanh toán qua VNPAY', desc: 'ATM, Visa, Mastercard, QR Code' },
                   ].map(opt => (
-                    <div key={opt.key} className={`payment-card ${paymentMethod === opt.key ? 'selected' : ''}`} style={{ padding: '1rem 1.25rem' }} onClick={() => setPaymentMethod(opt.key)}>
+                    <div key={opt.key} className={`payment-card ${paymentMethod === opt.key ? 'selected' : ''}`}
+                      style={{ padding: '1rem 1.25rem' }}
+                      onClick={() => setPaymentMethod(opt.key)}>
+                      {/* ... giữ nguyên phần bên trong ... */}
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                         <div style={{
                           width: 22, height: 22, borderRadius: '50%', flexShrink: 0, marginTop: 1,
@@ -1428,6 +1431,7 @@ export default function ShoppingCartUI() {
                             <span style={{ fontWeight: 600, color: '#3d2b1a', fontSize: '.95rem' }}>{opt.title}</span>
                           </div>
                           <p style={{ margin: 0, fontSize: '.8rem', color: '#a09080' }}>{opt.desc}</p>
+                          {/* Bank info vẫn giữ nguyên */}
                           {paymentMethod === 'bank' && opt.key === 'bank' && (
                             <div style={{ marginTop: 10, background: '#fffdfb', border: '1px solid #ede6dc', borderRadius: 10, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                               {[['Ngân hàng', 'Vietcombank'], ['Số tài khoản', '1234567890'], ['Chủ tài khoản', 'Vũ Đặng Minh Đức'], ['Nội dung CK', `DH${Date.now().toString().slice(-6)}`]].map(([k, v]) => (
@@ -1441,6 +1445,7 @@ export default function ShoppingCartUI() {
                         </div>
                       </div>
                     </div>
+
                   ))}
                 </div>
 
