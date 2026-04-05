@@ -462,7 +462,7 @@ export default function ShoppingCartUI() {
 
     try {
       if (paymentMethod === 'vnpay') {
-        const res = await fetch('/api/payment/vnpay', {
+        const res = await fetch('/api/payment/ipn', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
