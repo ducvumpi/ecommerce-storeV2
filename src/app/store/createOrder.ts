@@ -128,15 +128,95 @@ import { supabase } from "@/app/libs/supabaseClient";
 //     return true;
 // };
 // Khi thanh toán thành công, update status = 'success'
-export const handlePaymentSuccess = async (orderId: string, cartItems: { id: number; quantity: number; cart: { id: number; user_id: string; }; product_variant: { id: string; size: string; color: string; price: number; product: { id: number; name: string; image_url: string; }; }; }[]) => {
-    const { error } = await supabase
-        .from("orders")
-        .update({ status: 'paid' }) // nếu status là text
-        .eq("id", orderId);
+export const handlePayment = async (
+    orderId: string,
+    cartItems: {
+        id: number;
+        quantity: number;
+        cart: { id: number; user_id: string; };
+        product_variant: {
+            id: string; size: string; color: string; price: number;
+            product: { id: number; name: string; image_url: string; };
+        };
+    }[]
+) => {
+    // Tính tổng tiền từ cartItems
+    const amount = cartItems.reduce((total, item) => {
+        return total + item.product_variant.price * item.quantity;
+    }, 0);
 
-    if (error) {
-        console.error("PAYMENT ERROR:", error);
+    const orderInfo = `Thanh toan don hang #${orderId}`;
+
+    try {
+        const res = await fetch("/api/payment/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount, orderInfo, orderId }),
+        });
+
+        if (!res.ok) {
+            console.error("Tạo URL thanh toán thất bại:", res.statusText);
+            return false;
+        }
+
+        const { paymentUrl } = await res.json();
+        window.location.href = paymentUrl;
+        return true;
+
+    } catch (error) {
+        console.error("HANDLE PAYMENT ERROR:", error);
         return false;
     }
+};
+
+export const handlePaymentSuccess = async (
+    orderId: string,
+    cartItems: {
+        id: number;
+        quantity: number;
+        cart: { id: number; user_id: string; };
+        product_variant: {
+            id: string; size: string; color: string; price: number;
+            product: { id: number; name: string; image_url: string; };
+        };
+    }[]
+) => {
+    // 1. Cập nhật trạng thái đơn hàng
+    const { error: orderError } = await supabase
+        .from("orders")
+        .update({ status: 'paid' })
+        .eq("id", orderId);
+
+    if (orderError) {
+        console.error("PAYMENT ERROR:", orderError);
+        return false;
+    }
+
+    // 2. Xóa tất cả cart items
+    const cartItemIds = cartItems.map((item) => item.id);
+    const { error: cartItemsError } = await supabase
+        .from("cart_items")
+        .delete()
+        .in("id", cartItemIds);
+
+    if (cartItemsError) {
+        console.error("DELETE CART ITEMS ERROR:", cartItemsError);
+        return false;
+    }
+
+    // 3. Xóa cart
+    const cartId = cartItems[0]?.cart?.id;
+    if (cartId) {
+        const { error: cartError } = await supabase
+            .from("carts")
+            .delete()
+            .eq("id", cartId);
+
+        if (cartError) {
+            console.error("DELETE CART ERROR:", cartError);
+            return false;
+        }
+    }
+
     return true;
 };

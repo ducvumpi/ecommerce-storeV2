@@ -457,8 +457,8 @@ export default function ShoppingCartUI() {
   }, [currentStep]);
   const handlePlaceOrder = async () => {
     if (!orderId) { alert("Không tìm thấy đơn hàng"); return; }
-    if (isSubmitting) return;          // ← thêm guard
-    setIsSubmitting(true);             // ← lock button
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       if (paymentMethod === 'vnpay') {
@@ -473,6 +473,10 @@ export default function ShoppingCartUI() {
         });
 
         if (!res.ok) { alert("Không thể tạo link thanh toán, vui lòng thử lại"); return; }
+
+        // Lưu lại trước khi redirect vì sau khi VNPAY redirect về data sẽ mất
+        localStorage.setItem("pending_order_id", orderId);
+        localStorage.setItem("pending_cart_items", JSON.stringify(selectedCartItems));
 
         const { paymentUrl } = await res.json();
         window.location.href = paymentUrl;
@@ -496,7 +500,7 @@ export default function ShoppingCartUI() {
       }, 3000);
 
     } finally {
-      setIsSubmitting(false);          // ← luôn unlock
+      setIsSubmitting(false);
     }
   };
 
