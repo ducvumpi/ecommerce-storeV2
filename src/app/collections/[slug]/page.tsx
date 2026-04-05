@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { use, useEffect } from "react";
 import { Collection, fetchProductsByCategory } from "@/app/api/collections";
 import { addToCart } from "@/app/api/loginAPI";
-
+import { toast } from "react-hot-toast";
 export default function CollectionProducts({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [quantity, setQuantity] = useState<number>(1);
@@ -22,6 +22,8 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
       return;
     }
     addToCart(product.id, String(selectedVariant.id), quantity);
+    toast.success("Đã thêm vào giỏ hàng!");
+
   };
   const categories = useMemo(() => {
     return ['all', ...new Set(sampleProducts.map(p => p.category_id))];

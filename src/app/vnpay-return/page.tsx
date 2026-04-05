@@ -132,7 +132,10 @@ function PaymentReturnContent() {
                             }}>
                                 Về trang chủ
                             </button>
-                            <button onClick={() => router.back()} style={{
+                            <button onClick={() => {
+                                const orderId = localStorage.getItem('pending_order_id');
+                                router.push(`/cart?step=3&orderId=${orderId}`);
+                            }} style={{
                                 flex: 1, padding: '10px', borderRadius: 'var(--border-radius-md)',
                                 background: 'var(--color-background-warning)',
                                 border: '0.5px solid var(--color-border-warning)',

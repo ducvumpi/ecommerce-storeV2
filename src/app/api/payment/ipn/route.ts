@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { orderId, amount, orderInfo } = body;
 
-        // ✅ Parse amount thành số, tránh NaN
         const parsedAmount = Number(amount);
         if (!parsedAmount || isNaN(parsedAmount)) {
             return NextResponse.json({ error: "Amount không hợp lệ" }, { status: 400 });
@@ -40,7 +39,7 @@ export async function POST(req: NextRequest) {
             vnp_Version: "2.1.0",
             vnp_Command: "pay",
             vnp_TmnCode: tmnCode,
-            vnp_Amount: String(Math.round(parsedAmount) * 100), // ✅ dùng parsedAmount
+            vnp_Amount: String(Math.round(parsedAmount) * 100),
             vnp_CreateDate: createDate,
             vnp_CurrCode: "VND",
             vnp_IpAddr: req.headers.get("x-forwarded-for") || "127.0.0.1",
@@ -48,7 +47,7 @@ export async function POST(req: NextRequest) {
             vnp_OrderInfo: orderInfo,
             vnp_OrderType: "other",
             vnp_ReturnUrl: returnUrl,
-            vnp_TxnRef: String(orderId),
+            vnp_TxnRef: String(orderId), // ← dùng thẳng orderId từ frontend (đã là txnRef)
         };
 
         const sorted = sortObject(params);
@@ -87,13 +86,15 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ RspCode: "97", Message: "Invalid checksum" });
     }
 
-    const orderId = params["vnp_TxnRef"];
+    // ✅ Lấy orderId thật từ vnp_OrderInfo thay vì vnp_TxnRef
+    const orderInfo = params["vnp_OrderInfo"];
+    const orderId = orderInfo.replace("Thanh toan don hang ", "").trim();
     const responseCode = params["vnp_ResponseCode"];
-    const status = responseCode === "00" ? "success" : "failed";
+    const status = responseCode === "00" ? "paid" : "failed";
 
     await supabase
         .from("orders")
-        .update({ payment_status: status, vnpay_response: params })
+        .update({ status, vnpay_response: params })
         .eq("id", orderId);
 
     return NextResponse.json({ RspCode: "00", Message: "Confirm Success" });

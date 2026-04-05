@@ -4,14 +4,14 @@ import { ShoppingCart, Trash2, Plus, Minus, Tag, ArrowRight, Package, User, MapP
 import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI'
 import { supabase } from "../libs/supabaseClient";
 import Image from 'next/image';
-import { deleteCartItems } from "../api/productsAPI"
+import { deleteCartItems, deleteMultipleCartItems } from "../api/productsAPI"
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogTitle from '@mui/material/DialogTitle';
 import { handlePaymentSuccess } from '../store/createOrder';
 import { string } from 'yup';
 import { useSearchParams, useRouter } from 'next/navigation';
-
+import toast from 'react-hot-toast';
 // Custom Checkbox Component
 const CustomCheckbox = ({ checked, onChange, indeterminate = false }: {
   checked: boolean;
@@ -403,6 +403,15 @@ export default function ShoppingCartUI() {
   useEffect(() => {
     const step = searchParams.get('step');
     const variantId = searchParams.get('variantId');
+    const orderIdFromUrl = searchParams.get('orderId');
+
+    // Thanh toán lại sau khi hủy VNPAY
+    if (step === '3' && orderIdFromUrl) {
+      setOrderId(orderIdFromUrl);
+      setCurrentStep(3);
+      return;
+    }
+
     if (step === '2' && cartItems.length > 0 && !loading) {
       if (variantId) {
         const matched = cartItems.filter(
@@ -461,20 +470,21 @@ export default function ShoppingCartUI() {
     setIsSubmitting(true);
 
     try {
-      if (paymentMethod === 'vnpay') {
-        const res = await fetch('/api/payment/ipn', {
+      if (paymentMethod === 'ipn') {
+        const txnRef = Date.now().toString().slice(-8); // ✅ unique mỗi lần
+
+        const res = await fetch('/api/payment/ipn', { // ✅ đúng route
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            orderId,
+            orderId: txnRef,                                    // ✅ txnRef ngắn, unique
             amount: calculation,
-            orderInfo: `Thanh toan don hang ${orderId}`,
+            orderInfo: `Thanh toan don hang ${orderId}`,        // ✅ orderId thật trong orderInfo
           }),
         });
 
         if (!res.ok) { alert("Không thể tạo link thanh toán, vui lòng thử lại"); return; }
 
-        // Lưu lại trước khi redirect vì sau khi VNPAY redirect về data sẽ mất
         localStorage.setItem("pending_order_id", orderId);
         localStorage.setItem("pending_cart_items", JSON.stringify(selectedCartItems));
 
@@ -514,14 +524,16 @@ export default function ShoppingCartUI() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { saveGuestCart(updated as any); setOpenDeleteAll(false); return; }
 
-    const results = await Promise.all(idsToDelete.map(id => deleteCartItems(id)));
-    if (results.some(r => !r)) {
+    // ✅ Xóa tất cả 1 lần duy nhất thay vì từng cái
+    const success = await deleteMultipleCartItems(idsToDelete);
+    if (!success) {
       setCartItems(oldItems);
       alert("Có lỗi khi xóa, vui lòng thử lại!");
+    } else {
+      toast.success(`Đã xóa ${idsToDelete.length} sản phẩm`);
     }
     setOpenDeleteAll(false);
   };
-
   useEffect(() => {
     const fetchAddressData = async () => {
       try {
@@ -697,7 +709,12 @@ export default function ShoppingCartUI() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { saveGuestCart(updated as any); setOpen(false); return; }
     const success = await deleteCartItems(idCartItems);
-    if (!success) { setCartItems(oldItems); alert("Không thể xóa sản phẩm!"); }
+    if (!success) {
+      setCartItems(oldItems);
+      alert("Không thể xóa sản phẩm!");
+    } else {
+      toast.success("Xóa sản phẩm thành công"); // ✅ chỉ hiện khi thành công
+    }
     setOpen(false);
   };
 
@@ -1410,7 +1427,7 @@ export default function ShoppingCartUI() {
                   {[
                     { key: 'cod', icon: <Wallet size={20} color="#8b6343" />, title: 'Thanh toán khi nhận hàng (COD)', desc: 'Thanh toán bằng tiền mặt khi nhận hàng' },
                     { key: 'bank', icon: <Building2 size={20} color="#8b6343" />, title: 'Chuyển khoản ngân hàng', desc: 'Chuyển khoản trực tiếp vào tài khoản' },
-                    { key: 'vnpay', icon: <img src="https://sandbox.vnpayment.vn/paymentv2/Images/brands/logo.svg" style={{ width: 20, height: 20, objectFit: 'contain' }} />, title: 'Thanh toán qua VNPAY', desc: 'ATM, Visa, Mastercard, QR Code' },
+                    { key: 'ipn', icon: <img src="https://sandbox.vnpayment.vn/paymentv2/Images/brands/logo.svg" style={{ width: 20, height: 20, objectFit: 'contain' }} />, title: 'Thanh toán qua VNPAY', desc: 'ATM, Visa, Mastercard, QR Code' },
                   ].map(opt => (
                     <div key={opt.key} className={`payment-card ${paymentMethod === opt.key ? 'selected' : ''}`}
                       style={{ padding: '1rem 1.25rem' }}

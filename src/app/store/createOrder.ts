@@ -162,15 +162,14 @@ export const handlePaymentSuccess = async (
     }
 
     // 2. Cập nhật trạng thái đơn hàng
-    const { error: orderError } = await supabase
+    // 2. Cập nhật trạng thái đơn hàng
+    const { data: updateData, error: orderError } = await supabase
         .from("orders")
         .update({ status: 'paid' })
-        .eq("id", orderId);
+        .eq("id", orderId)
+        .select(); // ← thêm .select() để xem data trả về
 
-    if (orderError) {
-        console.error("PAYMENT ERROR:", orderError);
-        return false;
-    }
+    console.log("Update result:", { updateData, orderError });
 
     // 3. Xóa cart items nếu có
     if (cartItems?.length > 0) {

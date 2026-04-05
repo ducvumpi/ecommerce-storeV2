@@ -48,7 +48,6 @@ export default function Navbar() {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
 
       if (!currentUser) {
-        // Guest: đọc từ localStorage
         try {
           const guest = JSON.parse(localStorage.getItem("guest_cart") || "[]");
           const total = guest.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
@@ -61,15 +60,43 @@ export default function Navbar() {
         .from("cart").select("id").eq("user_id", currentUser.id).single();
       if (!cartData) return;
 
+      // Load lần đầu
       const { data } = await supabase
         .from("cart_items").select("quantity").eq("cart_id", cartData.id);
       if (data) {
         const total = data.reduce((sum, item) => sum + (item.quantity || 1), 0);
         setCartCount(total);
       }
+
+      // ✅ Realtime: lắng nghe thay đổi cart_items
+      const channel = supabase
+        .channel(`cart_items_${cartData.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*", // INSERT, UPDATE, DELETE
+            schema: "public",
+            table: "cart_items",
+            filter: `cart_id=eq.${cartData.id}`,
+          },
+          async () => {
+            // Re-fetch khi có thay đổi
+            const { data: updated } = await supabase
+              .from("cart_items").select("quantity").eq("cart_id", cartData.id);
+            if (updated) {
+              const total = updated.reduce((sum, item) => sum + (item.quantity || 1), 0);
+              setCartCount(total);
+            }
+          }
+        )
+        .subscribe();
+
+      // Cleanup khi unmount
+      return () => { supabase.removeChannel(channel); };
     }
+
     fetchCartCount();
-  }, [user]); // re-fetch khi user thay đổi
+  }, [user]);
   const handleLogOut = async () => {
     setDropdownOpen(false);
     setMobileOpen(false);

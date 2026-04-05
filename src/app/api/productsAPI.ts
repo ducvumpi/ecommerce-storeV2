@@ -131,8 +131,19 @@ export async function deleteCartItems(idCartItems: number) {
     console.error("Lỗi xóa sản phẩm:", error);
     return false;
   }
-  toast.success("Xóa sản phẩm thành công")
   return true;
 }
 
+// ✅ Thêm hàm xóa nhiều item 1 lần
+export async function deleteMultipleCartItems(ids: number[]) {
+  const { error } = await supabase
+    .from("cart_items")
+    .delete()
+    .in("id", ids);
 
+  if (error) {
+    console.error("Lỗi xóa sản phẩm:", error);
+    return false;
+  }
+  return true;
+}
