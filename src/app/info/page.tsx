@@ -24,8 +24,8 @@ export default function AccountProfile() {
       });
 
       setErrors(prev => ({ ...prev, [field]: "" }));
-    } catch (err) {
-      setErrors(prev => ({ ...prev, [field]: err.message }));
+    } catch (error: any) {
+      setErrors(prev => ({ ...prev, [field]: error.message }));
     }
   };
   const profileSchema = yup.object({
