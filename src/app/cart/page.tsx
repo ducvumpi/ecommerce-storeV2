@@ -457,42 +457,47 @@ export default function ShoppingCartUI() {
   }, [currentStep]);
   const handlePlaceOrder = async () => {
     if (!orderId) { alert("Không tìm thấy đơn hàng"); return; }
+    if (isSubmitting) return;          // ← thêm guard
+    setIsSubmitting(true);             // ← lock button
 
-    if (paymentMethod === 'vnpay') {
-      // Redirect sang VNPay, không xử lý thêm ở đây
-      // Kết quả sẽ được xử lý ở /vnpay-return và IPN
-      const res = await fetch('/api/payment/vnpay', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId,
-          amount: calculation,
-          orderInfo: `Thanh toan don hang ${orderId}`,
-        }),
-      });
+    try {
+      if (paymentMethod === 'vnpay') {
+        const res = await fetch('/api/payment/vnpay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId,
+            amount: calculation,
+            orderInfo: `Thanh toan don hang ${orderId}`,
+          }),
+        });
 
-      if (!res.ok) { alert("Không thể tạo link thanh toán, vui lòng thử lại"); return; }
+        if (!res.ok) { alert("Không thể tạo link thanh toán, vui lòng thử lại"); return; }
 
-      const { paymentUrl } = await res.json();
-      window.location.href = paymentUrl;
-      return; // dừng tại đây, không chạy code bên dưới
+        const { paymentUrl } = await res.json();
+        window.location.href = paymentUrl;
+        return;
+      }
+
+      // COD / bank
+      const success = await handlePaymentSuccess(orderId, selectedCartItems);
+      if (!success) { alert("Đặt hàng thất bại, vui lòng thử lại"); return; }
+
+      setOrderSuccess(true);
+      setTimeout(() => {
+        setOrderSuccess(false);
+        setCurrentStep(1);
+        setCartItems([]);
+        setCustomerInfo({ fullName: "", email: "", phone: "", address: "", city: "", ward: "", note: "", totalAmount: 0 });
+        setAppliedCoupon(null);
+        setCouponCode("");
+        setOrderId(null);
+        localStorage.removeItem("order_id");
+      }, 3000);
+
+    } finally {
+      setIsSubmitting(false);          // ← luôn unlock
     }
-
-    // COD / bank — giữ nguyên flow cũ
-    const success = await handlePaymentSuccess(orderId, selectedCartItems);
-    if (!success) { alert("Đặt hàng thất bại, vui lòng thử lại"); return; }
-
-    setOrderSuccess(true);
-    setTimeout(() => {
-      setOrderSuccess(false);
-      setCurrentStep(1);
-      setCartItems([]);
-      setCustomerInfo({ fullName: "", email: "", phone: "", address: "", city: "", ward: "", note: "", totalAmount: 0 });
-      setAppliedCoupon(null);
-      setCouponCode("");
-      setOrderId(null);
-      localStorage.removeItem("order_id");
-    }, 3000);
   };
 
   const removeSelectedItems = async () => {
@@ -1454,8 +1459,12 @@ export default function ShoppingCartUI() {
                   <button onClick={() => setCurrentStep(2)} className="btn-ghost" style={{ flex: 1, padding: '12px' }}>
                     ← Quay lại
                   </button>
-                  <button onClick={handlePlaceOrder} className="btn-primary" style={{ flex: 2, padding: '12px', background: 'linear-gradient(135deg, #6a8f50 0%, #4e6e38 100%)', boxShadow: '0 4px 14px rgba(80,120,50,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    <Check size={18} /> Đặt hàng ngay
+                  <button
+                    onClick={handlePlaceOrder}
+                    disabled={isSubmitting}             // ← thêm
+                    className="btn-primary"
+                    style={{ flex: 2, padding: '12px', background: 'linear-gradient(135deg, #6a8f50 0%, #4e6e38 100%)', boxShadow: '0 4px 14px rgba(80,120,50,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    {isSubmitting ? 'Đang xử lý...' : <><Check size={18} /> Đặt hàng ngay</>}
                   </button>
                 </div>
               </div>

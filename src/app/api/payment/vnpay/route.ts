@@ -4,7 +4,7 @@ import { VNPay, ProductCode, VnpLocale } from 'vnpay';
 const vnpay = new VNPay({
     tmnCode: process.env.VNPAY_TMN_CODE!,
     secureSecret: process.env.VNPAY_SECURE_SECRET!,
-    vnpayHost: 'https://sandbox.vnpayment.vn', // đổi sang production khi live
+    vnpayHost: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html', // đổi sang production khi live
     testMode: process.env.VNPAY_SANDBOX === 'true',
 });
 
