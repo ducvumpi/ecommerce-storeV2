@@ -258,8 +258,8 @@ export default function AccountProfile() {
     const { name, value } = e.target;
     setCustomerInfo(prev => ({ ...prev, [name]: value }));
   };
-  const getPasswordStrength = (password: any) => {
-    if (!password) return "";
+  const getPasswordStrength = (password: string): { label: string; color: string } | null => {
+    if (!password) return null;
 
     let score = 0;
     if (password.length >= 6) score++;
@@ -1039,13 +1039,13 @@ export default function AccountProfile() {
 
                       </div>
                     ))}
-                    {passwordData.newPassword && (
+                    {getPasswordStrength(passwordData.newPassword) && (
                       <p style={{
                         fontSize: 12,
                         marginTop: 4,
-                        color: getPasswordStrength(passwordData.newPassword).color
+                        color: getPasswordStrength(passwordData.newPassword)!.color
                       }}>
-                        Độ mạnh: {getPasswordStrength(passwordData.newPassword).label}
+                        Độ mạnh: {getPasswordStrength(passwordData.newPassword)!.label}
                       </p>
                     )}
                     <button
