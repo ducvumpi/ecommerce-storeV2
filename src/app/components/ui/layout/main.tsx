@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { ChevronRight, ArrowRight, Leaf } from 'lucide-react';
+import { useEffect, useState, useRef } from "react";
+import { ChevronRight, ChevronLeft, ArrowRight, Leaf } from 'lucide-react';
 import { fetchCollections, Collection } from "@/app/api/collections";
 import { Clothes } from "@/app/api/productsAPI";
 import { supabase } from "@/app/libs/supabaseClient";
@@ -9,10 +9,87 @@ import Link from "next/link";
 
 type ClothesWithColors = Clothes & { colors?: string[] };
 
+interface HeroSlide {
+  id: string | number;
+  image: string;
+  label?: string;
+  title?: string;
+  subtitle?: string;
+  tag?: string;
+}
+
 export default function Main() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [menProducts, setMenProducts] = useState<ClothesWithColors[]>([]);
   const [womenProducts, setWomenProducts] = useState<ClothesWithColors[]>([]);
+
+  // ── Hero slideshow state ──
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [heroCurrent, setHeroCurrent] = useState(0);
+  const [heroTransitioning, setHeroTransitioning] = useState(false);
+  const heroIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Load hero slides from collections ──
+  useEffect(() => {
+    async function loadHeroSlides() {
+      try {
+        const { data, error } = await supabase
+          .from("collections")
+          .select("id, name, description, image, tag")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (!error && data && data.length > 0) {
+          setHeroSlides(data.map((c: any) => ({
+            id: c.id,
+            image: c.image,
+            label: c.tag ?? "Bộ Sưu Tập Mới",
+            title: c.name,
+            subtitle: c.description,
+            tag: c.tag,
+          })));
+          return;
+        }
+        // Fallback: dùng ảnh products nếu collections rỗng
+        const { data: prods } = await supabase
+          .from("products")
+          .select("id, name, description, image_url")
+          .limit(5);
+        if (prods && prods.length > 0) {
+          setHeroSlides(prods.map((p: any) => ({
+            id: p.id,
+            image: p.image_url,
+            label: "Sản Phẩm Nổi Bật",
+            title: p.name,
+            subtitle: p.description,
+          })));
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadHeroSlides();
+  }, []);
+
+  // ── Auto-play hero ──
+  useEffect(() => {
+    if (heroSlides.length < 2) return;
+    heroIntervalRef.current = setInterval(() => heroGoTo("next"), 5000);
+    return () => { if (heroIntervalRef.current) clearInterval(heroIntervalRef.current); };
+  }, [heroSlides.length, heroCurrent]);
+
+  function heroGoTo(dir: "next" | "prev" | number) {
+    if (heroTransitioning || heroSlides.length < 2) return;
+    setHeroTransitioning(true);
+    const total = heroSlides.length;
+    let next: number;
+    if (dir === "next") next = (heroCurrent + 1) % total;
+    else if (dir === "prev") next = (heroCurrent - 1 + total) % total;
+    else next = dir as number;
+    setTimeout(() => { setHeroCurrent(next); setHeroTransitioning(false); }, 650);
+    if (heroIntervalRef.current) {
+      clearInterval(heroIntervalRef.current);
+      heroIntervalRef.current = setInterval(() => heroGoTo("next"), 5000);
+    }
+  }
 
   useEffect(() => {
     async function loadProducts() {
@@ -59,31 +136,29 @@ export default function Main() {
   const fmtPrice = (p: number) =>
     p ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p) : '';
 
+  const currentSlide = heroSlides[heroCurrent];
+
   return (
     <>
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Be+Vietnam+Pro:wght@300;400;500;600&display=swap');
 
         :root {
-          --w:   #FDFAF6;   /* warm white – nền tổng */
-          --c:   #F3EDE3;   /* cream – nền section phụ */
-          --li:  #E6DACE;   /* linen – border, divider */
-          --sa:  #C9B99A;   /* sand – icon nhạt, placeholder */
-          --cl:  #8C6D52;   /* clay – accent chính */
-          --bk:  #5C3D28;   /* bark – text heading, button */
-          --ea:  #2E1E12;   /* earth – text đậm, footer */
-          --sg:  #7A8C70;   /* sage – accent xanh rêu */
+          --w:   #FDFAF6;
+          --c:   #F3EDE3;
+          --li:  #E6DACE;
+          --sa:  #C9B99A;
+          --cl:  #8C6D52;
+          --bk:  #5C3D28;
+          --ea:  #2E1E12;
+          --sg:  #7A8C70;
         }
 
         *, *::before, *::after { box-sizing: border-box; }
-
         .f-display { font-family: 'Gowun Batang', serif; }
         .f-body    { font-family: 'Be Vietnam Pro', Lora, serif; }
-
-        /* Smooth scroll */
         html { scroll-behavior: smooth; }
 
-        /* ── Animations ── */
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(24px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -92,6 +167,19 @@ export default function Main() {
           from { opacity: 0; transform: scale(0.96); }
           to   { opacity: 1; transform: scale(1); }
         }
+        @keyframes heroImgIn {
+          from { opacity: 0; transform: scale(1.06); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes heroTxtUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes heroProgress {
+          from { width: 0%; }
+          to   { width: 100%; }
+        }
+
         .anim-up   { animation: fadeUp  0.7s cubic-bezier(.22,.68,0,1.2) both; }
         .anim-in   { animation: scaleIn 0.6s cubic-bezier(.22,.68,0,1.2) both; }
         .delay-1   { animation-delay: .1s; }
@@ -99,29 +187,40 @@ export default function Main() {
         .delay-3   { animation-delay: .3s; }
         .delay-4   { animation-delay: .4s; }
 
-        /* ── Card ── */
+        .hero-img-enter  { animation: heroImgIn 1s cubic-bezier(.25,.46,.45,.94) both; }
+        .hero-txt-0 { animation: heroTxtUp .7s cubic-bezier(.22,.68,0,1.2) both; animation-delay: .05s; }
+        .hero-txt-1 { animation: heroTxtUp .7s cubic-bezier(.22,.68,0,1.2) both; animation-delay: .18s; }
+        .hero-txt-2 { animation: heroTxtUp .7s cubic-bezier(.22,.68,0,1.2) both; animation-delay: .30s; }
+        .hero-txt-3 { animation: heroTxtUp .7s cubic-bezier(.22,.68,0,1.2) both; animation-delay: .44s; }
+
+        .hero-dot {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: rgba(255,255,255,.35); border: none; cursor: pointer; padding: 0;
+          transition: all .35s ease;
+        }
+        .hero-dot.active { width: 24px; border-radius: 4px; background: white; }
+
+        .hero-nav {
+          width: 38px; height: 38px; border-radius: 50%;
+          background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.22);
+          color: white; display: flex; align-items: center; justify-content: center;
+          cursor: pointer; backdrop-filter: blur(8px); transition: all .25s;
+        }
+        .hero-nav:hover { background: rgba(255,255,255,.28); transform: scale(1.1); }
+
         .card {
-          background: white;
-          border-radius: 16px;
-          overflow: hidden;
+          background: white; border-radius: 16px; overflow: hidden;
           border: 1px solid var(--li);
           transition: transform .4s cubic-bezier(.25,.46,.45,.94), box-shadow .4s ease;
         }
-        .card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 16px 48px rgba(92,61,40,.12);
-        }
-        .card .img-wrap {
-          overflow: hidden;
-          position: relative;
-        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 16px 48px rgba(92,61,40,.12); }
+        .card .img-wrap { overflow: hidden; position: relative; }
         .card .img-wrap img {
           width: 100%; height: 100%; object-fit: cover;
           transition: transform .7s cubic-bezier(.25,.46,.45,.94);
         }
         .card:hover .img-wrap img { transform: scale(1.07); }
 
-        /* Quick-add overlay */
         .quick-overlay {
           position: absolute; inset: 0;
           background: rgba(46,30,18,.18);
@@ -130,15 +229,13 @@ export default function Main() {
         }
         .card:hover .quick-overlay { opacity: 1; }
 
-        /* ── Buttons ── */
         .btn-solid {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 11px 28px; border-radius: 8px;
           background: var(--bk); color: var(--w);
           font-family: 'Be Vietnam Pro', Lora, serif;
           font-size: 13px; font-weight: 500; letter-spacing: .5px;
-          border: none; cursor: pointer;
-          transition: background .25s, transform .2s;
+          border: none; cursor: pointer; transition: background .25s, transform .2s;
         }
         .btn-solid:hover { background: var(--ea); transform: translateY(-1px); }
 
@@ -148,24 +245,18 @@ export default function Main() {
           background: transparent; color: var(--bk);
           font-family: 'Be Vietnam Pro', Lora, serif;
           font-size: 13px; font-weight: 500;
-          border: 1.5px solid var(--li); cursor: pointer;
-          transition: all .25s;
+          border: 1.5px solid var(--li); cursor: pointer; transition: all .25s;
         }
-        .btn-ghost:hover {
-          background: var(--bk); color: var(--w);
-          border-color: var(--bk); transform: translateY(-1px);
-        }
+        .btn-ghost:hover { background: var(--bk); color: var(--w); border-color: var(--bk); transform: translateY(-1px); }
 
         .btn-mini {
           padding: 7px 16px; border-radius: 6px; border: 1.5px solid var(--li);
           background: transparent; color: var(--cl);
           font-family: 'Be Vietnam Pro', Lora, serif;
-          font-size: 11px; font-weight: 500; cursor: pointer;
-          transition: all .2s;
+          font-size: 11px; font-weight: 500; cursor: pointer; transition: all .2s;
         }
         .btn-mini:hover { background: var(--bk); color: white; border-color: var(--bk); }
 
-        /* Quick-add btn inside overlay */
         .btn-quick {
           padding: 10px 22px; border-radius: 8px;
           background: var(--w); color: var(--ea);
@@ -175,12 +266,10 @@ export default function Main() {
         }
         .btn-quick:hover { background: var(--c); }
 
-        /* ── Section label ── */
         .s-label {
           font-family: 'Be Vietnam Pro', Lora, serif;
           font-size: 10.5px; font-weight: 600;
-          letter-spacing: 3px; text-transform: uppercase;
-          color: var(--cl);
+          letter-spacing: 3px; text-transform: uppercase; color: var(--cl);
         }
         .s-divider {
           width: 36px; height: 1.5px;
@@ -197,22 +286,10 @@ export default function Main() {
           font-size: 14px; color: #9a8878; line-height: 1.75;
           max-width: 480px; margin: 0 auto;
         }
+        .p-name { font-family: 'Gowun Batang', serif; font-size: 16px; color: var(--ea); line-height: 1.3; }
+        .p-desc { font-family: 'Be Vietnam Pro', Lora, serif; font-size: 12.5px; color: #9a8878; line-height: 1.6; }
+        .p-price { font-family: 'Gowun Batang', serif; font-size: 17px; color: var(--bk); font-weight: 700; }
 
-        /* ── Product card text ── */
-        .p-name {
-          font-family: 'Gowun Batang', serif;
-          font-size: 16px; color: var(--ea); line-height: 1.3;
-        }
-        .p-desc {
-          font-family: 'Be Vietnam Pro', Lora, serif;
-          font-size: 12.5px; color: #9a8878; line-height: 1.6;
-        }
-        .p-price {
-          font-family: 'Gowun Batang', serif;
-          font-size: 17px; color: var(--bk); font-weight: 700;
-        }
-
-        /* ── Collection card ── */
         .coll-card {
           border-radius: 18px; overflow: hidden; position: relative; cursor: pointer;
           transition: transform .4s cubic-bezier(.25,.46,.45,.94), box-shadow .4s ease;
@@ -224,25 +301,18 @@ export default function Main() {
         }
         .coll-card:hover img { transform: scale(1.06); }
 
-        /* ── Tag badge ── */
         .badge {
-          display: inline-block;
-          padding: 3px 10px; border-radius: 4px;
+          display: inline-block; padding: 3px 10px; border-radius: 4px;
           font-family: 'Be Vietnam Pro', Lora, serif;
-          font-size: 10px; font-weight: 600; letter-spacing: 1px;
-          text-transform: uppercase;
+          font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
         }
-
-        /* ── Color chip ── */
         .chip {
-          display: inline-block;
-          padding: 3px 9px; border-radius: 4px;
+          display: inline-block; padding: 3px 9px; border-radius: 4px;
           font-family: 'Be Vietnam Pro', Lora, serif;
           font-size: 10.5px; color: var(--cl);
           background: var(--c); border: 1px solid var(--li);
         }
 
-        /* ── Newsletter ── */
         .nl-input {
           flex: 1; padding: 12px 18px; border-radius: 8px;
           background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2);
@@ -252,7 +322,6 @@ export default function Main() {
         .nl-input::placeholder { color: rgba(255,255,255,.4); }
         .nl-input:focus { border-color: rgba(255,255,255,.5); }
 
-        /* ── Scrollbar ── */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--c); }
         ::-webkit-scrollbar-thumb { background: var(--sa); border-radius: 3px; }
@@ -262,60 +331,152 @@ export default function Main() {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
           {/* ════════════════════════════════════════════════
-              HERO
+              HERO — Dynamic slideshow từ DB
           ════════════════════════════════════════════════ */}
           <section className="relative rounded-3xl overflow-hidden mb-24 anim-in" style={{ minHeight: 600 }}>
-            <Image
-              width={1400} height={700}
-              src="https://cdn.brvn.vn/editor_news/2012/09/hinhanhdong5-ID367.gif"
-              alt="Hero"
-              className="absolute inset-0 w-full h-full object-cover"
-              priority
-            />
-            {/* Multi-stop overlay — warm left, clear right */}
-            <div className="absolute inset-0"
-              style={{ background: 'linear-gradient(120deg, rgba(46,30,18,.72) 0%, rgba(46,30,18,.38) 55%, rgba(46,30,18,.08) 100%)' }} />
 
-            {/* Decorative bottom fade */}
-            <div className="absolute bottom-0 left-0 right-0 h-32"
-              style={{ background: 'linear-gradient(to top, rgba(46,30,18,.4), transparent)' }} />
+            {/* Skeleton khi chưa load xong */}
+            {heroSlides.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center"
+                style={{ background: 'var(--c)' }}>
+                <span className="f-body text-xs tracking-[3px] uppercase" style={{ color: 'var(--sa)' }}>
+                  <Image
+                    width={1400} height={700}
+                    src="https://cdn.brvn.vn/editor_news/2012/09/hinhanhdong5-ID367.gif"
+                    alt="Hero"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    priority
+                  />
+                </span>
+              </div>
+            )}
 
-            <div className="relative z-10 min-h-[600px] flex flex-col justify-between p-8 md:p-14 text-white">
+            {/* ── Stack các slide, cross-fade ── */}
+            {heroSlides.map((slide, i) => (
+              <div
+                key={slide.id}
+                className="absolute inset-0"
+                style={{
+                  opacity: i === heroCurrent ? 1 : 0,
+                  transition: 'opacity 0.7s cubic-bezier(.25,.46,.45,.94)',
+                  zIndex: i === heroCurrent ? 1 : 0,
+                }}
+              >
+                <img
+                  src={slide.image}
+                  alt={slide.title ?? "Hero"}
+                  /* key thay đổi → re-mount → trigger lại animation ken-burns */
+                  key={i === heroCurrent ? `active-${slide.id}` : slide.id}
+                  className={i === heroCurrent ? "hero-img-enter" : ""}
+                  style={{
+                    position: 'absolute', inset: 0,
+                    width: '100%', height: '100%', objectFit: 'cover',
+                  }}
+                />
+              </div>
+            ))}
+
+            {/* Overlays */}
+            <div className="absolute inset-0" style={{
+              background: 'linear-gradient(120deg, rgba(46,30,18,.72) 0%, rgba(46,30,18,.38) 55%, rgba(46,30,18,.08) 100%)',
+              zIndex: 2,
+            }} />
+            <div className="absolute bottom-0 left-0 right-0 h-32" style={{
+              background: 'linear-gradient(to top, rgba(46,30,18,.4), transparent)',
+              zIndex: 2,
+            }} />
+
+            {/* Content — re-animate mỗi lần đổi slide nhờ key */}
+            <div className="relative min-h-[600px] flex flex-col justify-between p-8 md:p-14 text-white"
+              style={{ zIndex: 3 }}>
+
               {/* Top row */}
               <div className="flex items-center justify-between">
                 <span className="f-body text-[11px] tracking-[3px] uppercase opacity-60">
                   Slow Living · Natural Wear
                 </span>
-                <span className="badge" style={{ background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.9)', backdropFilter: 'blur(8px)' }}>
-                  2024 Collection
-                </span>
+                {currentSlide?.tag && (
+                  <span className="badge" style={{
+                    background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.9)', backdropFilter: 'blur(8px)'
+                  }}>
+                    {currentSlide.tag}
+                  </span>
+                )}
               </div>
 
-              {/* Bottom content */}
-              <div className="max-w-lg">
-                <p className="f-body text-xs tracking-[4px] uppercase mb-4 opacity-70">Bộ Sưu Tập Mới</p>
-                <h1 className="f-display mb-5 hero-text-shadow"
-                  style={{ fontSize: 'clamp(44px,7vw,80px)', fontWeight: 400, lineHeight: 1.08, letterSpacing: '-0.5px' }}>
-                  Tiệm<br />Mùa Chậm
-                </h1>
-                <p className="f-body mb-8 opacity-80"
-                  style={{ fontSize: 15, fontWeight: 300, lineHeight: 1.75, maxWidth: 340 }}>
-                  Dừng lại giữa cuộc sống vội vàng — mặc thứ bạn thực sự yêu thích.
+              {/* Bottom text — key đổi theo slide để re-trigger animation */}
+              <div className="max-w-lg" key={`hero-txt-${heroCurrent}`}>
+                <p className="f-body text-xs tracking-[4px] uppercase mb-4 opacity-70 hero-txt-0">
+                  {currentSlide?.label ?? "Bộ Sưu Tập Mới"}
                 </p>
-                <div className="flex gap-3 flex-wrap">
-                  <a href="/collections"
-                    className="btn-solid"
+                <h1 className="f-display mb-5 hero-txt-1"
+                  style={{ fontSize: 'clamp(44px,7vw,80px)', fontWeight: 400, lineHeight: 1.08, letterSpacing: '-0.5px' }}>
+                  {currentSlide?.title
+                    ? (() => {
+                      const words = currentSlide.title.split(" ");
+                      const mid = Math.ceil(words.length / 2);
+                      return <>{words.slice(0, mid).join(" ")}<br />{words.slice(mid).join(" ")}</>;
+                    })()
+                    : <>Tiệm<br />Mùa Chậm</>
+                  }
+                </h1>
+                {currentSlide?.subtitle && (
+                  <p className="f-body mb-8 opacity-80 hero-txt-2"
+                    style={{ fontSize: 15, fontWeight: 300, lineHeight: 1.75, maxWidth: 340 }}>
+                    {currentSlide.subtitle}
+                  </p>
+                )}
+                <div className="flex gap-3 flex-wrap hero-txt-3">
+                  <a href="/collections" className="btn-solid"
                     style={{ background: 'var(--w)', color: 'var(--ea)' }}>
                     Khám Phá Ngay <ArrowRight size={14} />
                   </a>
-                  <a href="#collections"
-                    className="btn-ghost"
+                  <a href="/collections" className="btn-ghost"
                     style={{ color: 'white', borderColor: 'rgba(255,255,255,.4)' }}>
                     Bộ Sưu Tập
                   </a>
                 </div>
               </div>
             </div>
+
+            {/* ── Controls: dots + prev/next (chỉ hiện khi > 1 slide) ── */}
+            {heroSlides.length > 1 && (
+              <div className="absolute bottom-7 right-7 flex items-center gap-4" style={{ zIndex: 4 }}>
+                {/* Dots */}
+                <div className="flex items-center gap-2">
+                  {heroSlides.map((_, i) => (
+                    <button
+                      key={i}
+                      className={`hero-dot ${i === heroCurrent ? 'active' : ''}`}
+                      onClick={() => heroGoTo(i)}
+                      aria-label={`Slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
+                {/* Prev / Next */}
+                <div className="flex gap-2">
+                  <button className="hero-nav" onClick={() => heroGoTo("prev")} aria-label="Previous">
+                    <ChevronLeft size={15} />
+                  </button>
+                  <button className="hero-nav" onClick={() => heroGoTo("next")} aria-label="Next">
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── Progress bar ── */}
+            {heroSlides.length > 1 && (
+              <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 4, height: 2, background: 'rgba(255,255,255,.08)' }}>
+                <div
+                  key={`prog-${heroCurrent}`}
+                  style={{
+                    height: '100%', background: 'var(--cl)',
+                    animation: 'heroProgress 5s linear forwards',
+                  }}
+                />
+              </div>
+            )}
           </section>
 
           {/* ════════════════════════════════════════════════
@@ -331,7 +492,6 @@ export default function Main() {
 
             {collections.length >= 3 && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 anim-up">
-                {/* Featured — large left */}
                 <div className="md:col-span-7 coll-card" style={{ height: 520 }}>
                   <img src={collections[0].image} alt={collections[0].name} className="absolute inset-0" />
                   <div className="absolute inset-0"
@@ -350,10 +510,8 @@ export default function Main() {
                     </a>
                   </div>
                 </div>
-
-                {/* Two stacked right */}
                 <div className="md:col-span-5 flex flex-col gap-5">
-                  {collections.slice(1, 3).map((col, i) => (
+                  {collections.slice(1, 3).map((col) => (
                     <div key={col.id} className="coll-card flex-1" style={{ height: 248 }}>
                       <img src={col.image} alt={col.name} className="absolute inset-0" />
                       <div className="absolute inset-0"
@@ -403,22 +561,18 @@ export default function Main() {
                 Tối giản, tinh tế, thoải mái. Dành cho những người đàn ông sống chậm và trân trọng từng khoảnh khắc.
               </p>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {menProducts.length >= 4 && menProducts.slice(0, 4).map((p, i) => (
                 <div key={p.id} className={`card anim-up delay-${i + 1}`}>
                   <div className="img-wrap" style={{ height: 300 }}>
                     <img src={p.image_url} alt={p.name} />
-                    {/* Material badge */}
                     <div className="absolute top-3 left-3">
                       <span className="badge" style={{ background: 'rgba(253,250,246,.92)', color: 'var(--bk)', backdropFilter: 'blur(4px)' }}>
                         {p.material}
                       </span>
                     </div>
                     <div className="quick-overlay">
-                      <button className="btn-quick" onClick={() => alert(`Đã thêm ${p.name}`)}>
-                        + Thêm vào giỏ
-                      </button>
+                      <button className="btn-quick" onClick={() => alert(`Đã thêm ${p.name}`)}>+ Thêm vào giỏ</button>
                     </div>
                   </div>
                   <div className="p-5">
@@ -432,11 +586,8 @@ export default function Main() {
                 </div>
               ))}
             </div>
-
             <div className="text-center mt-12">
-              <a href="/men" className="btn-ghost">
-                Xem tất cả sản phẩm nam <ArrowRight size={14} />
-              </a>
+              <a href="/men" className="btn-ghost">Xem tất cả sản phẩm nam <ArrowRight size={14} /></a>
             </div>
           </section>
 
@@ -444,10 +595,8 @@ export default function Main() {
               WOMEN
           ════════════════════════════════════════════════ */}
           <section id="women" className="mb-24">
-            {/* Soft warm strip wrapper */}
             <div className="rounded-3xl px-6 py-16 md:px-12"
               style={{ background: 'linear-gradient(135deg, var(--c) 0%, #f9f4ed 100%)', border: '1px solid var(--li)' }}>
-
               <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
                 <div>
                   <p className="s-label mb-2">For Her</p>
@@ -457,7 +606,6 @@ export default function Main() {
                   Nữ tính, tự do, nhẹ nhàng. Lời tri ân đến vẻ đẹp tự nhiên của người phụ nữ hiện đại.
                 </p>
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 {womenProducts.length >= 4 && womenProducts.slice(0, 4).map((p, i) => (
                   <div key={p.id} className={`card anim-up delay-${i + 1}`}>
@@ -469,9 +617,7 @@ export default function Main() {
                         </span>
                       </div>
                       <div className="quick-overlay">
-                        <button className="btn-quick" onClick={() => alert(`Đã thêm ${p.name}`)}>
-                          + Thêm vào giỏ
-                        </button>
+                        <button className="btn-quick" onClick={() => alert(`Đã thêm ${p.name}`)}>+ Thêm vào giỏ</button>
                       </div>
                     </div>
                     <div className="p-5">
@@ -492,11 +638,8 @@ export default function Main() {
                   </div>
                 ))}
               </div>
-
               <div className="text-center mt-12">
-                <a href="/women" className="btn-ghost">
-                  Xem tất cả sản phẩm nữ <ArrowRight size={14} />
-                </a>
+                <a href="/women" className="btn-ghost">Xem tất cả sản phẩm nữ <ArrowRight size={14} /></a>
               </div>
             </div>
           </section>
@@ -506,12 +649,10 @@ export default function Main() {
           ════════════════════════════════════════════════ */}
           <section className="rounded-3xl p-10 md:p-16 mb-10 relative overflow-hidden"
             style={{ background: 'var(--ea)' }}>
-            {/* Glow blobs */}
             <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full pointer-events-none"
               style={{ background: 'radial-gradient(circle, rgba(140,109,82,.22) 0%, transparent 70%)' }} />
             <div className="absolute -bottom-10 left-10 w-48 h-48 rounded-full pointer-events-none"
               style={{ background: 'radial-gradient(circle, rgba(122,140,112,.12) 0%, transparent 70%)' }} />
-
             <div className="max-w-xl mx-auto text-center relative z-10">
               <p className="s-label mb-3" style={{ color: 'var(--sa)' }}>Newsletter</p>
               <div className="s-divider mb-6" style={{ background: 'rgba(255,255,255,.15)' }} />

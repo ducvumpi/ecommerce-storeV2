@@ -6,6 +6,15 @@ import Navbar from "../app/components/ui/layout/navbar";
 import { Toaster } from "react-hot-toast";
 import ChatAI from "./chatbox/chatbox";
 import { AuthProvider } from "./AuthProvider";
+
+import { Be_Vietnam_Pro } from 'next/font/google';
+
+const beVietnam = Be_Vietnam_Pro({
+  subsets: ['vietnamese'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap', // 👈 tránh FOIT
+});
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="vi" className={beVietnam.className}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

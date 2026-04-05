@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { Collection } from "../api/collections";
+import { Collection } from "../../../api/collections";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 function formatImageUrl(url: string) {

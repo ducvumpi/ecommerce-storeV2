@@ -1,4 +1,4 @@
-import CollectionList from "./CollectionList";
+import CollectionList from "../components/ui/collections/CollectionList";
 import { fetchCollections } from "../api/collections";
 
 export default async function CollectionsPage() {

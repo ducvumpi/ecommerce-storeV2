@@ -332,7 +332,7 @@ export default function ShoppingCartUI() {
     ward: '',
     note: ''
   });
-
+  const [addressLoading, setAddressLoading] = useState(true); // 👈 thêm
   const [openDeleteAll, setOpenDeleteAll] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -417,11 +417,71 @@ export default function ShoppingCartUI() {
       setCurrentStep(2);
     }
   }, [searchParams, cartItems, loading]);
+  useEffect(() => {
+    if (currentStep !== 2) return;
+    setAddressLoading(true); // 👈 bắt đầu load
+    const loadSavedAddresses = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setAddressLoading(false); return; }
+      const { data } = await supabase
+        .from('addresses')
+        .select(`
+        *,
+        commune:communes!fk_addresses_ward (
+          code, name,
+          province:provinces!fk_communes_province (code, name)
+        )
+      `)
+        .eq('user_id', user.id);
 
+      if (data?.length) {
+        setSavedAddresses(data);
+        const def = data.find((a: any) => a.is_default) || data[0];
+        if (def) {
+          setSelectedAddressId(def.id);
+          skipWardReset.current = true;
+          setCustomerInfo(prev => ({
+            ...prev,
+            fullName: def.full_name || prev.fullName,
+            email: def.mail || prev.email,
+            phone: def.phone || prev.phone,
+            address: def.address_line || '',
+            city: def.city || '',
+            ward: def.ward || '',
+          }));
+        }
+      }
+      setAddressLoading(false); // 👈 xong
+    };
+    loadSavedAddresses();
+  }, [currentStep]);
   const handlePlaceOrder = async () => {
     if (!orderId) { alert("Không tìm thấy đơn hàng"); return; }
+
+    if (paymentMethod === 'vnpay') {
+      // Redirect sang VNPay, không xử lý thêm ở đây
+      // Kết quả sẽ được xử lý ở /vnpay-return và IPN
+      const res = await fetch('/api/payment/vnpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          amount: calculation,
+          orderInfo: `Thanh toan don hang ${orderId}`,
+        }),
+      });
+
+      if (!res.ok) { alert("Không thể tạo link thanh toán, vui lòng thử lại"); return; }
+
+      const { paymentUrl } = await res.json();
+      window.location.href = paymentUrl;
+      return; // dừng tại đây, không chạy code bên dưới
+    }
+
+    // COD / bank — giữ nguyên flow cũ
     const success = await handlePaymentSuccess(orderId, selectedCartItems);
     if (!success) { alert("Đặt hàng thất bại, vui lòng thử lại"); return; }
+
     setOrderSuccess(true);
     setTimeout(() => {
       setOrderSuccess(false);
@@ -475,18 +535,17 @@ export default function ShoppingCartUI() {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, email, phone, address, city, ward")
+        .select("first_name, last_name, email, phone, address_id")
         .eq("id", user.id)
         .single();
       if (data) {
         setCustomerInfo(prev => ({
           ...prev,
-          fullName: data.full_name || "",
+          fullName: `${data.last_name || ""} ${data.first_name || ""}`.trim(),
           email: data.email || user.email || "",
           phone: data.phone || "",
-          address: data.address || "",
-          city: data.city || "",
-          ward: data.ward || "",
+          address: data.address_id || "",
+
         }));
       }
     }
@@ -1140,7 +1199,19 @@ export default function ShoppingCartUI() {
                 </h2>
 
                 {/* ── PHÂN NHÁNH: chưa có địa chỉ → form thẳng | có địa chỉ → 2 tab ── */}
-                {savedAddresses.length === 0 ? (
+                {addressLoading ? (
+                  // Skeleton giữ layout ổn định, không nháy
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1.5rem' }}>
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i} style={{
+                        height: 72, borderRadius: 12,
+                        background: '#f5f0ea', border: '1.5px solid #ede6dc',
+                        animation: 'pulse 1.5s ease-in-out infinite'
+                      }} />
+                    ))}
+                    <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }`}</style>
+                  </div>
+                ) : savedAddresses.length === 0 ? (
                   <CustomerForm
                     customerInfo={customerInfo}
                     handleInputChange={handleInputChange}

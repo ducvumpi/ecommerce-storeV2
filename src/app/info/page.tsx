@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight, Menu } from 'lucide-react';
 import { supabase } from '../libs/supabaseClient';
 import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI';
+import * as yup from "yup";
 
 export default function AccountProfile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -13,16 +14,49 @@ export default function AccountProfile() {
   const [addressData, setAddressData] = useState<Commune[]>([]);
   const [wards, setWards] = useState<Commune[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false); // mobile drawer
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const isInitialLoad = useRef(true);
+  const validateField = async (field: any, value: any) => {
+    try {
+      await profileSchema.validateAt(field, {
+        ...profileData,
+        [field]: value,
+      });
 
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    } catch (err) {
+      setErrors(prev => ({ ...prev, [field]: err.message }));
+    }
+  };
+  const profileSchema = yup.object({
+    last_name: yup.string().required("Vui lòng nhập họ"),
+    first_name: yup.string().required("Vui lòng nhập tên"),
+    email: yup
+      .string()
+      .required("Email không được để trống")
+      .matches(
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}$/,
+        "Email không đúng định dạng (ví dụ: abc@gmail.com)"
+      ),
+
+    phone: yup
+      .string()
+      .matches(/^[0-9]{9,11}$/, "Số điện thoại không hợp lệ"),
+
+    dateOfBirth: yup.string().required("Vui lòng chọn ngày sinh"),
+  });
   const [customerInfo, setCustomerInfo] = useState({
-    fullName: '', email: '', phone: 0, address: '',
+    fullName: '', email: '', phone: "", address: '',
     totalAmount: 0, city: '', ward: '', note: ''
   });
-
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
   const [profileData, setProfileData] = useState({
-    last_name: '', first_name: '', email: '', phone: 0,
-    address: '', bio: '', dateOfBirth: '', gender: 'Nam'
+    last_name: '', first_name: '', email: '', phone: "",
+    address: '', bio: '', dateOfBirth: '31/01/1990', gender: 'Nam'
   });
 
   useEffect(() => {
@@ -67,7 +101,7 @@ export default function AccountProfile() {
         first_name: data?.first_name || "",
         email: data?.email || "",
         phone: data?.phone || 0,
-        address: data?.address || "",
+        gender: data?.gender || "Nam",
         dateOfBirth: data?.date_of_birth || "",
       }));
 
@@ -98,22 +132,42 @@ export default function AccountProfile() {
   };
 
   const handleSaveProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error } = await supabase.from("profiles").upsert({
-      id: user.id,
-      last_name: profileData.last_name,
-      first_name: profileData.first_name,
-      email: profileData.email,
-      phone: profileData.phone,
-      address: profileData.address,
-      city: customerInfo.city,
-      ward: customerInfo.ward,
-      date_of_birth: profileData.dateOfBirth,
-    }, { onConflict: "id" });
-    if (error) { console.error("Error saving profile:", error); alert("Lưu thất bại: " + error.message); return; }
-  };
+    try {
+      await profileSchema.validate(profileData, { abortEarly: false });
 
+      setErrors({}); // clear lỗi
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        last_name: profileData.last_name,
+        first_name: profileData.first_name,
+        email: profileData.email,
+        phone: profileData.phone,
+        gender: profileData.gender,
+        date_of_birth: profileData.dateOfBirth,
+      }, { onConflict: "id" });
+
+      if (error) throw error;
+
+      handleSave();
+
+    } catch (err) {
+      if (err instanceof yup.ValidationError) {
+        const newErrors: Record<string, string> = {};
+        err.inner.forEach(e => {
+          if (e.path) {
+            newErrors[e.path] = e.message;
+          }
+        });
+        setErrors(newErrors);
+      } else {
+        alert((err as Error).message);
+      }
+    }
+  };
   const handleSave = () => {
     setIsEditing(false);
     setShowSuccess(true);
@@ -123,19 +177,100 @@ export default function AccountProfile() {
   const tabs = [
     { id: 'profile', label: 'Cá nhân', icon: User },
     { id: 'security', label: 'Bảo mật', icon: Lock },
+    { id: 'addresses', label: 'Địa chỉ đã lưu', icon: MapPin },
     { id: 'notifications', label: 'Thông báo', icon: Bell },
     { id: 'billing', label: 'Thanh toán', icon: CreditCard },
-    { id: 'addresses', label: 'Địa chỉ', icon: MapPin },
 
   ];
 
   const initials = (profileData.first_name || profileData.last_name || 'U').charAt(0).toUpperCase();
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
 
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const handlePasswordChange = (field: any, value: any) => {
+    setPasswordData(prev => ({ ...prev, [field]: value }));
+  };
+  const handleChangePassword = async () => {
+    setPasswordError("");
+
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      return setPasswordError("Vui lòng nhập đầy đủ thông tin");
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      return setPasswordError("Mật khẩu mới phải >= 6 ký tự");
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      return setPasswordError("Xác nhận mật khẩu không khớp");
+    }
+
+    try {
+      setPasswordLoading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error("Không tìm thấy user");
+
+      // 🔥 Bước quan trọng: verify mật khẩu cũ
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (signInError) {
+        throw new Error("Mật khẩu hiện tại không đúng");
+      }
+
+      // 🔥 Update password
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
+
+      if (error) throw error;
+
+      // 🔥 Logout sau khi đổi mật khẩu
+      await supabase.auth.signOut();
+
+      alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+
+      // redirect (nếu dùng Next.js)
+      window.location.href = "/auth/login";
+
+      setShowSuccess(true);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+
+    } catch (err) {
+      setPasswordError((err as Error).message);
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setCustomerInfo(prev => ({ ...prev, [name]: value }));
   };
+  const getPasswordStrength = (password: any) => {
+    if (!password) return "";
 
+    let score = 0;
+    if (password.length >= 6) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 1) return { label: "Yếu", color: "red" };
+    if (score === 2) return { label: "Trung bình", color: "orange" };
+    return { label: "Mạnh", color: "green" };
+  };
   const SidebarContent = () => (
     <>
       <div className="sidebar-hero">
@@ -696,39 +831,166 @@ export default function AccountProfile() {
                 </div>
 
                 <div className="field-grid">
-                  {[
-                    { label: "Họ", field: "last_name", type: "text", placeholder: "Nguyễn" },
-                    { label: "Tên", field: "first_name", type: "text", placeholder: "Văn A" },
-                    { label: "Email", field: "email", type: "email", placeholder: "email@example.com" },
-                    { label: "Số điện thoại", field: "phone", type: "tel", placeholder: "0912 345 678" },
-                    { label: "Ngày sinh", field: "dateOfBirth", type: "date", placeholder: "" },
-                  ].map(f => (
-                    <div key={f.field}>
-                      <label className="field-label">{f.label}</label>
-                      <input type={f.type} value={(profileData as any)[f.field] || ""} placeholder={f.placeholder}
-                        onChange={e => handleProfileChange(f.field, e.target.value)}
-                        disabled={!isEditing} className="field-input" />
-                    </div>
-                  ))}
+                  {/* Họ */}
+                  <div>
+                    <label className="field-label">Họ</label>
+                    <input
+                      type="text"
+                      value={profileData.last_name || ""}
+                      placeholder="Nhập họ của bạn"
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        handleProfileChange("last_name", val);
+                        await validateField("last_name", val);
+                      }}
+                      disabled={!isEditing}
+                      className="field-input"
+                      style={{
+                        borderColor: isEditing
+                          ? errors.last_name ? "red" : profileData.last_name ? "green" : undefined
+                          : undefined
+                      }}
+                    />
+                    {isEditing && errors.last_name && <p style={{ color: "red", fontSize: 12 }}>❌ {errors.last_name}</p>}
+                    {isEditing && !errors.last_name && profileData.last_name && (
+                      <p style={{ color: "green", fontSize: 12 }}>✅ Hợp lệ</p>
+                    )}
+                  </div>
 
+                  {/* Tên */}
+                  <div>
+                    <label className="field-label">Tên</label>
+                    <input
+                      type="text"
+                      value={profileData.first_name || ""}
+                      placeholder="Nhập tên của bạn"
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        handleProfileChange("first_name", val);
+                        await validateField("first_name", val);
+                      }}
+                      disabled={!isEditing}
+                      className="field-input"
+                      style={{
+                        borderColor: isEditing
+                          ? errors.first_name ? "red" : profileData.first_name ? "green" : undefined
+                          : undefined
+                      }}
+                    />
+                    {isEditing && errors.first_name && <p style={{ color: "red", fontSize: 12 }}>❌ {errors.first_name}</p>}
+                    {isEditing && !errors.first_name && profileData.first_name && (
+                      <p style={{ color: "green", fontSize: 12 }}>✅ Hợp lệ</p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="field-label">Email</label>
+                    <input
+                      type="email"
+                      value={profileData.email || ""}
+                      placeholder="email@example.com"
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        handleProfileChange("email", val);
+                        await validateField("email", val);
+                      }}
+                      disabled={!isEditing}
+                      className="field-input"
+                      style={{
+                        borderColor: isEditing
+                          ? errors.email ? "red" : profileData.email ? "green" : undefined
+                          : undefined
+                      }}
+                    />
+                    {isEditing && errors.email && <p style={{ color: "red", fontSize: 12 }}>❌ {errors.email}</p>}
+                    {isEditing && !errors.email && profileData.email && (
+                      <p style={{ color: "green", fontSize: 12 }}>✅ Hợp lệ</p>
+                    )}
+                  </div>
+
+                  {/* SĐT */}
+                  <div>
+                    <label className="field-label">Số điện thoại</label>
+                    <input
+                      type="tel"
+                      value={profileData.phone || ""}
+                      placeholder=" Nhập số điện thoại của bạn"
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        handleProfileChange("phone", val);
+                        await validateField("phone", val);
+                      }}
+                      disabled={!isEditing}
+                      className="field-input"
+                      style={{
+                        borderColor: isEditing
+                          ? errors.phone ? "red" : profileData.phone ? "green" : undefined
+                          : undefined
+                      }}
+                    />
+                    {isEditing && errors.phone && <p style={{ color: "red", fontSize: 12 }}>❌ {errors.phone}</p>}
+                    {isEditing && !errors.phone && profileData.phone && (
+                      <p style={{ color: "green", fontSize: 12 }}>✅ Hợp lệ</p>
+                    )}
+                  </div>
+
+                  {/* Ngày sinh */}
+                  <div>
+                    <label className="field-label">Ngày sinh</label>
+                    <input
+                      type="date"
+                      value={profileData.dateOfBirth || ""}
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        handleProfileChange("dateOfBirth", val);
+                        await validateField("dateOfBirth", val);
+                      }}
+                      disabled={!isEditing}
+                      className="field-input"
+                      style={{
+                        borderColor: errors.dateOfBirth
+                          ? "red"
+                          : profileData.dateOfBirth
+                            ? "green"
+                            : undefined
+                      }}
+                    />
+                    {isEditing && errors.dateOfBirth && (
+                      <p style={{ color: "red", fontSize: 12 }}>❌ {errors.dateOfBirth}</p>
+                    )}
+                    {isEditing && !errors.dateOfBirth && profileData.dateOfBirth && (
+                      <p style={{ color: "green", fontSize: 12 }}>✅ Hợp lệ</p>
+                    )}
+                  </div>
+
+                  {/* Giới tính */}
                   <div>
                     <label className="field-label">Giới tính</label>
-                    <select value={profileData.gender} onChange={e => handleProfileChange('gender', e.target.value)}
-                      disabled={!isEditing} className="field-input">
-                      <option value="male">Nam</option>
-                      <option value="female">Nữ</option>
-                      <option value="other">Khác</option>
+                    <select
+                      value={profileData.gender}
+                      onChange={e => handleProfileChange("gender", e.target.value)}
+                      disabled={!isEditing}
+                      className="field-input"
+                    >
+                      <option value="Nam">Nam</option>
+                      <option value="Nữ">Nữ</option>
+                      <option value="Khác">Khác</option>
                     </select>
                   </div>
 
-
-
+                  {/* Bio */}
                   <div className="field-full">
                     <label className="field-label">Giới thiệu</label>
-                    <textarea value={profileData.bio} rows={3} placeholder="Vài dòng về bạn..."
-                      onChange={e => handleProfileChange('bio', e.target.value)}
+                    <textarea
+                      value={profileData.bio}
+                      rows={3}
+                      placeholder="Vài dòng về bạn..."
+                      onChange={e => handleProfileChange("bio", e.target.value)}
                       disabled={!isEditing}
-                      className="field-input" style={{ resize: "none", lineHeight: 1.6 }} />
+                      className="field-input"
+                      style={{ resize: "none", lineHeight: 1.6 }}
+                    />
                   </div>
                 </div>
               </div>
@@ -742,14 +1004,56 @@ export default function AccountProfile() {
                 <div className="security-block" style={{ marginBottom: "1.25rem" }}>
                   <p style={{ fontWeight: 600, color: "var(--bd)", marginBottom: "1.25rem", fontSize: "0.95rem" }}>Đổi mật khẩu</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 420 }}>
-                    {["Mật khẩu hiện tại", "Mật khẩu mới", "Xác nhận mật khẩu mới"].map(label => (
-                      <div key={label}>
+                    {([
+                      ["currentPassword", "Mật khẩu hiện tại", "current"],
+                      ["newPassword", "Mật khẩu mới", "new"],
+                      ["confirmPassword", "Xác nhận mật khẩu mới", "confirm"]
+                    ] as [keyof typeof passwordData, string, keyof typeof showPassword][]).map(([field, label, key]) => (
+                      <div key={field} style={{ position: "relative" }}>
                         <label className="field-label">{label}</label>
-                        <input type="password" placeholder="••••••••" className="field-input" />
+
+                        <input
+                          type={showPassword[key] ? "text" : "password"}
+                          placeholder=""
+                          className="field-input"
+                          value={passwordData[field]}
+                          onChange={e => handlePasswordChange(field, e.target.value)}
+                        />
+
+                        {/* icon mắt */}
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(prev => ({ ...prev, [key]: !prev[key] }))}
+                          style={{
+                            position: "absolute",
+                            right: 10,
+                            top: 30,
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "#888"
+                          }}
+                        >
+                          {showPassword[key] ? "🙈" : "👁"}
+                        </button>
+
                       </div>
                     ))}
-                    <button className="btn-primary btn-primary-full" style={{ marginTop: 4, alignSelf: "flex-start" }}>
-                      Cập nhật mật khẩu
+                    {passwordData.newPassword && (
+                      <p style={{
+                        fontSize: 12,
+                        marginTop: 4,
+                        color: getPasswordStrength(passwordData.newPassword).color
+                      }}>
+                        Độ mạnh: {getPasswordStrength(passwordData.newPassword).label}
+                      </p>
+                    )}
+                    <button
+                      className="btn-primary btn-primary-full"
+                      onClick={handleChangePassword}
+                      disabled={passwordLoading}
+                    >
+                      {passwordLoading ? "Đang cập nhật..." : "Cập nhật mật khẩu"}
                     </button>
                   </div>
                 </div>
@@ -770,7 +1074,9 @@ export default function AccountProfile() {
                 </div>
               </div>
             )}
-
+            {passwordError && (
+              <p style={{ color: "red", fontSize: 13 }}>{passwordError}</p>
+            )}
             {/* ───── NOTIFICATIONS ───── */}
             {activeTab === 'notifications' && (
               <div>

@@ -1,6 +1,6 @@
 // app/men/page.tsx
 import { fetchProduct } from "@/app/api/productsAPI";
-import MenList from "./ListMen";
+import MenList from "../components/ui/men/ListMen";
 export default async function MenPage() {
   const clothes = await fetchProduct();
 
