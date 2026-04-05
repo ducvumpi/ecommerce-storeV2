@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { handlePaymentSuccess } from "@/lib/payment"; // sửa đúng đường dẫn
+import { handlePaymentSuccess } from '@/app/store/createOrder';
 
 function PaymentReturnContent() {
     const params = useSearchParams();
