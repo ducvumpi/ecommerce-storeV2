@@ -128,47 +128,6 @@ import { supabase } from "@/app/libs/supabaseClient";
 //     return true;
 // };
 // Khi thanh toán thành công, update status = 'success'
-export const handlePayment = async (
-    orderId: string,
-    cartItems: {
-        id: number;
-        quantity: number;
-        cart: { id: number; user_id: string; };
-        product_variant: {
-            id: string; size: string; color: string; price: number;
-            product: { id: number; name: string; image_url: string; };
-        };
-    }[]
-) => {
-    // Tính tổng tiền từ cartItems
-    const amount = cartItems.reduce((total, item) => {
-        return total + item.product_variant.price * item.quantity;
-    }, 0);
-
-    const orderInfo = `Thanh toan don hang #${orderId}`;
-
-    try {
-        const res = await fetch("/api/payment/create", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount, orderInfo, orderId }),
-        });
-
-        if (!res.ok) {
-            console.error("Tạo URL thanh toán thất bại:", res.statusText);
-            return false;
-        }
-
-        const { paymentUrl } = await res.json();
-        window.location.href = paymentUrl;
-        return true;
-
-    } catch (error) {
-        console.error("HANDLE PAYMENT ERROR:", error);
-        return false;
-    }
-};
-
 export const handlePaymentSuccess = async (
     orderId: string,
     cartItems: {
@@ -181,7 +140,28 @@ export const handlePaymentSuccess = async (
         };
     }[]
 ) => {
-    // 1. Cập nhật trạng thái đơn hàng
+    console.log("handlePaymentSuccess called:", { orderId, cartItems });
+
+    // 1. Kiểm tra order có tồn tại không
+    const { data: existingOrder, error: fetchError } = await supabase
+        .from("orders")
+        .select("id, status")
+        .eq("id", orderId)
+        .single();
+
+    console.log("existing order:", existingOrder, fetchError);
+
+    if (fetchError || !existingOrder) {
+        console.error("Order không tồn tại:", fetchError);
+        return false;
+    }
+
+    if (existingOrder.status === 'paid') {
+        console.warn("Order đã được xử lý rồi");
+        return true; // coi như thành công, không báo lỗi
+    }
+
+    // 2. Cập nhật trạng thái đơn hàng
     const { error: orderError } = await supabase
         .from("orders")
         .update({ status: 'paid' })
@@ -192,29 +172,29 @@ export const handlePaymentSuccess = async (
         return false;
     }
 
-    // 2. Xóa tất cả cart items
-    const cartItemIds = cartItems.map((item) => item.id);
-    const { error: cartItemsError } = await supabase
-        .from("cart_items")
-        .delete()
-        .in("id", cartItemIds);
-
-    if (cartItemsError) {
-        console.error("DELETE CART ITEMS ERROR:", cartItemsError);
-        return false;
-    }
-
-    // 3. Xóa cart
-    const cartId = cartItems[0]?.cart?.id;
-    if (cartId) {
-        const { error: cartError } = await supabase
-            .from("carts")
+    // 3. Xóa cart items nếu có
+    if (cartItems?.length > 0) {
+        const cartItemIds = cartItems.map((item) => item.id);
+        const { error: cartItemsError } = await supabase
+            .from("cart_items")
             .delete()
-            .eq("id", cartId);
+            .in("id", cartItemIds);
 
-        if (cartError) {
-            console.error("DELETE CART ERROR:", cartError);
-            return false;
+        if (cartItemsError) {
+            console.error("DELETE CART ITEMS ERROR:", cartItemsError);
+        }
+
+        // 4. Xóa cart
+        const cartId = cartItems[0]?.cart?.id;
+        if (cartId) {
+            const { error: cartError } = await supabase
+                .from("carts")
+                .delete()
+                .eq("id", cartId);
+
+            if (cartError) {
+                console.error("DELETE CART ERROR:", cartError);
+            }
         }
     }
 
