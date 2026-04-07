@@ -29,7 +29,7 @@ export default function ProductCard({ product }: { product: Clothes }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [getInfo, setGetInFo] = useState<Clothes>();
   const [product_id, setProductId] = useState<number | null>(null);
-  const SIZE_ORDER = ["S", "M", "L", "XL", "XXL"];
+  const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "2XL", "3XL", "4XL", "5XL"];
   const increment = () => setQuantity(prev => prev + 1);
   const decrement = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
   const router = useRouter();
