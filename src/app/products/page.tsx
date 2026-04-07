@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'; // ✅ thêm dòng này lên đầu file
+export const revalidate = 0;
+
 export default function ProductsPage() {
   return (
     <div className="bg-gradient-to-r from-indigo-900 to-purple-800/90 backdrop-blur-md shadow-lg fixed w-full z-50">
