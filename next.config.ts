@@ -3,19 +3,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, max-age=0', // ✅ tắt cache toàn bộ route
-          },
-        ],
-      },
-    ];
-  },
   images: {
     domains: [
       "i.imgur.com",
