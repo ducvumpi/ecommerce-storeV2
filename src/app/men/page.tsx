@@ -1,6 +1,11 @@
 // app/men/page.tsx
 import { fetchProduct } from "@/app/api/productsAPI";
 import MenList from "../components/ui/men/ListMen";
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 export default async function MenPage() {
   const clothes = await fetchProduct();
 
