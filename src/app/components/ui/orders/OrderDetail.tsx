@@ -3,6 +3,7 @@ import { Ban, Truck, CheckCircle, MapPin, Phone, Mail, ShoppingBag, Package } fr
 import { Order } from '@/app/types/order.types';
 import { StatusBadge } from './StatusBadge';
 import { memo } from 'react';
+import { CreditCard } from 'lucide-react'; // thêm vào import lucide
 
 const formatPrice = (v: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v);
@@ -148,6 +149,14 @@ export const OrderDetail = memo(function OrderDetail({ order, progressPct, onCan
                                 <Mail className="text-stone-500" size={12} />
                             </div>
                             <span className="text-sm text-stone-600 truncate">{order.mail}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0">
+                                <CreditCard className="text-stone-500" size={12} />
+                            </div>
+                            <span className="text-sm text-stone-600">
+                                {order.payment_method_icon} {order.payment_method_label ?? 'Không xác định'}
+                            </span>
                         </div>
                     </div>
                 </div>

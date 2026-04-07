@@ -32,4 +32,9 @@ export interface Order {
     mail: string;
     trackingSteps: TrackingStep[];
     status: OrderStatus;
+    // order.types.ts
+    payment_method: string;
+    payment_method_label: string;
+    payment_method_icon: string;
+    payment_method_color: string;
 }

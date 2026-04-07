@@ -470,16 +470,27 @@ export default function ShoppingCartUI() {
     setIsSubmitting(true);
 
     try {
-      if (paymentMethod === 'ipn') {
-        const txnRef = Date.now().toString().slice(-8); // ✅ unique mỗi lần
+      // ✅ Cập nhật payment_method vào đơn hàng trước
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ payment_method: paymentMethod })
+        .eq('id', orderId);
 
-        const res = await fetch('/api/payment/ipn', { // ✅ đúng route
+      if (updateError) {
+        alert("Không thể cập nhật phương thức thanh toán");
+        return;
+      }
+
+      if (paymentMethod === 'ipn') {
+        const txnRef = Date.now().toString().slice(-8);
+
+        const res = await fetch('/api/payment/ipn', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            orderId: txnRef,                                    // ✅ txnRef ngắn, unique
+            orderId: txnRef,
             amount: calculation,
-            orderInfo: `Thanh toan don hang ${orderId}`,        // ✅ orderId thật trong orderInfo
+            orderInfo: `Thanh toan don hang ${orderId}`,
           }),
         });
 
@@ -670,9 +681,9 @@ export default function ShoppingCartUI() {
         p_ward: customerInfo.ward,
         p_mail: customerInfo.email,
         p_selected_items: selectedItems,
-        // Thêm 2 param này — backend dùng address_id có sẵn nếu được truyền
         p_address_id: isUsingSavedAddress ? selectedAddressId : null,
-        p_save_address: !isUsingSavedAddress, // chỉ save khi nhập mới
+        p_save_address: !isUsingSavedAddress,
+        p_payment_method: paymentMethod, // ← thêm dòng này
       });
 
       if (error) throw error;

@@ -65,7 +65,7 @@ export const orderServiceServer = {
             communeMap[c.code] = { name: c.name, provinceName: provinceMap[c.province_code] || '' };
         });
 
-        return (data || []).map((o: any) => {
+        return (data || []).map((o: any): Order => {
             const wardCode = o.addresses?.ward || '';
             const cityCode = o.addresses?.city || '';
             const commune = communeMap[wardCode] || { name: '', provinceName: '' };
@@ -93,7 +93,7 @@ export const orderServiceServer = {
                 ward_name: commune.name,
                 city_name: commune.provinceName || provinceMap[cityCode] || '',
                 total_price: o.total_price ?? items.reduce((s: number, i: any) => s + i.price * i.quantity, 0),
-            };
+            } as Order;
         });
     },
 

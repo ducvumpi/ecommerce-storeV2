@@ -4,6 +4,12 @@ import { Order } from '../types/order.types';
 const fmtDate = (iso: string) =>
     iso ? new Date(iso).toLocaleDateString('vi-VN') : '';
 
+export const PAYMENT_METHOD_LABEL: Record<string, { label: string; icon: string; color: string }> = {
+    cod: { label: 'Thanh toán khi nhận hàng (COD)', icon: '💵', color: '#a07050' },
+    bank: { label: 'Chuyển khoản ngân hàng', icon: '🏦', color: '#5060a0' },
+    ipn: { label: 'Thanh toán qua VNPAY', icon: '💳', color: '#1a6fb0' },
+};
+
 const mkTracking = (status: string) => {
     const steps = [
         { status: 'pending', label: 'Đặt hàng' },
@@ -28,14 +34,14 @@ export async function getOrdersServer(): Promise<Order[]> {
     const { data, error } = await supabase
         .from('orders')
         .select(`
-            id, total_price, created_at, status,
-            addresses(full_name, phone, address_line, mail, ward, city),
-            order_items(quantity, price,
-                product_variants(id, size, color, price,
-                    products(name, image_url)
-                )
-            )
-        `)
+    id, total_price, created_at, status, payment_method,
+    addresses(full_name, phone, address_line, mail, ward, city),
+    order_items(quantity, price,
+        product_variants(id, size, color, price,
+            products(name, image_url)
+        )
+    )
+`)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -77,6 +83,10 @@ export async function getOrdersServer(): Promise<Order[]> {
             size: i.product_variants?.size || '',
         }));
 
+        const pmKey = (o.payment_method || 'cod').toString().trim().toLowerCase();
+        console.log('pmKey:', pmKey, '| found:', !!PAYMENT_METHOD_LABEL[pmKey]);
+        const pmInfo = PAYMENT_METHOD_LABEL[pmKey] ?? PAYMENT_METHOD_LABEL['cod'];
+
         return {
             id: o.id,
             status: o.status,
@@ -91,6 +101,10 @@ export async function getOrdersServer(): Promise<Order[]> {
             ward_name: commune.name,
             city_name: commune.provinceName || provinceMap[cityCode] || '',
             total_price: o.total_price ?? items.reduce((s: number, i: any) => s + i.price * i.quantity, 0),
+            payment_method: pmKey,
+            payment_method_label: pmInfo.label,
+            payment_method_icon: pmInfo.icon,
+            payment_method_color: pmInfo.color,
         };
     });
 }
