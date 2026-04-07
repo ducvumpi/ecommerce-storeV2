@@ -3,6 +3,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    fetchCache: 'force-no-store',
+  },
   images: {
     domains: [
       "i.imgur.com",
