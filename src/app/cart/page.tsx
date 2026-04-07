@@ -624,6 +624,7 @@ export default function ShoppingCartUI() {
         setLoading(false);
         return;
       }
+
       const { data: cartData, error: cartError } = await supabase
         .from('cart').select('id').eq('user_id', user.id).single();
       if (cartError) { setLoading(false); return; }
@@ -639,6 +640,27 @@ export default function ShoppingCartUI() {
       setLoading(false);
     }
     fetchCart();
+    const channel = supabase
+      .channel('cart_items_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cart_items' },
+        () => {
+          fetchCart(); // refetch lại khi có thay đổi
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'product_variants' },
+        () => {
+          fetchCart();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
