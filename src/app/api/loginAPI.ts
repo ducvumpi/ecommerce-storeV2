@@ -138,6 +138,9 @@ export async function addToCart(product_id: number, variantId: string, quantity:
 
   if (!authData?.user) {
     toast.error("Bạn cần đăng nhập");
+    setTimeout(() => {
+      window.location.href = "/auth/login";
+    }, 800);
     return;
   }
 

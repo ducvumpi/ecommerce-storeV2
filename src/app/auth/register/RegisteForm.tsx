@@ -4,6 +4,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { SignupForm, SignUpSchema } from "../../api/loginAPI";
 import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
+import { useCaptcha } from "@/app/hooks/useCaptcha";
 
 const inputStyle = (hasError?: boolean): React.CSSProperties => ({
     height: 42, padding: "0 14px",
@@ -20,16 +21,18 @@ const errStyle: React.CSSProperties = { fontSize: 11, color: "#c07050", margin: 
 
 export default function RegisterForm() {
     const router = useRouter();
-    const { onSignUp } = useAuthStore();
+    const { canvasRef, captchaInput, setCaptchaInput, captchaError, refresh, validate } = useCaptcha();
 
+    const { onSignUp } = useAuthStore();
+    const handleSignUp = async (data: SignupForm) => {
+        if (!validate()) return;   // ← chặn nếu captcha sai
+        await onSignUp(data);
+        router.push("/auth/login");
+    };
     const { control, handleSubmit, formState: { errors } } = useForm<SignupForm>({
         resolver: yupResolver(SignUpSchema),
     });
 
-    const handleSignUp = async (data: SignupForm) => {
-        await onSignUp(data);
-        router.push("/auth/login");
-    };
 
     return (
         <div style={{ background: "#faf8f5", minHeight: "100vh", padding: "60px 16px", fontFamily: "var(--font-sans, Lora, serif)" }}>
@@ -93,7 +96,33 @@ export default function RegisterForm() {
                             <a href="/privacy" style={{ color: "#a07050", textDecoration: "none" }}>Chính sách bảo mật</a>
                         </span>
                     </label>
-
+                    <div style={{ marginBottom: 14 }}>
+                        <label style={labelStyle}>Xác minh bảo mật</label>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                            <canvas
+                                ref={canvasRef}
+                                width={160}
+                                height={50}
+                                onClick={refresh}
+                                title="Click để làm mới"
+                                style={{ border: "1px solid #e2d9ce", borderRadius: 10, cursor: "pointer", flexShrink: 0 }}
+                            />
+                            <button type="button" onClick={refresh}
+                                style={{ background: "none", border: "1px solid #e2d9ce", borderRadius: 10, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: "#8a7060" }}>
+                                ↻ Làm mới
+                            </button>
+                        </div>
+                        <input
+                            value={captchaInput}
+                            onChange={(e) => setCaptchaInput(e.target.value)}
+                            placeholder="Nhập ký tự ở trên"
+                            maxLength={6}
+                            autoComplete="off"
+                            style={inputStyle(!!captchaError)}
+                        />
+                        {captchaError && <p style={errStyle}>{captchaError}</p>}
+                        {!captchaError && <p style={{ ...errStyle, color: "#b0997e" }}>Không phân biệt hoa thường</p>}
+                    </div>
                     <button type="submit" style={{ width: "100%", height: 44, borderRadius: 50, background: "#8b5e3c", color: "#fff", border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
                         Đăng ký tài khoản
                     </button>

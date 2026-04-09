@@ -78,7 +78,7 @@ export const useAuthStore = create<AuthContextType>()(
         return true; // 🔥 QUAN TRỌNG
       },
 
-      // ================= SIGNUP =================
+
       onSignUp: async (values: SignupForm) => {
         if (values.password !== values.confirmPassword) {
           toast.error("Mật khẩu không khớp!");
@@ -101,11 +101,27 @@ export const useAuthStore = create<AuthContextType>()(
           return;
         }
 
+        // 1. Tạo address trống trước
+        const { data: addressData, error: addressErr } = await supabase
+          .from("addresses")
+          .insert({
+            // điền các field NOT NULL nếu có, hoặc để trống nếu tất cả nullable
+          })
+          .select("id")
+          .single();
+
+        if (addressErr || !addressData) {
+          toast.error("Không tạo được địa chỉ!");
+          return;
+        }
+
+        // 2. Insert profile với address_id vừa tạo
         const { error: profileErr } = await supabase.from("profiles").insert({
           id: userId,
           email: values.email,
           first_name: values.firstName,
           last_name: values.lastName,
+          address_id: addressData.id,
         });
 
         if (profileErr) {

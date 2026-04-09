@@ -6,7 +6,7 @@ export default async function MenPage() {
   const clothes = await fetchProduct();
 
   return (
-    <div className="bg-[#F8F5EF]">
+    <div >
       <main className="container mx-auto px-4 py-12">
         <MenList clothes={clothes} />
       </main>

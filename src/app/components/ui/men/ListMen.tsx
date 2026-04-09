@@ -1,12 +1,17 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Clothes } from "@/app/api/productsAPI";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
     const [hoveredId, setHoveredId] = useState<number | null>(null);
+    const [sortBy, setSortBy] = useState("default");
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+    const [showFilter, setShowFilter] = useState(false);
+    const [showSort, setShowSort] = useState(false);
     const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
     const router = useRouter();
     const formatImageUrl = (url: any) => {
@@ -35,7 +40,7 @@ export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
         new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
     return (
-        <div style={{ background: "#faf8f5", fontFamily: "var(--font-sans, Lora, serif)" }}>
+        <div style={{ fontFamily: "var(--font-sans, Lora, serif)" }}>
             {/* Header */}
             <style jsx>{`
                 .back-btn {

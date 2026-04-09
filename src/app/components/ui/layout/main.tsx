@@ -6,6 +6,7 @@ import { fetchCollections, Collection } from "@/app/api/collections";
 import { Clothes } from "@/app/api/productsAPI";
 import { supabase } from "@/app/libs/supabaseClient";
 import Link from "next/link";
+import CartModal from "@/app/components/ui/product/CartModal";
 
 type ClothesWithColors = Clothes & { colors?: string[] };
 
@@ -22,6 +23,7 @@ export default function Main() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [menProducts, setMenProducts] = useState<ClothesWithColors[]>([]);
   const [womenProducts, setWomenProducts] = useState<ClothesWithColors[]>([]);
+  const [cartTarget, setCartTarget] = useState<any>(null);
 
   // ── Hero slideshow state ──
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
@@ -572,7 +574,8 @@ export default function Main() {
                       </span>
                     </div>
                     <div className="quick-overlay">
-                      <button className="btn-quick" onClick={() => alert(`Đã thêm ${p.name}`)}>+ Thêm vào giỏ</button>
+                      <button className="btn-quick" onClick={() => setCartTarget(p)}
+                      >+ Thêm vào giỏ</button>
                     </div>
                   </div>
                   <div className="p-5">
@@ -580,7 +583,7 @@ export default function Main() {
                     <p className="p-desc mb-4 line-clamp-2">{p.description}</p>
                     <div className="flex items-center justify-between">
                       <p className="p-price">{fmtPrice(p.base_price)}</p>
-                      <button className="btn-mini" onClick={() => alert(`Đã thêm ${p.name}`)}>+ Giỏ hàng</button>
+                      <button className="btn-mini" onClick={() => setCartTarget(p)}>+ Giỏ hàng</button>
                     </div>
                   </div>
                 </div>
@@ -617,7 +620,8 @@ export default function Main() {
                         </span>
                       </div>
                       <div className="quick-overlay">
-                        <button className="btn-quick" onClick={() => alert(`Đã thêm ${p.name}`)}>+ Thêm vào giỏ</button>
+                        <button className="btn-quick" onClick={() => setCartTarget(p)}
+                        >+ Thêm vào giỏ</button>
                       </div>
                     </div>
                     <div className="p-5">
@@ -632,7 +636,8 @@ export default function Main() {
                       )}
                       <div className="flex items-center justify-between">
                         <p className="p-price">{fmtPrice(p.base_price)}</p>
-                        <button className="btn-mini" onClick={() => alert(`Đã thêm ${p.name}`)}>+ Giỏ hàng</button>
+                        <button className="btn-mini" onClick={() => setCartTarget(p)}
+                        >+ Giỏ hàng</button>
                       </div>
                     </div>
                   </div>
@@ -677,6 +682,8 @@ export default function Main() {
 
         </main>
       </div>
+      <CartModal product={cartTarget} onClose={() => setCartTarget(null)} />
+
     </>
   );
 }

@@ -67,6 +67,7 @@ export async function fetchCollectionBySlug(slug: string): Promise<Collection | 
     return null;
   }
 }
+
 export async function fetchProductsByCategory(categoryId: number) {
   const { data, error } = await supabase
     .from("products")

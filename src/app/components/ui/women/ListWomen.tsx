@@ -37,7 +37,7 @@ export default function WomenListProduct({ clothes }: { clothes: Clothes[] }) {
 
     return (
 
-        <div style={{ background: "#faf8f5", fontFamily: "var(--font-sans, Lora, serif)" }}>
+        <div style={{ fontFamily: "var(--font-sans, Lora, serif)" }}>
             <style jsx>{`
                 .back-btn {
             display: none;

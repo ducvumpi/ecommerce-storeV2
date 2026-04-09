@@ -6,6 +6,7 @@ import { use, useEffect } from "react";
 import { Collection, fetchProductsByCategory } from "@/app/api/collections";
 import { addToCart } from "@/app/api/loginAPI";
 import { toast } from "react-hot-toast";
+import { supabase } from '@/app/libs/supabaseClient';
 export default function CollectionProducts({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [quantity, setQuantity] = useState<number>(1);
@@ -16,6 +17,8 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
   const [sortBy, setSortBy] = useState('default');
   const [sampleProducts, setSampleProducts] = useState<any[]>([]);
   const [loadingCart, setLoadingCart] = useState<string | null>(null);
+  const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
+
   const handleAddToCart = (product: any, selectedVariant: any, quantity: number) => {
     if (!selectedVariant?.id || !product?.id) {
       alert("Vui lòng chọn đầy đủ màu sắc và kích thước");
@@ -35,16 +38,32 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
   // Calculate min and max prices from products
   const priceStats = useMemo(() => {
     if (sampleProducts.length === 0) return { min: 0, max: 2000000 };
-
     const prices = sampleProducts.map(p => Number(p.base_price || 0)).filter(p => p > 0);
     if (prices.length === 0) return { min: 0, max: 2000000 };
 
-    const min = Math.floor(Math.min(...prices) / 50000);
-    const max = Math.ceil(Math.max(...prices) / 50000) * 50000;
+    const min = Math.floor(Math.min(...prices) / 50000) * 50000; // ← thêm * 50000
+    const max = Math.ceil(Math.max(...prices) / 50000) * 500000;
 
     return { min, max };
   }, [sampleProducts]);
+  useEffect(() => {
+    async function loadCategoryNames() {
+      const ids = [...new Set(sampleProducts.map(p => p.category_id).filter(Boolean))];
+      if (!ids.length) return;
 
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name")
+        .in("id", ids);
+
+      if (!error && data) {
+        const map: Record<number, string> = {};
+        data.forEach((c: any) => { map[c.id] = c.name; });
+        setCategoryNames(map);
+      }
+    }
+    loadCategoryNames();
+  }, [sampleProducts]);
   useEffect(() => {
     async function load() {
       const res = await fetchProductsByCategory(categoryId);
@@ -212,10 +231,7 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
                 </h3>
                 <div className="space-y-2">
                   {categories.map((category_id) => (
-                    <label
-                      key={category_id}
-                      className="flex items-center gap-3 cursor-pointer group py-1"
-                    >
+                    <label key={category_id} className="flex items-center gap-3 cursor-pointer group py-1">
                       <input
                         type="radio"
                         name="category"
@@ -224,7 +240,10 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
                         className="w-4 h-4 text-[#8b5e3c] focus:ring-[#8b5e3c] border-[#d4c4b0]"
                       />
                       <span className="text-sm text-[#6a5a4a] group-hover:text-[#3d2b1a] capitalize">
-                        {category_id === 'all' ? 'Tất cả sản phẩm' : category_id}
+                        {category_id === 'all'
+                          ? 'Tất cả sản phẩm'
+                          : categoryNames[Number(category_id)]
+                        }
                       </span>
                     </label>
                   ))}
