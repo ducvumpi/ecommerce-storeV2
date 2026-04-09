@@ -189,6 +189,7 @@ export async function addToCart(product_id: number, variantId: string, quantity:
 }
 
 
+
 export async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -204,7 +205,6 @@ export async function loginWithGoogle() {
 
   return data;
 }
-
 export async function GetUserProfile(): Promise<UserData | null> {
   const userId = localStorage.getItem("user_id");
 

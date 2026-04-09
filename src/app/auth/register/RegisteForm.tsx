@@ -5,6 +5,7 @@ import { SignupForm, SignUpSchema } from "../../api/loginAPI";
 import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
 import { useCaptcha } from "@/app/hooks/useCaptcha";
+import { useState } from "react";
 
 const inputStyle = (hasError?: boolean): React.CSSProperties => ({
     height: 42, padding: "0 14px",
@@ -22,13 +23,16 @@ const errStyle: React.CSSProperties = { fontSize: 11, color: "#c07050", margin: 
 export default function RegisterForm() {
     const router = useRouter();
     const { canvasRef, captchaInput, setCaptchaInput, captchaError, refresh, validate } = useCaptcha();
-
-    const { onSignUp } = useAuthStore();
+    const [loading, setLoading] = useState(false);
     const handleSignUp = async (data: SignupForm) => {
-        if (!validate()) return;   // ← chặn nếu captcha sai
+        if (!validate()) return;
+        setLoading(true);
         await onSignUp(data);
+        setLoading(false);
         router.push("/auth/login");
     };
+    const { onSignUp } = useAuthStore();
+
     const { control, handleSubmit, formState: { errors } } = useForm<SignupForm>({
         resolver: yupResolver(SignUpSchema),
     });
@@ -123,9 +127,30 @@ export default function RegisterForm() {
                         {captchaError && <p style={errStyle}>{captchaError}</p>}
                         {!captchaError && <p style={{ ...errStyle, color: "#b0997e" }}>Không phân biệt hoa thường</p>}
                     </div>
-                    <button type="submit" style={{ width: "100%", height: 44, borderRadius: 50, background: "#8b5e3c", color: "#fff", border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
-                        Đăng ký tài khoản
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        style={{
+                            width: "100%", height: 44, borderRadius: 50,
+                            background: loading ? "#c4a882" : "#8b5e3c",
+                            color: "#fff", border: "none", fontSize: 14, fontWeight: 500,
+                            cursor: loading ? "not-allowed" : "pointer",
+                            fontFamily: "inherit",
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                            transition: "background .2s",
+                        }}
+                    >
+                        {loading && (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                                style={{ animation: "spin 1s linear infinite", flexShrink: 0 }}>
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                            </svg>
+                        )}
+                        {loading ? "Đang xử lý..." : "Đăng ký tài khoản"}
                     </button>
+
+                    {/* Thêm keyframe spin */}
+                    <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
                 </form>
 
                 {/* Divider */}
