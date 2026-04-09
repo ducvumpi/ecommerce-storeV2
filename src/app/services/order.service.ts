@@ -28,14 +28,20 @@ export const orderServiceServer = {
         const { data, error } = await supabase
             .from('orders')
             .select(`
-        id, total_price, created_at, status,
-        addresses(full_name, phone, address_line, mail, ward, city),
-        order_items(quantity, price,
-          product_variants(id, size, color, price,
-            products(name, image_url)
-          )
-        )
-      `)
+  id, total_price, created_at, status, payment_method,
+  addresses:addresses (
+    full_name, phone, address_line, mail, ward, city
+  ),
+  order_items:order_items (
+    quantity, price,
+    product_variants:product_variants (
+      id, size, color, price,
+      products:products (
+        name, image_url
+      )
+    )
+  )
+`)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
@@ -66,6 +72,8 @@ export const orderServiceServer = {
         });
 
         return (data || []).map((o: any): Order => {
+            console.log('raw status from DB:', o.status); // 👈 thêm dòng này
+
             const wardCode = o.addresses?.ward || '';
             const cityCode = o.addresses?.city || '';
             const commune = communeMap[wardCode] || { name: '', provinceName: '' };
@@ -82,6 +90,15 @@ export const orderServiceServer = {
             return {
                 id: o.id,
                 status: o.status,
+                payment_method: o.payment_method,                    // ✅ thêm
+                payment_method_label: o.payment_method === 'cod' ? 'Thanh toán khi nhận hàng'
+                    : o.payment_method === 'bank' ? 'Thanh toán Chuyển khoản'
+                        : o.payment_method === 'ipn' ? 'Thanh toán qua VNPAY'
+                            : 'Không xác định',
+                payment_method_icon: o.payment_method === 'cod' ? ''
+                    : o.payment_method === 'bank' ? ''
+                        : o.payment_method === 'ipn' ? ''
+                            : '',
                 orderDate: fmtDate(o.created_at),
                 estimatedDelivery: fmtDate(o.estimated_delivery),
                 trackingSteps: mkTracking(o.status),

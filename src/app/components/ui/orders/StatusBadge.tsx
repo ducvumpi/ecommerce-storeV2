@@ -9,8 +9,15 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string; te
     payment_failed: { label: 'Thanh toán thất bại', dot: 'bg-red-400', bg: 'bg-red-50', text: 'text-red-500' },
 };
 export const StatusBadge = ({ status }: { status: string }) => {
-    console.log('status raw:', JSON.stringify(status)); // 👈
-    const cfg = STATUS_CONFIG[status] ?? { label: 'Không xác định', dot: 'bg-stone-400', bg: 'bg-stone-50', text: 'text-stone-500' };
+    if (!status) return null; // ✅ chờ data load xong
+
+    const cfg = STATUS_CONFIG[status?.trim()] ?? {
+        label: 'Không xác định',
+        dot: 'bg-stone-400',
+        bg: 'bg-stone-50',
+        text: 'text-stone-500'
+    };
+
     return (
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.bg} ${cfg.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />

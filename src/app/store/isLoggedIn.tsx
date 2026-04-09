@@ -48,15 +48,18 @@ export const useAuthStore = create<AuthContextType>()(
             password,
           });
 
+
         if (error) {
-          toast.error("Email chưa xác thực! Vui lòng kiểm tra hộp thư đến.");
-          return false;
-        }
-
-        const user = loginData.user;
-
-        if (!user?.email_confirmed_at) {
-          toast.error("Email chưa xác thực!");
+          if (
+            error.message === "Invalid login credentials" ||
+            error.message === "invalid_credentials"
+          ) {
+            toast.error("Email hoặc mật khẩu không đúng!");
+          } else if (error.message.toLowerCase().includes("email not confirmed")) {
+            toast.error("Email chưa xác thực! Vui lòng kiểm tra hộp thư đến.");
+          } else {
+            toast.error(error.message);
+          }
           return false;
         }
 
@@ -67,6 +70,7 @@ export const useAuthStore = create<AuthContextType>()(
 
         // ❌ KHÔNG cần isLoggedIn nữa nếu bạn dùng SSR
         // set({ isLoggedIn: true });
+        const user = loginData.user;
 
         localStorage.setItem("user_id", user.id);
 

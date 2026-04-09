@@ -34,13 +34,19 @@ export async function getOrdersServer(): Promise<Order[]> {
     const { data, error } = await supabase
         .from('orders')
         .select(`
-    id, total_price, created_at, status, payment_method,
-    addresses(full_name, phone, address_line, mail, ward, city),
-    order_items(quantity, price,
-        product_variants(id, size, color, price,
-            products(name, image_url)
-        )
+  id, total_price, created_at, status, payment_method,
+  addresses:addresses (
+    full_name, phone, address_line, mail, ward, city
+  ),
+  order_items:order_items (
+    quantity, price,
+    product_variants:product_variants (
+      id, size, color, price,
+      products:products (
+        name, image_url
+      )
     )
+  )
 `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
