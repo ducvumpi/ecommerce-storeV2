@@ -1,4 +1,3 @@
-// app/auth/callback/page.tsx
 "use client";
 import { useEffect } from "react";
 import { supabase } from "@/app/libs/supabaseClient";
