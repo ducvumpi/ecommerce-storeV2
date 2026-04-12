@@ -9,20 +9,44 @@ export const PAYMENT_METHOD_LABEL: Record<string, { label: string; icon: string;
     bank: { label: 'Chuyển khoản ngân hàng', icon: '🏦', color: '#5060a0' },
     ipn: { label: 'Thanh toán qua VNPAY', icon: '💳', color: '#1a6fb0' },
 };
+const mkTracking = (status: string, isCOD = false) => {
+    const steps = isCOD
+        ? [
+            { status: 'pending', label: 'Đặt hàng' },
+            { status: 'packing', label: 'Đóng gói' },
+            { status: 'shipping', label: 'Vận chuyển' },
+            { status: 'completed', label: 'Hoàn tất' },
+            { status: 'cod_payment', label: 'Thu tiền khi giao' },
+        ]
+        : [
+            { status: 'pending', label: 'Đặt hàng' },
+            { status: 'paid', label: 'Thanh toán' },
+            { status: 'packing', label: 'Đóng gói' },
+            { status: 'shipping', label: 'Vận chuyển' },
+            { status: 'completed', label: 'Hoàn tất' },
+        ];
 
-const mkTracking = (status: string) => {
-    const steps = [
-        { status: 'pending', label: 'Đặt hàng' },
-        { status: 'paid', label: 'Thanh toán' },
-        { status: 'packing', label: 'Đóng gói' },
-        { status: 'shipping', label: 'Vận chuyển' },
-        { status: 'completed', label: 'Hoàn tất' },
-    ];
-    const currentIdx = steps.findIndex(x => x.status === status);
+    // ✅ Với COD: 'paid' và 'pending_payment' đều coi như 'packing'
+    // vì backend set paid ngay sau khi đặt COD
+    const normalizeStatus = (s: string) => {
+        if (isCOD && (s === 'paid' || s === 'pending_payment')) return 'packing';
+        return s;
+    };
+
+    const resolvedStatus = normalizeStatus(status);
+
+    const currentIdx = (() => {
+        const idx = steps.findIndex(x => x.status === resolvedStatus);
+        // cod_payment chỉ completed khi 'completed'
+        if (isCOD && resolvedStatus === 'completed') return steps.length - 1;
+        return idx;
+    })();
+
     return steps.map((s, i) => ({
         ...s,
         completed: i <= currentIdx,
         date: i <= currentIdx ? new Date().toLocaleDateString('vi-VN') : '',
+        isCodStep: s.status === 'cod_payment',
     }));
 };
 

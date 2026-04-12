@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight, Menu } from 'lucide-react';
 import { supabase } from '../libs/supabaseClient';
 import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI';
@@ -347,7 +347,24 @@ export default function AccountProfile() {
     }
   }, [addressForm.city, addressData]);
 
-  // 6. Thêm các hàm xử lý:
+  // 1. Dùng useCallback
+  const reloadAddresses = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_default', { ascending: false });
+    if (data) setAddresses([...data]); // ✅ spread để force re-render
+  }, []);
+
+  // 2. useEffect dùng hàm đó
+  useEffect(() => {
+    reloadAddresses();
+  }, [reloadAddresses]);
+
+  // 3. Sửa handleSaveAddress — thêm await reloadAddresses() trước khi đóng form
   const handleSaveAddress = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -364,9 +381,24 @@ export default function AccountProfile() {
         })
         .eq('id', editingAddress.id);
       if (error) { alert('Lỗi: ' + error.message); return; }
+
+      // ✅ Cập nhật thẳng vào state, không cần fetch lại
+      setAddresses(prev => prev.map(a =>
+        a.id === editingAddress.id
+          ? {
+            ...a,
+            full_name: addressForm.full_name,
+            phone: addressForm.phone,
+            address_line: addressForm.address_line,
+            ward: addressForm.ward,
+            city: addressForm.city,
+          }
+          : a
+      ));
+
     } else {
       const isFirst = addresses.length === 0;
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('addresses')
         .insert({
           user_id: user.id,
@@ -376,29 +408,25 @@ export default function AccountProfile() {
           ward: addressForm.ward,
           city: addressForm.city,
           is_default: isFirst,
-        });
+        })
+        .select() // ✅ lấy luôn row vừa insert kèm id
+        .single();
+
       if (error) { alert('Lỗi: ' + error.message); return; }
 
-      // Nếu là địa chỉ đầu tiên → link vào profiles
-      if (isFirst) {
-        const { data: newAddr } = await supabase
-          .from('addresses')
-          .select('id')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        if (newAddr) {
-          await supabase.from('profiles').update({ address_id: newAddr.id }).eq('id', user.id);
-        }
+      if (isFirst && inserted) {
+        await supabase.from('profiles').update({ address_id: inserted.id }).eq('id', user.id);
+      }
+
+      // ✅ Thêm thẳng vào state
+      if (inserted) {
+        setAddresses(prev => isFirst
+          ? [{ ...inserted, is_default: true }]
+          : [...prev, { ...inserted, is_default: false }]
+        );
       }
     }
 
-    // Reload
-    const { data } = await supabase
-      .from('addresses').select('*').eq('user_id', user.id)
-      .order('is_default', { ascending: false });
-    if (data) setAddresses(data);
     setShowAddressForm(false);
     setEditingAddress(null);
     setAddressForm({ full_name: '', phone: '', address_line: '', ward: '', city: '' });

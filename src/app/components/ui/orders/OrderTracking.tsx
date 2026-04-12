@@ -3,7 +3,7 @@ import { Package, CheckCircle } from 'lucide-react';
 import { useOrders } from '@/app/hooks/useOrders';
 import { CancelConfirmModal } from './CancelConfirmModal';
 import { OrderList } from '@/app/components/ui/orders/OrderList';
-import { OrderDetail } from './OrderDetail';
+import { OrderDetail } from '@/app/components/ui/orders/OrderDetail';
 import { Order } from '@/app/types/order.types';
 
 export function OrderTracking({ initialOrders = [] }: { initialOrders?: Order[] }) {

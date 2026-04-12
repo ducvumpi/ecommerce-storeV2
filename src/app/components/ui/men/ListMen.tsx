@@ -8,10 +8,7 @@ import { useRouter } from "next/navigation";
 
 export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
     const [hoveredId, setHoveredId] = useState<number | null>(null);
-    const [sortBy, setSortBy] = useState("default");
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
-    const [showFilter, setShowFilter] = useState(false);
-    const [showSort, setShowSort] = useState(false);
+
     const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
     const router = useRouter();
     const formatImageUrl = (url: any) => {

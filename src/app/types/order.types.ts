@@ -32,6 +32,7 @@ export interface Order {
     mail: string;
     trackingSteps: TrackingStep[];
     status: OrderStatus;
+    completed_at: string | null;
     // order.types.ts
     payment_method: string;
     payment_method_label: string;

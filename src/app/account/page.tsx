@@ -14,12 +14,31 @@ import {
 import { GetUserProfile } from "../api/loginAPI";
 import { useAuth } from "../AuthProvider";
 import { supabase } from "../libs/supabaseClient";
-
+import { Order } from "../types/order.types";
 export default function UserPage() {
   const { user } = useAuth(); // ✅ dùng 1 nguồn auth duy nhất
   const [profile, setProfile] = useState<any>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [order, setOrder] = useState<Order | null>(null);
 
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const channel = supabase
+      .channel(`order-${order.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${order.id}`,
+      }, (payload) => {
+        // Cập nhật order khi trigger set completed_at
+        setOrder(prev => prev ? { ...prev, ...payload.new } : prev);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [order?.id]);
   useEffect(() => {
     if (!user) return;
 

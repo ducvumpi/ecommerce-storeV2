@@ -182,7 +182,7 @@ const SearchableSelect = ({
 
       {open && (
         <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 999,
+          top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 999,
           background: '#fff', border: '1.5px solid #e2d9ce', borderRadius: 12,
           boxShadow: '0 8px 24px rgba(120,80,40,.12)', overflow: 'hidden'
         }}>
@@ -348,7 +348,16 @@ export default function ShoppingCartUI() {
   const [loading, setLoading] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
   const [addressTab, setAddressTab] = useState<'saved' | 'new'>('saved');
-
+  // Thêm vào cùng chỗ với các useState khác
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{
+    full_name: string;
+    phone: string;
+    address_line: string;
+    city: string;
+    ward: string;
+  } | null>(null);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
   // FIX 2: ref để bỏ qua reset ward khi auto-fill địa chỉ đã lưu
   const skipWardReset = useRef(false);
 
@@ -392,7 +401,64 @@ export default function ShoppingCartUI() {
     };
     loadSavedAddresses();
   }, [currentStep]);
+  const handleUpdateAddress = async (addressId: string) => {
+    if (!editForm) return;
+    setIsSavingAddress(true);
+    try {
+      const { error } = await supabase
+        .from('addresses')
+        .update({
+          full_name: editForm.full_name,
+          phone: editForm.phone,
+          address_line: editForm.address_line,
+          city: editForm.city,
+          ward: editForm.ward,
+        })
+        .eq('id', addressId);
 
+      if (error) throw error;
+
+      // ✅ Fetch lại đúng row vừa update kèm join commune
+      const { data: updated } = await supabase
+        .from('addresses')
+        .select(`
+        *,
+        commune:communes!fk_addresses_ward (
+          code, name,
+          province:provinces!fk_communes_province (code, name)
+        )
+      `)
+        .eq('id', addressId)
+        .single();
+
+      if (updated) {
+        setSavedAddresses(prev =>
+          prev.map(a => a.id === addressId ? updated : a)
+        );
+      }
+
+      // Nếu đang chọn địa chỉ này → cập nhật luôn customerInfo
+      if (selectedAddressId === addressId) {
+        skipWardReset.current = true;
+        setCustomerInfo(prev => ({
+          ...prev,
+          fullName: editForm.full_name,
+          phone: editForm.phone,
+          address: editForm.address_line,
+          city: editForm.city,
+          ward: editForm.ward,
+        }));
+      }
+
+      setEditingAddressId(null);
+      setEditForm(null);
+      toast.success('Cập nhật địa chỉ thành công');
+    } catch (err: any) {
+      toast.error(err?.message || 'Không thể cập nhật địa chỉ');
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
   // Reset tab khi vào step 2
   useEffect(() => {
     if (currentStep === 2) {
@@ -479,6 +545,14 @@ export default function ShoppingCartUI() {
       if (updateError) {
         alert("Không thể cập nhật phương thức thanh toán");
         return;
+      }
+
+      // ✅ Nếu COD → update status sang packing ngay
+      if (paymentMethod === 'cod') {
+        await supabase
+          .from('orders')
+          .update({ status: 'packing' })
+          .eq('id', orderId);
       }
 
       if (paymentMethod === 'ipn') {
@@ -576,7 +650,6 @@ export default function ShoppingCartUI() {
           fullName: `${data.last_name || ""} ${data.first_name || ""}`.trim(),
           email: data.email || user.email || "",
           phone: data.phone || "",
-          address: data.address_id || "",
 
         }));
       }
@@ -1310,58 +1383,173 @@ export default function ShoppingCartUI() {
                       ))}
                     </div>
 
-                    {/* Tab: Địa chỉ đã lưu */}
+
                     {addressTab === 'saved' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: '1.5rem' }}>
                         {savedAddresses.map(addr => {
                           const isSelected = selectedAddressId === addr.id;
+                          const isEditing = editingAddressId === addr.id;
                           return (
-                            <div
-                              key={addr.id}
-                              onClick={() => {
-                                setSelectedAddressId(addr.id);
-                                skipWardReset.current = true; // FIX 2: bỏ qua reset ward
-                                setCustomerInfo(prev => ({
-                                  ...prev,
-                                  fullName: addr.full_name || prev.fullName,
-                                  phone: addr.phone || prev.phone,
-                                  address: addr.address_line || '',
-                                  city: addr.city || '',
-                                  ward: addr.ward || '',
-                                }));
-                              }}
-                              style={{
-                                display: 'flex', alignItems: 'flex-start', gap: 10,
-                                padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
-                                border: `1.5px solid ${isSelected ? '#a07050' : '#e8ddd0'}`,
-                                background: isSelected ? '#fdf6ef' : '#fdfbf7',
-                                transition: 'border-color 0.15s, background 0.15s'
-                              }}
-                            >
-                              <div style={{
-                                width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 1,
-                                border: `2px solid ${isSelected ? '#a07050' : '#d4c4b0'}`,
-                                background: isSelected ? '#a07050' : 'transparent',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                              }}>
-                                {isSelected && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
-                              </div>
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                  <span style={{ fontWeight: 500, fontSize: 13, color: '#4a3728' }}>{addr.full_name}</span>
-                                  <span style={{ fontSize: 12, color: '#a09080' }}>{addr.phone}</span>
-                                  {addr.is_default && (
-                                    <span style={{ fontSize: 10, padding: '1px 8px', borderRadius: 50, background: '#eef5e8', color: '#5a8050', fontWeight: 500 }}>
-                                      Mặc định
-                                    </span>
-                                  )}
+                            <div key={addr.id} style={{
+                              borderRadius: 12,
+                              border: `1.5px solid ${isSelected ? '#a07050' : '#e8ddd0'}`,
+                              background: isSelected ? '#fdf6ef' : '#fdfbf7',
+                              transition: 'border-color 0.15s, background 0.15s',
+                              overflow: 'hidden'
+                            }}>
+                              {/* ── Row chọn địa chỉ ── */}
+                              <div
+                                onClick={() => {
+                                  if (isEditing) return; // không toggle khi đang edit
+                                  setSelectedAddressId(addr.id);
+                                  skipWardReset.current = true;
+                                  setCustomerInfo(prev => ({
+                                    ...prev,
+                                    fullName: addr.full_name || prev.fullName,
+                                    phone: addr.phone || prev.phone,
+                                    address: addr.address_line || '',
+                                    city: addr.city || '',
+                                    ward: addr.ward || '',
+                                  }));
+                                }}
+                                style={{
+                                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                                  padding: '10px 14px', cursor: isEditing ? 'default' : 'pointer',
+                                }}
+                              >
+                                <div style={{
+                                  width: 18, height: 18, borderRadius: '50%', flexShrink: 0, marginTop: 1,
+                                  border: `2px solid ${isSelected ? '#a07050' : '#d4c4b0'}`,
+                                  background: isSelected ? '#a07050' : 'transparent',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>
+                                  {isSelected && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
                                 </div>
-                                <p style={{ margin: '3px 0 0', fontSize: 12, color: '#a09080', lineHeight: 1.5 }}>
-                                  {addr.address_line},
-                                  {addr.commune?.name ? `, ${addr.commune.name}` : ''},
-                                  {addr.commune?.province?.name ? `, ${addr.commune.province.name}` : ''}
-                                </p>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                    <span style={{ fontWeight: 500, fontSize: 13, color: '#4a3728' }}>{addr.full_name}</span>
+                                    <span style={{ fontSize: 12, color: '#a09080' }}>{addr.phone}</span>
+                                    {addr.is_default && (
+                                      <span style={{ fontSize: 10, padding: '1px 8px', borderRadius: 50, background: '#eef5e8', color: '#5a8050', fontWeight: 500 }}>
+                                        Mặc định
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p style={{ margin: '3px 0 0', fontSize: 12, color: '#a09080', lineHeight: 1.5 }}>
+                                    {addr.address_line}
+                                    {addr.commune?.name ? `, ${addr.commune.name}` : ''}
+                                    {addr.commune?.province?.name ? `, ${addr.commune.province.name}` : ''}
+                                  </p>
+                                </div>
+                                {/* Nút chỉnh sửa */}
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    if (isEditing) {
+                                      setEditingAddressId(null);
+                                      setEditForm(null);
+                                    } else {
+                                      setEditingAddressId(addr.id);
+                                      setEditForm({
+                                        full_name: addr.full_name || '',
+                                        phone: addr.phone || '',
+                                        address_line: addr.address_line || '',
+                                        city: addr.city || '',
+                                        ward: addr.ward || '',
+                                      });
+                                    }
+                                  }}
+                                  style={{
+                                    flexShrink: 0, padding: '4px 10px', fontSize: 11, fontWeight: 500,
+                                    borderRadius: 50, border: '1px solid #e0d0c0',
+                                    background: isEditing ? '#f5ede0' : '#ffffff',
+                                    color: isEditing ? '#a07050' : '#b09070',
+                                    cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s'
+                                  }}
+                                >
+                                  {isEditing ? 'Hủy' : 'Sửa'}
+                                </button>
                               </div>
+
+                              {/* ── Form chỉnh sửa inline ── */}
+                              {isEditing && editForm && (
+                                <div style={{
+                                  padding: '0 14px 14px 14px',
+                                  borderTop: '1px solid #f0e8e0',
+                                  background: '#fffdf9'
+                                }}>
+                                  <div style={{ height: 12 }} />
+                                  <div className="form-grid-2" style={{ marginBottom: '0.75rem' }}>
+                                    <div>
+                                      <label className="label-warm">Họ và tên</label>
+                                      <input
+                                        className="input-warm"
+                                        value={editForm.full_name}
+                                        onChange={e => setEditForm(prev => prev ? { ...prev, full_name: e.target.value } : prev)}
+                                        placeholder="Nguyễn Văn A"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="label-warm">Số điện thoại</label>
+                                      <input
+                                        className="input-warm"
+                                        value={editForm.phone}
+                                        onChange={e => setEditForm(prev => prev ? { ...prev, phone: e.target.value } : prev)}
+                                        placeholder="0912 345 678"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div style={{ marginBottom: '0.75rem' }}>
+                                    <label className="label-warm">Địa chỉ</label>
+                                    <input
+                                      className="input-warm"
+                                      value={editForm.address_line}
+                                      onChange={e => setEditForm(prev => prev ? { ...prev, address_line: e.target.value } : prev)}
+                                      placeholder="Số nhà, tên đường..."
+                                    />
+                                  </div>
+                                  <div className="form-grid-2" style={{ marginBottom: '1rem' }}>
+                                    <div>
+                                      <label className="label-warm">Tỉnh / Thành phố</label>
+                                      <SearchableSelect
+                                        type="province" options={provinces} value={editForm.city}
+                                        onChange={code => setEditForm(prev => prev ? { ...prev, city: code, ward: '' } : prev)}
+                                        placeholder="Chọn tỉnh / thành"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="label-warm">Phường / Xã</label>
+                                      <SearchableSelect
+                                        type="ward"
+                                        options={addressData
+                                          .filter(item => item.provinceCode === editForm.city)
+                                          .map(item => ({ code: item.code, name: item.name }))}
+                                        value={editForm.ward}
+                                        onChange={code => setEditForm(prev => prev ? { ...prev, ward: code } : prev)}
+                                        placeholder="Chọn phường / xã"
+                                        disabled={!editForm.city}
+                                      />
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                    <button
+                                      onClick={() => { setEditingAddressId(null); setEditForm(null); }}
+                                      className="btn-ghost"
+                                      style={{ padding: '7px 16px', fontSize: '.82rem' }}
+                                    >
+                                      Hủy
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateAddress(addr.id)}
+                                      disabled={isSavingAddress}
+                                      className="btn-primary"
+                                      style={{ padding: '7px 18px', fontSize: '.82rem', display: 'flex', alignItems: 'center', gap: 6 }}
+                                    >
+                                      {isSavingAddress ? 'Đang lưu...' : <><Check size={13} /> Lưu</>}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}

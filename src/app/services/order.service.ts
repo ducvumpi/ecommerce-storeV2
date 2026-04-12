@@ -3,22 +3,46 @@ import { Order } from '../types/order.types';
 const fmtDate = (iso: string) =>
     iso ? new Date(iso).toLocaleDateString('vi-VN') : '';
 
-const mkTracking = (status: string) => {
-    const steps = [
-        { status: 'pending', label: 'Đặt hàng' },
-        { status: 'paid', label: 'Thanh toán' },
-        { status: 'packing', label: 'Đóng gói' },
-        { status: 'shipping', label: 'Vận chuyển' },
-        { status: 'completed', label: 'Hoàn tất' },
-    ];
-    const currentIdx = steps.findIndex(x => x.status === status);
+const mkTracking = (status: string, isCOD = false) => {
+    const steps = isCOD
+        ? [
+            { status: 'pending', label: 'Đặt hàng' },
+            { status: 'packing', label: 'Đóng gói' },
+            { status: 'shipping', label: 'Vận chuyển' },
+            { status: 'completed', label: 'Hoàn tất' },
+            { status: 'cod_payment', label: 'Thu tiền khi giao' },
+        ]
+        : [
+            { status: 'pending', label: 'Đặt hàng' },
+            { status: 'paid', label: 'Thanh toán' },
+            { status: 'packing', label: 'Đóng gói' },
+            { status: 'shipping', label: 'Vận chuyển' },
+            { status: 'completed', label: 'Hoàn tất' },
+        ];
+
+    // ✅ Với COD: 'paid' và 'pending_payment' đều coi như 'packing'
+    // vì backend set paid ngay sau khi đặt COD
+    const normalizeStatus = (s: string) => {
+        if (isCOD && (s === 'paid' || s === 'pending_payment')) return 'packing';
+        return s;
+    };
+
+    const resolvedStatus = normalizeStatus(status);
+
+    const currentIdx = (() => {
+        const idx = steps.findIndex(x => x.status === resolvedStatus);
+        // cod_payment chỉ completed khi 'completed'
+        if (isCOD && resolvedStatus === 'completed') return steps.length - 1;
+        return idx;
+    })();
+
     return steps.map((s, i) => ({
         ...s,
         completed: i <= currentIdx,
         date: i <= currentIdx ? new Date().toLocaleDateString('vi-VN') : '',
+        isCodStep: s.status === 'cod_payment',
     }));
 };
-
 
 export const orderServiceServer = {
     async getOrders(): Promise<Order[]> {
@@ -28,7 +52,7 @@ export const orderServiceServer = {
         const { data, error } = await supabase
             .from('orders')
             .select(`
-  id, total_price, created_at, status, payment_method,
+  id, total_price, created_at, status, payment_method,completed_at,
   addresses:addresses (
     full_name, phone, address_line, mail, ward, city
   ),
@@ -90,21 +114,27 @@ export const orderServiceServer = {
             return {
                 id: o.id,
                 status: o.status,
-                payment_method: o.payment_method,                    // ✅ thêm
+                payment_method: o.payment_method,
                 payment_method_label: o.payment_method === 'cod' ? 'Thanh toán khi nhận hàng'
-                    : o.payment_method === 'bank' ? 'Thanh toán Chuyển khoản'
+                    : o.payment_method === 'bank' ? 'Chuyển khoản ngân hàng'
                         : o.payment_method === 'ipn' ? 'Thanh toán qua VNPAY'
                             : 'Không xác định',
-                payment_method_icon: o.payment_method === 'cod' ? ''
-                    : o.payment_method === 'bank' ? ''
-                        : o.payment_method === 'ipn' ? ''
-                            : '',
+                payment_method_icon: o.payment_method === 'cod' ? '🚚'
+                    : o.payment_method === 'bank' ? '🏦'
+                        : o.payment_method === 'ipn' ? '💳'
+                            : '❓',
+                payment_method_color: o.payment_method === 'cod' ? 'emerald'
+                    : o.payment_method === 'bank' ? 'blue'
+                        : o.payment_method === 'ipn' ? 'violet'
+                            : 'stone',
                 orderDate: fmtDate(o.created_at),
                 estimatedDelivery: fmtDate(o.estimated_delivery),
-                trackingSteps: mkTracking(o.status),
+                // ✅ truyền isCOD vào mkTracking
+                trackingSteps: mkTracking(o.status, o.payment_method === 'cod'),
                 items,
                 address_line: o.addresses?.address_line || '',
                 receiver_name: o.addresses?.full_name || '',
+                completed_at: o.completed_at || null,
                 phone: o.addresses?.phone || '',
                 mail: o.addresses?.mail || '',
                 ward_name: commune.name,

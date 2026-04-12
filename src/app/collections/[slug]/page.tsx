@@ -10,15 +10,13 @@ import { supabase } from '@/app/libs/supabaseClient';
 export default function CollectionProducts({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [quantity, setQuantity] = useState<number>(1);
-  const [variantId, setVariantId] = useState<number | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | 'all'>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000000]);
   const [sortBy, setSortBy] = useState('default');
   const [sampleProducts, setSampleProducts] = useState<any[]>([]);
-  const [loadingCart, setLoadingCart] = useState<string | null>(null);
   const [categoryNames, setCategoryNames] = useState<Record<number, string>>({});
-
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const handleAddToCart = (product: any, selectedVariant: any, quantity: number) => {
     if (!selectedVariant?.id || !product?.id) {
       alert("Vui lòng chọn đầy đủ màu sắc và kích thước");
@@ -34,7 +32,13 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
 
   const categoryId = Number(slug);
   const isOutOfStock = (product: any) => product.inStock <= 0;
-
+  // Helper lấy tất cả ảnh của product
+  const getImages = (img: any): string[] => {
+    if (!img) return ["/no-image.png"];
+    if (Array.isArray(img)) return img.length > 0 ? img : ["/no-image.png"];
+    if (typeof img === "string" && img.trim()) return [img.trim()];
+    return ["/no-image.png"];
+  };
   // Calculate min and max prices from products
   const priceStats = useMemo(() => {
     if (sampleProducts.length === 0) return { min: 0, max: 2000000 };
@@ -128,7 +132,16 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
     setPriceRange([priceStats.min, priceStats.max]);
     setSortBy('default');
   };
-
+  useEffect(() => {
+    if (!lightbox) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setLightbox(null);
+      if (e.key === 'ArrowRight') setLightbox(prev => prev && ({ ...prev, index: (prev.index + 1) % prev.images.length }));
+      if (e.key === 'ArrowLeft') setLightbox(prev => prev && ({ ...prev, index: (prev.index - 1 + prev.images.length) % prev.images.length }));
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightbox]);
   const [selections, setSelections] = useState<Record<string, { color?: string; size?: string }>>({});
 
   const updateSelection = (productId: string, field: 'color' | 'size', value: string) => {
@@ -150,6 +163,104 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
 
   return (
     <div className="min-h-screen bg-[#fdfbf7]">
+      {/* ── Lightbox ── */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(20,10,5,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          {/* Nút đóng */}
+          <button
+            onClick={() => setLightbox(null)}
+            style={{
+              position: 'absolute', top: 16, right: 16,
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)', border: 'none',
+              color: '#fff', fontSize: 20, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >✕</button>
+
+          {/* Nút lùi */}
+          {lightbox.images.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); setLightbox(prev => prev && ({ ...prev, index: (prev.index - 1 + prev.images.length) % prev.images.length })); }}
+              style={{
+                position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.15)', border: 'none',
+                color: '#fff', fontSize: 22, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >‹</button>
+          )}
+
+          {/* Ảnh chính */}
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ position: 'relative', maxWidth: '90vw', maxHeight: '90vh' }}
+          >
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt=""
+              style={{
+                maxWidth: '90vw', maxHeight: '90vh',
+                objectFit: 'contain', borderRadius: 12,
+                userSelect: 'none'
+              }}
+            />
+            {/* Số thứ tự */}
+            {lightbox.images.length > 1 && (
+              <div style={{
+                position: 'absolute', bottom: -32, left: '50%', transform: 'translateX(-50%)',
+                color: 'rgba(255,255,255,0.6)', fontSize: 13
+              }}>
+                {lightbox.index + 1} / {lightbox.images.length}
+              </div>
+            )}
+          </div>
+
+          {/* Nút tiến */}
+          {lightbox.images.length > 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); setLightbox(prev => prev && ({ ...prev, index: (prev.index + 1) % prev.images.length })); }}
+              style={{
+                position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.15)', border: 'none',
+                color: '#fff', fontSize: 22, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >›</button>
+          )}
+
+          {/* Thumbnail strip */}
+          {lightbox.images.length > 1 && (
+            <div style={{
+              position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+              display: 'flex', gap: 8
+            }}>
+              {lightbox.images.map((img, i) => (
+                <div
+                  key={i}
+                  onClick={e => { e.stopPropagation(); setLightbox(prev => prev && ({ ...prev, index: i })); }}
+                  style={{
+                    width: 48, height: 48, borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
+                    border: `2px solid ${i === lightbox.index ? '#d4a574' : 'rgba(255,255,255,0.3)'}`,
+                    flexShrink: 0
+                  }}
+                >
+                  <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <style jsx global>{`
         /* Custom scrollbar */
         ::-webkit-scrollbar {
@@ -388,14 +499,37 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
 
                   return (
                     <div key={product.id} className="group bg-white rounded-2xl border border-[#e8ddd0] overflow-hidden hover:shadow-lg hover:shadow-[#d4c4b0]/20 transition-all duration-300">
-                      {/* Product Image */}
-                      <div className="relative aspect-square overflow-hidden bg-[#f9f5ef]">
+
+                      <div
+                        className="relative aspect-square overflow-hidden bg-[#f9f5ef]"
+                        style={{ cursor: 'zoom-in' }}
+                        onClick={() => {
+                          const imgs = getImages(product.image_url);
+                          setLightbox({ images: imgs, index: 0 });
+                        }}
+                      >
                         <Image
                           src={getImageUrl(product.image_url)}
                           alt={product.name}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
+
+                        {/* ✅ Badge phóng to — chỉ hiện khi hover */}
+                        <div className="absolute inset-0 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                          <div style={{
+                            background: 'rgba(20,10,5,0.55)', backdropFilter: 'blur(4px)',
+                            color: '#fff', fontSize: 11, fontWeight: 500,
+                            padding: '5px 12px', borderRadius: 50,
+                            display: 'flex', alignItems: 'center', gap: 5,
+                          }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /><path d="M11 8v6M8 11h6" />
+                            </svg>
+                            Nhấn để phóng to
+                          </div>
+                        </div>
+
                         {product.inStock === 0 && (
                           <div className="absolute inset-0 bg-white/90 flex items-center justify-center backdrop-blur-sm">
                             <span className="bg-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-[#8a7060] shadow-md border border-[#e8ddd0]">

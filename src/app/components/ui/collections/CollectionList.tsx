@@ -50,34 +50,39 @@ export default function CollectionList({ LoadCollections }: { LoadCollections: C
                             onMouseEnter={e => (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1.05)"}
                             onMouseLeave={e => (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1)"}
                         >
-                            <div style={{ position: "relative", height: 300, overflow: "hidden" }}>
-                                <Link href={`/collections/${collection.id}`}>
-                                    <Image
-                                        src={formatImageUrl(collection.image)}
-                                        alt={collection.name}
-                                        width={600} height={300} unoptimized
-                                        style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease", display: "block" }}
-                                    />
-                                </Link>
+                            <div key={collection.id} style={{ borderRadius: 16, overflow: "hidden", border: "0.5px solid #e8ddd0", background: "#fff", position: "relative" }}
+                                onMouseEnter={e => (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1.05)"}
+                                onMouseLeave={e => (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1)"}
+                            >
+                                <div style={{ position: "relative", height: 300, overflow: "hidden" }}>
+                                    {/* ✅ Link bọc toàn bộ, overlay và content nằm trong Link */}
+                                    <Link href={`/collections/${collection.id}`} style={{ display: "block", height: "100%", textDecoration: "none" }}>
+                                        <Image
+                                            src={formatImageUrl(collection.image)}
+                                            alt={collection.name}
+                                            width={600} height={300} unoptimized
+                                            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease", display: "block" }}
+                                        />
 
-                                {/* Overlay */}
-                                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(40,20,5,.72) 0%, rgba(40,20,5,.1) 55%, transparent 100%)" }} />
+                                        {/* Overlay — nằm trong Link nên không chặn click nữa */}
+                                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(40,20,5,.72) 0%, rgba(40,20,5,.1) 55%, transparent 100%)" }} />
 
-                                {/* Content */}
-                                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, color: "#fff" }}>
-                                    <h3 style={{ fontFamily: "'Lora', serif", fontSize: 18, fontWeight: 500, margin: "0 0 6px" }}>
-                                        {collection.name}
-                                    </h3>
-                                    <p style={{
-                                        fontSize: 12, color: "rgba(255,255,255,.78)", margin: "0 0 14px", lineHeight: 1.5,
-                                        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden"
-                                    }}>
-                                        {collection.description}
-                                    </p>
-                                    <a href={`/collections/${collection.id}`}
-                                        style={{ display: "inline-block", background: "rgba(255,255,255,.95)", color: "#3d2b1a", fontSize: 12, fontWeight: 500, padding: "7px 18px", borderRadius: 50, textDecoration: "none" }}>
-                                        Xem chi tiết
-                                    </a>
+                                        {/* Content */}
+                                        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, color: "#fff" }}>
+                                            <h3 style={{ fontFamily: "'Lora', serif", fontSize: 18, fontWeight: 500, margin: "0 0 6px" }}>
+                                                {collection.name}
+                                            </h3>
+                                            <p style={{
+                                                fontSize: 12, color: "rgba(255,255,255,.78)", margin: "0 0 14px", lineHeight: 1.5,
+                                                display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden"
+                                            }}>
+                                                {collection.description}
+                                            </p>
+                                            <span style={{ display: "inline-block", background: "rgba(255,255,255,.95)", color: "#3d2b1a", fontSize: 12, fontWeight: 500, padding: "7px 18px", borderRadius: 50 }}>
+                                                Xem chi tiết
+                                            </span>
+                                        </div>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
