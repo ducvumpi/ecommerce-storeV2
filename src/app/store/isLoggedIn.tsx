@@ -69,10 +69,10 @@ export const useAuthStore = create<AuthContextType>()(
         }
 
         // ❌ KHÔNG cần isLoggedIn nữa nếu bạn dùng SSR
-        // set({ isLoggedIn: true });
         const user = loginData.user;
 
         localStorage.setItem("user_id", user.id);
+        set({ isLoggedIn: true });
 
         toast.success("Đăng nhập thành công!");
         return true; // 🔥 QUAN TRỌNG

@@ -11,7 +11,7 @@ import ChatAI from "./chatbox/chatbox";
 import { AuthProvider } from "./AuthProvider";
 
 import { Be_Vietnam_Pro } from 'next/font/google';
-
+import BotpressChat from "@/app/components/BotpressChat";
 const beVietnam = Be_Vietnam_Pro({
   subsets: ['vietnamese'],
   weight: ['300', '400', '500', '600', '700'],
@@ -50,11 +50,12 @@ export default function RootLayout({
           <Navbar />
           <div className="overlay"></div>
           {children}
-          <ChatAI />
+          {/* <ChatAI /> */}
           <Footer />
           <Toaster position="top-right" reverseOrder={false} />
-        </AuthProvider>
 
+        </AuthProvider>
+        <BotpressChat />
       </body>
     </html>
   );
