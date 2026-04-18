@@ -7,16 +7,34 @@ export default function AuthCallback() {
     const router = useRouter();
 
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === "SIGNED_IN" && session?.user) {
-                localStorage.setItem("user_id", session.user.id);
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === "SIGNED_IN" && session) {
+                // Tạo profile nếu chưa có
+                const user = session.user;
+                const { data: existing } = await supabase
+                    .from("profiles")
+                    .select("id")
+                    .eq("id", user.id)
+                    .maybeSingle();
+
+                if (!existing) {
+                    const { error } = await supabase.from("profiles").insert({
+                        id: user.id,
+                        email: user.email,
+                        first_name: user.user_metadata?.full_name?.split(" ")[0] ?? "",
+                        last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
+                        avatar: user.user_metadata?.avatar_url ?? "",
+                    });
+                    if (error) {
+                        console.error("Error creating profile:", error);
+                    }
+                }
+
+                localStorage.setItem("user_id", user.id);
                 router.push("/");
-                subscription.unsubscribe(); // ✅ cleanup sau khi xong
             }
         });
-
-        return () => subscription.unsubscribe(); // ✅ cleanup khi unmount
-    }, [router]);
+    }, []);
 
     return (
         <div style={{ background: "#faf8f5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>
