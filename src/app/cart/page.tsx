@@ -586,7 +586,7 @@ export default function ShoppingCartUI() {
       setTimeout(() => {
         setOrderSuccess(false);
         setCurrentStep(1);
-        // setCartItems([]);
+        setCartItems(prev => prev.filter(item => !selectedItems.includes(item.id)));
         setCustomerInfo({ fullName: "", email: "", phone: "", address: "", city: "", ward: "", note: "", totalAmount: 0 });
         setAppliedCoupon(null);
         setCouponCode("");
@@ -869,7 +869,7 @@ export default function ShoppingCartUI() {
     );
   }
 
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !orderSuccess) {
     return (
       <div className="flex flex-col items-center justify-center py-24 bg-[#faf8f5] min-h-screen">
         <div className="w-28 h-28 rounded-full bg-[#ede8e0] flex items-center justify-center mb-6">
