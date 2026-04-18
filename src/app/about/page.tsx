@@ -434,10 +434,10 @@ export default function AboutPage() {
           <h2 className="about-heading" style={{ fontSize: "2.4rem", textAlign: "center", marginBottom: "3rem", fontWeight: 500 }}>Nhóm của chúng tôi</h2>
           <div className="team-grid">
             {[
-              { src: "http://static.photos/people/400x400/1", name: "Sarah Johnson", role: "Founder & CEO" },
-              { src: "http://static.photos/people/400x400/2", name: "Michael Chen", role: "Giám đốc sáng tạo" },
-              { src: "http://static.photos/people/400x400/3", name: "Emma Rodriguez", role: "Trưởng phòng tạo mẫu" },
-              { src: "http://static.photos/people/400x400/4", name: "David Wilson", role: "Trải nghiệm khách hàng" },
+              { src: "http://static.photos/people/400x400/1", name: "Trịnh Trần Phương Tuất", role: "Founder & CEO" },
+              { src: "http://static.photos/people/400x400/2", name: "Sơn Tùng Ôm TV", role: "Giám đốc sáng tạo" },
+              { src: "http://static.photos/people/400x400/3", name: "Lệ Rơi", role: "Trưởng phòng tạo mẫu" },
+              { src: "http://static.photos/people/400x400/4", name: "Chubin", role: "Trải nghiệm khách hàng" },
             ].map(m => (
               <div key={m.name} className="team-card">
                 <div className="team-img-wrap">
