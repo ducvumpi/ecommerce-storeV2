@@ -8,29 +8,38 @@ export default function AuthCallback() {
 
     useEffect(() => {
         supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === "SIGNED_IN" && session) {
-                // Tạo profile nếu chưa có
+            if (event === "SIGNED_IN" && session?.user) {
                 const user = session.user;
+
+                // Kiểm tra profile đã tồn tại chưa
                 const { data: existing } = await supabase
                     .from("profiles")
                     .select("id")
                     .eq("id", user.id)
-                    .maybeSingle();
+                    .single();
 
                 if (!existing) {
+                    // Lần đầu đăng nhập → insert
+                    const fullName = user.user_metadata?.full_name ?? "";
+                    const nameParts = fullName.trim().split(" ");
+                    const firstName = nameParts.pop() ?? "";
+                    const lastName = nameParts.join(" ");
+
                     await supabase.from("profiles").insert({
                         id: user.id,
                         email: user.email,
-                        first_name: user.user_metadata?.full_name?.split(" ")[0] ?? "",
-                        last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
-                        avatar: user.user_metadata?.avatar_url ?? "",
+                        first_name: firstName,
+                        last_name: lastName,
+                        avatar_url: user.user_metadata?.avatar_url ?? null,
+                        phone: user.phone ?? null,
                     });
-                }
 
-                localStorage.setItem("user_id", user.id);
-                router.push("/");
+                    localStorage.setItem("user_id", user.id);
+                    router.push("/");
+                }
             }
         });
+
     }, []);
 
     return (
