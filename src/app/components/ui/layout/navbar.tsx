@@ -453,9 +453,9 @@ export default function Navbar() {
                         <Link href="/orders" className="dd-item" onClick={() => setDropdownOpen(false)}>
                           <ShoppingCart size={14} strokeWidth={1.6} className="dd-icon" />Đơn mua
                         </Link>
-                        <Link href="/settings" className="dd-item" onClick={() => setDropdownOpen(false)}>
+                        {/* <Link href="/settings" className="dd-item" onClick={() => setDropdownOpen(false)}>
                           <Settings size={14} strokeWidth={1.6} className="dd-icon" />Cài đặt
-                        </Link>
+                        </Link> */}
                         <div className="dd-sep" />
                         <button className="dd-item danger" onClick={handleLogOut}>
                           <LogOut size={14} strokeWidth={1.6} className="dd-icon" />Đăng xuất

@@ -47,7 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
-    // ⚡ Chỉ block UI khi load lần đầu
     if (loading) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center">

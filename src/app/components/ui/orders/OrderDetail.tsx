@@ -253,7 +253,7 @@ const ReturnModal = ({ order, onClose, onSubmit }: ReturnModalProps) => {
 
             // 2. Kiểm tra chưa có request active
             const { data: existing } = await supabase
-                .from('order_returns')
+                .from('refunds')
                 .select('id')
                 .eq('order_id', order.id)
                 .not('status', 'eq', 'rejected')
@@ -265,7 +265,7 @@ const ReturnModal = ({ order, onClose, onSubmit }: ReturnModalProps) => {
 
             // 4. Insert vào order_returns
             const { error: insertError } = await supabase
-                .from('order_returns')
+                .from('refunds')
                 .insert({
                     order_id: order.id,
                     user_id: user.id,

@@ -52,20 +52,20 @@ export const orderServiceServer = {
         const { data, error } = await supabase
             .from('orders')
             .select(`
-  id, total_price, created_at, status, payment_method,completed_at,
-  addresses:addresses (
-    full_name, phone, address_line, mail, ward, city
-  ),
-  order_items:order_items (
-    quantity, price,
-    product_variants:product_variants (
-      id, size, color, price,
-      products:products (
-        name, image_url
-      )
-    )
-  )
-`)
+            id, total_price, created_at, status, payment_method,completed_at,
+            addresses:addresses (
+                full_name, phone, address_line, mail, ward, city
+            ),
+            order_items:order_items (
+                quantity, price,
+                product_variants:product_variants (
+                id, size, color, price,
+                products:products (
+                    name, image_url
+                )
+                )
+            )
+            `)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
@@ -119,9 +119,9 @@ export const orderServiceServer = {
                     : o.payment_method === 'bank' ? 'Chuyển khoản ngân hàng'
                         : o.payment_method === 'ipn' ? 'Thanh toán qua VNPAY'
                             : 'Không xác định',
-                payment_method_icon: o.payment_method === 'cod' ? '🚚'
-                    : o.payment_method === 'bank' ? '🏦'
-                        : o.payment_method === 'ipn' ? '💳'
+                payment_method_icon: o.payment_method === 'cod' ? ''
+                    : o.payment_method === 'bank' ? ''
+                        : o.payment_method === 'ipn' ? ''
                             : '❓',
                 payment_method_color: o.payment_method === 'cod' ? 'emerald'
                     : o.payment_method === 'bank' ? 'blue'

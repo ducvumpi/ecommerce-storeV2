@@ -586,7 +586,7 @@ export default function ShoppingCartUI() {
       setTimeout(() => {
         setOrderSuccess(false);
         setCurrentStep(1);
-        setCartItems([]);
+        // setCartItems([]);
         setCustomerInfo({ fullName: "", email: "", phone: "", address: "", city: "", ward: "", note: "", totalAmount: 0 });
         setAppliedCoupon(null);
         setCouponCode("");

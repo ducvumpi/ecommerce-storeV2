@@ -45,7 +45,6 @@ export default function UserPage() {
     async function fetchGetUser() {
       const data = await GetUserProfile();
       setProfile(data);
-      console.log("ktra data profile", data);
     }
 
     fetchGetUser();

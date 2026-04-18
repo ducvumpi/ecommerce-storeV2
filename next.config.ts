@@ -25,8 +25,7 @@ const nextConfig = {
       'picsum.photos',
       "pwezkmvuiuxvssaglkse.supabase.co",
     ],
-    // protocol: "https",
-    // pathname: "/storage/v1/object/public/**",
+
   },
 };
 
