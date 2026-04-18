@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getProfile, UserData } from "../api/loginAPI";
-import { useAuthStore } from "../store/isLoggedIn";
+import { getProfile, UserData } from "../../../api/loginAPI";
+import { useAuthStore } from "../../../store/isLoggedIn";
 import Link from "next/link";
 import {
     AppBar,
@@ -15,34 +15,13 @@ import {
     Box,
 } from "@mui/material";
 // import AccountCircle from "@mui/icons-material/AccountCircle";
-import { GetUserProfile } from "../api/loginAPI";
+import { GetUserProfile } from "../../../api/loginAPI";
 export default function UserPage({ data }: { data: UserData | null }) {
-    // const [profile, setProfile] = useState<UserData | null>(null);
-    // const [profile, setProfile] = useState<UserData | null>(null);
+
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const { isLoggedIn, logout } = useAuthStore();
 
-    // useEffect(() => {
-    //   const token = sessionStorage.getItem("access_token");
-    //   if (!token) return;
-
-    //   getProfile(token)
-    //     .then((data) => {
-    //       setProfile(data);
-    //       console.log("✅ Profile loaded:", data);
-    //     })
-    //     .catch((err) => console.error("❌ Lỗi lấy profile:", err));
-    // }, []);
-
-    // useEffect(() => {
-    //     async function fetchGetUser() {
-    //         const data = await GetUserProfile()
-    //         setProfile(data)
-    //         console.log("ktra data profile", data)
-    //     }
-    //     fetchGetUser()
-    // }, [])
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);

@@ -1,6 +1,4 @@
-import axios from "axios";
 import { supabase } from "../libs/supabaseClient";
-import toast from "react-hot-toast";
 export interface Clothes {
   id: string;
   name: string;
@@ -30,17 +28,7 @@ export interface CategoryStore {
   product: Clothes[];
 
 }
-// export async function fetchProduct(): Promise<Clothes[]> {
-//   try {
-//     const response = await axios.get(
-//       "https://api.escuelajs.co/api/v1/products"
-//     );
-//     return response.data;
-//   } catch (error) {
-//     console.error("Lỗi khi lấy dữ liệu quần áo:", error);
-//     return [];
-//   }
-// }
+
 export async function fetchProduct(): Promise<Clothes[]> {
   const { data, error } = await supabase
     .from("products")
@@ -67,17 +55,6 @@ export async function fetchProductWoman(): Promise<Clothes[]> {
   console.log(data);
   return data || [];
 }
-export async function fetchProductDetail(id: number) {
-  try {
-    const response = await axios.get(
-      `https://api.escuelajs.co/api/v1/products/${id}`
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Lỗi khi lấy dữ liệu quần áo:", error);
-    return;
-  }
-}
 export async function fetchClothesByProduct(slug: string): Promise<Clothes | null> {
   try {
     const products = await fetchProduct();
@@ -101,25 +78,6 @@ export async function fetchClothesByProductWoman(slug: string): Promise<Clothes 
   }
 }
 
-export async function createCartIfNotExists(userId: number) {
-  const { data: existing } = await supabase
-    .from("cart_items")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (!existing) {
-    const { data, error } = await supabase.from("cart").insert({
-      user_id: userId
-    }).select().single();
-
-    if (error) throw error;
-
-    return data;
-  }
-
-  return existing;
-}
 
 export async function deleteCartItems(idCartItems: number) {
   const { error } = await supabase

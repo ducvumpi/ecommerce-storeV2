@@ -1,7 +1,5 @@
-import axios from "axios";
 import { create } from "zustand";
 import { supabase } from "../libs/supabaseClient";
-import { Clothes } from "./productsAPI"
 export type Collection = {
   id: number;
   name: string;

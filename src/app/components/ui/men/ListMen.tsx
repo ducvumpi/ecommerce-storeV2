@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 
 export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
     const [hoveredId, setHoveredId] = useState<number | null>(null);
-
     const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
     const router = useRouter();
     const formatImageUrl = (url: any) => {

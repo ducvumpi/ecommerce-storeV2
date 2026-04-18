@@ -7,11 +7,10 @@ import "./globals.css";
 import Footer from "../app/components/ui/layout/footer";
 import Navbar from "../app/components/ui/layout/navbar";
 import { Toaster } from "react-hot-toast";
-import ChatAI from "./chatbox/chatbox";
 import { AuthProvider } from "./AuthProvider";
 
 import { Be_Vietnam_Pro } from 'next/font/google';
-import BotpressChat from "@/app/components/BotpressChat";
+import BotpressChat from "@/app/components/ui/chatAI/BotpressChat";
 const beVietnam = Be_Vietnam_Pro({
   subsets: ['vietnamese'],
   weight: ['300', '400', '500', '600', '700'],
