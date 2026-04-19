@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight, Menu } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight, Menu, EyeOff, Eye } from 'lucide-react';
 import { supabase } from '../libs/supabaseClient';
 import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI';
 import toast from 'react-hot-toast';
@@ -1068,10 +1068,13 @@ export default function AccountProfile() {
                             background: "none",
                             border: "none",
                             cursor: "pointer",
-                            color: "#888"
+                            color: "#a09080",
+                            display: "flex",
+                            alignItems: "center",
+                            padding: 0,
                           }}
                         >
-                          {showPassword[key] ? "🙈" : "👁"}
+                          {showPassword[key] ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
 
                       </div>
