@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { User, Mail, Phone, MapPin, Lock, Bell, CreditCard, Camera, Check, X, Edit2, ShieldCheck, ChevronRight, Menu } from 'lucide-react';
 import { supabase } from '../libs/supabaseClient';
 import { DiaGioiHanhChinh2Cap, Commune } from '../api/addressAPI';
+import toast from 'react-hot-toast';
 import * as yup from "yup";
 
 export default function AccountProfile() {
@@ -233,7 +234,7 @@ export default function AccountProfile() {
       // 🔥 Logout sau khi đổi mật khẩu
       await supabase.auth.signOut();
 
-      alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+      toast.success("Đổi mật khẩu thành công!");
 
       // redirect (nếu dùng Next.js)
       window.location.href = "/auth/login";
