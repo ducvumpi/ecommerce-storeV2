@@ -5,6 +5,8 @@ import { LoginData, LoginSchema } from "@/app/api/loginAPI";
 import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
 import { loginWithGoogle } from "@/app/api/loginAPI";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 const inputStyle: React.CSSProperties = {
     height: 42, padding: "0 14px", border: "1px solid #e2d9ce",
@@ -20,7 +22,7 @@ const labelStyle: React.CSSProperties = {
 export default function LoginFormAuth() {
     const { onSubmit } = useAuthStore();
     const router = useRouter();
-
+    const [showPassword, setShowPassword] = useState(false);
     const { control, handleSubmit, formState: { errors } } = useForm<LoginData>({
         resolver: yupResolver(LoginSchema),
     });
@@ -54,12 +56,30 @@ export default function LoginFormAuth() {
                     {/* Password */}
                     <div style={{ marginBottom: 16 }}>
                         <label style={labelStyle}>Mật khẩu</label>
-                        <Controller name="password" defaultValue="" control={control} render={({ field }) => (
-                            <input {...field} type="password" placeholder="••••••••" style={{ ...inputStyle, borderColor: errors.password ? "#c07050" : "#e2d9ce" }} />
-                        )} />
+                        <div style={{ position: "relative" }}>
+                            <Controller name="password" defaultValue="" control={control} render={({ field }) => (
+                                <input
+                                    {...field}
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    style={{ ...inputStyle, borderColor: errors.password ? "#c07050" : "#e2d9ce", paddingRight: 40 }}
+                                />
+                            )} />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(p => !p)}
+                                style={{
+                                    position: "absolute", right: 10, top: "50%",
+                                    transform: "translateY(-50%)", background: "none",
+                                    border: "none", cursor: "pointer", color: "#a09080", padding: 0,
+                                    display: "flex", alignItems: "center",
+                                }}
+                            >
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
                         {errors.password && <p style={{ fontSize: 12, color: "#c07050", margin: "4px 0 0" }}>{errors.password.message}</p>}
                     </div>
-
                     {/* Remember + Forgot */}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
                         <label style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, color: "#8a7060", cursor: "pointer" }}>
