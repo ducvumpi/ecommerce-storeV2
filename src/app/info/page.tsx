@@ -134,8 +134,7 @@ export default function AccountProfile() {
   const handleSaveProfile = async () => {
     try {
       await profileSchema.validate(profileData, { abortEarly: false });
-
-      setErrors({}); // clear lỗi
+      setErrors({});
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -158,9 +157,7 @@ export default function AccountProfile() {
       if (err instanceof yup.ValidationError) {
         const newErrors: Record<string, string> = {};
         err.inner.forEach(e => {
-          if (e.path) {
-            newErrors[e.path] = e.message;
-          }
+          if (e.path) newErrors[e.path] = e.message;
         });
         setErrors(newErrors);
       } else {
@@ -804,6 +801,11 @@ export default function AccountProfile() {
           </div>
         )}
 
+        {Object.keys(errors).length > 0 && (
+          <div className="toast" style={{ background: "#ff4d4f" }}>
+            <X size={15} strokeWidth={2} /> Vui lòng điền đầy đủ thông tin!
+          </div>
+        )}
         {/* ── Mobile top bar ── */}
         <div className="mobile-topbar">
           <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)} aria-label="Mở menu">
@@ -848,7 +850,13 @@ export default function AccountProfile() {
                     </button>
                   ) : (
                     <div className="section-header-actions">
-                      <button className="btn-cancel" onClick={() => setIsEditing(false)}>
+                      <button
+                        className="btn-cancel"
+                        onClick={() => {
+                          setIsEditing(false);
+                          setErrors({});
+                        }}
+                      >
                         <X size={13} /> Hủy
                       </button>
                       <button className="btn-save" onClick={async () => { await handleSaveProfile(); handleSave(); }}>

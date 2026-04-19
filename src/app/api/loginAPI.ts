@@ -194,8 +194,9 @@ export async function loginWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: window.location.origin + "/",
+      redirectTo: window.location.origin + "/auth/callback",
     },
+
   });
 
   if (error) {
@@ -204,6 +205,7 @@ export async function loginWithGoogle() {
   }
 
   return data;
+
 }
 export async function GetUserProfile(): Promise<UserData | null> {
   const userId = localStorage.getItem("user_id");

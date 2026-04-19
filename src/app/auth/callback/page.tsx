@@ -7,37 +7,45 @@ export default function AuthCallback() {
     const router = useRouter();
 
     useEffect(() => {
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === "SIGNED_IN" && session) {
-                // Tạo profile nếu chưa có
-                const user = session.user;
-                const { data: existing } = await supabase
-                    .from("profiles")
-                    .select("id")
-                    .eq("id", user.id)
-                    .maybeSingle();
+        const handleAuth = async () => {
+            console.log("✅ AuthCallback mounted");
 
-                if (!existing) {
-                    const { error } = await supabase.from("profiles").insert({
-                        id: user.id,
-                        email: user.email,
-                        first_name: user.user_metadata?.full_name?.split(" ")[0] ?? "",
-                        last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ?? "",
-                        avatar: user.user_metadata?.avatar_url ?? "",
-                    });
-                    if (error) {
-                        console.error("Error creating profile:", error);
-                    }
-                }
+            // Đợi Supabase xử lý hash từ URL
+            const { data: { session }, error } = await supabase.auth.getSession();
+            console.log("Session:", session, "Error:", error);
 
-                localStorage.setItem("user_id", user.id);
+            if (!session?.user) {
                 router.push("/");
+                return;
             }
-        });
-    }, []);
+
+            const user = session.user;
+            console.log("User:", user.id, user.email);
+            console.log("Metadata:", user.user_metadata);
+
+            const { error: upsertError } = await supabase
+                .from("profiles")
+                .upsert({
+                    id: user.id,
+                    email: user.email,
+                    avatar_url: user.user_metadata?.avatar_url ?? null,
+                    first_name: user.user_metadata?.given_name ?? '',
+                    last_name: user.user_metadata?.family_name ?? '',
+                    role: 'user',
+                    updated_at: new Date().toISOString(),
+                }, { onConflict: 'id' });
+
+            console.log("Upsert error:", upsertError);
+
+            localStorage.setItem("user_id", user.id);
+            router.push("/");
+        };
+
+        handleAuth();
+    }, [router]);
 
     return (
-        <div style={{ background: "#faf8f5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "inherit" }}>
+        <div style={{ background: "#faf8f5", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <p style={{ color: "#b0997e", fontSize: 14 }}>Đang đăng nhập...</p>
         </div>
     );
