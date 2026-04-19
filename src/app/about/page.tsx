@@ -459,7 +459,7 @@ export default function AboutPage() {
           <p className="cta-sub">
             Đăng ký ngay hôm nay để được giảm giá 15% cho đơn hàng đầu tiên cùng quyền truy cập độc quyền vào các bộ sưu tập mới.
           </p>
-          <a href="/signup" className="cta-btn">Tham gia ngay</a>
+          <a href="/auth/register" className="cta-btn">Tham gia ngay</a>
         </section>
 
       </main>
