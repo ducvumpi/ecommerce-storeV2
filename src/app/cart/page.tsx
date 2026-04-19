@@ -764,7 +764,6 @@ export default function ShoppingCartUI() {
       }
       if (!validateStep2()) { alert("Vui lòng điền đầy đủ thông tin giao hàng"); return; }
 
-      // Nếu đang dùng địa chỉ đã lưu → truyền address_id, backend skip insert mới
       const isUsingSavedAddress = savedAddresses.length > 0 && addressTab === 'saved' && selectedAddressId;
 
       const { data, error } = await supabase.rpc("create_order_from_cart_full", {
@@ -778,10 +777,17 @@ export default function ShoppingCartUI() {
         p_selected_items: selectedItems,
         p_address_id: isUsingSavedAddress ? selectedAddressId : null,
         p_save_address: !isUsingSavedAddress,
-        p_payment_method: paymentMethod, // ← thêm dòng này
+        p_payment_method: paymentMethod,
       });
 
       if (error) throw error;
+
+      // ✅ Update total_price = calculation sau khi áp coupon
+      await supabase
+        .from("orders")
+        .update({ total_price: calculation })
+        .eq("id", data);
+
       setOrderId(data);
       setCurrentStep(3);
     } catch (err: any) {
@@ -833,7 +839,8 @@ export default function ShoppingCartUI() {
     const now = new Date();
     if (coupon.start_date && new Date(coupon.start_date) > now) { alert("Mã chưa bắt đầu"); return; }
     if (coupon.end_date && new Date(coupon.end_date) < now) { alert("Mã đã hết hạn"); return; }
-    if (subtotal < coupon.min_order_value) { alert(`Đơn tối thiểu ${coupon.min_order_value}`); return; }
+    if (subtotal < coupon.min_order_value) { alert(`Đơn tối thiểu ${formatPrice(coupon.min_order_value)}`); return; }
+
     let discountAmount = 0;
     if (coupon.discount_type === "percent") {
       discountAmount = subtotal * (coupon.discount_value / 100);
@@ -841,15 +848,17 @@ export default function ShoppingCartUI() {
     } else if (coupon.discount_type === "fixed") {
       discountAmount = coupon.discount_value;
     }
+    discountAmount = Math.min(discountAmount, subtotal);
+
     setAppliedCoupon({ code: coupon.code, discountAmount });
   };
-
   const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
   const subtotal = selectedCartItems.reduce((sum, item) => sum + (item.product_variant?.price ?? 0) * item.quantity, 0);
   const discount = appliedCoupon?.discountAmount || 0;
   const shipping = (appliedCoupon as any)?.freeShip ? 0 : 30000;
-  const calculation = subtotal - discount + shipping;
-
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  const finalShipping = discountedSubtotal === 0 ? 0 : shipping;
+  const calculation = discountedSubtotal + finalShipping;
   const formatPrice = (price: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
   const updateCartItemQuantity = async (cartItemId: number, newQuantity: number) => {
@@ -1269,20 +1278,7 @@ export default function ShoppingCartUI() {
                       </div>
                     )}
 
-                    <div style={{ marginBottom: '1.25rem' }}>
-                      <label className="label-warm"><Tag size={12} style={{ display: 'inline', marginRight: 4 }} />Mã giảm giá</label>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <input type="text" value={couponCode} onChange={e => setCouponCode(e.target.value)} placeholder="Nhập mã..." className="input-warm" style={{ flex: 1 }} />
-                        <button onClick={applyCoupon} className="btn-primary" style={{ padding: '.65rem 1rem', fontSize: '.82rem', borderRadius: 10, whiteSpace: 'nowrap' }}>
-                          Áp dụng
-                        </button>
-                      </div>
-                      {appliedCoupon && (
-                        <div className="badge-tag" style={{ marginTop: 8 }}>
-                          <Check size={11} /> Mã "{appliedCoupon.code}" đã áp dụng
-                        </div>
-                      )}
-                    </div>
+
 
                     <div style={{ borderTop: '1px dashed #e8ddd0', paddingTop: '1rem', marginBottom: '1rem' }}>
                       {[
@@ -1600,6 +1596,20 @@ export default function ShoppingCartUI() {
                   <div className="card-warm sidebar-sticky" style={{ padding: '1.25rem' }}>
                     <h2 className="cart-heading" style={{ fontSize: '1rem', color: '#4a3728', marginBottom: '1rem' }}>Đơn hàng</h2>
                     <div style={{ maxHeight: 260, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, marginBottom: '1rem' }}>
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <label className="label-warm"><Tag size={12} style={{ display: 'inline', marginRight: 4 }} />Mã giảm giá</label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input type="text" value={couponCode} onChange={e => setCouponCode(e.target.value)} placeholder="Nhập mã..." className="input-warm" style={{ flex: 1 }} />
+                          <button onClick={applyCoupon} className="btn-primary" style={{ padding: '.65rem 1rem', fontSize: '.82rem', borderRadius: 10, whiteSpace: 'nowrap' }}>
+                            Áp dụng
+                          </button>
+                        </div>
+                        {appliedCoupon && (
+                          <div className="badge-tag" style={{ marginTop: 8 }}>
+                            <Check size={11} /> Mã "{appliedCoupon.code}" đã áp dụng
+                          </div>
+                        )}
+                      </div>
                       {selectedCartItems.map(item => (
                         <div key={item.id} style={{ display: 'flex', gap: 10, paddingBottom: 10, borderBottom: '1px solid #f0e8e0' }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
