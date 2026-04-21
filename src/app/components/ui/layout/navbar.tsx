@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingBag, User, LogOut, Settings, ShoppingCart, ChevronDown, Menu, X } from "lucide-react";
+import { Search, ShoppingBag, User, LogOut, Settings, ShoppingCart, ChevronDown, Menu, X, Heart } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/app/libs/supabaseClient";
 import { useAuth } from "@/app/AuthProvider";
@@ -199,9 +199,9 @@ export default function Navbar() {
                         <Link href="/orders" className="dd-item" onClick={() => setDropdownOpen(false)}>
                           <ShoppingCart size={14} strokeWidth={1.6} className="dd-icon" />Đơn mua
                         </Link>
-                        {/* <Link href="/settings" className="dd-item" onClick={() => setDropdownOpen(false)}>
-                          <Settings size={14} strokeWidth={1.6} className="dd-icon" />Cài đặt
-                        </Link> */}
+                        <Link href="/wishlist" className="dd-item" onClick={() => setDropdownOpen(false)}>
+                          <Heart size={14} strokeWidth={1.6} className="dd-icon" />Danh sách yêu thích
+                        </Link>
                         <div className="dd-sep" />
                         <button className="dd-item danger" onClick={handleLogOut}>
                           <LogOut size={14} strokeWidth={1.6} className="dd-icon" />Đăng xuất

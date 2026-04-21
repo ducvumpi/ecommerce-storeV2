@@ -29,7 +29,9 @@ export default function LoginFormAuth() {
 
     const handleLogin = async (data: LoginData) => {
         const success = await onSubmit(data);
-        if (success) router.push("/");
+        if (success) {
+            window.location.href = "/";
+        }
     };
 
     return (

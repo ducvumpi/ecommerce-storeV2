@@ -119,7 +119,17 @@ export default function CollectionProducts({ params }: { params: Promise<{ slug:
 
     return products;
   }, [sampleProducts, selectedCategory, priceRange, sortBy]);
+  const [collections, setCollections] = useState<{ id: number, name: string, slug: string }[]>([]);
 
+  useEffect(() => {
+    async function loadCollections() {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, slug");
+      if (data) setCollections(data);
+    }
+    loadCollections();
+  }, []);
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',

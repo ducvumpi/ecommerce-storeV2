@@ -93,6 +93,7 @@ type Coupon = {
   discountAmount: number;
 };
 
+
 // ─────────────────────────────────────────────────────────
 // SearchableSelect — đặt NGOÀI component cha để tránh remount
 // ─────────────────────────────────────────────────────────
@@ -882,7 +883,7 @@ export default function ShoppingCartUI() {
     return (
       <div className="flex flex-col items-center justify-center py-24 bg-[#faf8f5] min-h-screen">
         <div className="w-28 h-28 rounded-full bg-[#ede8e0] flex items-center justify-center mb-6">
-          <img src="https://cdn-icons-png.flaticon.com/512/11329/11329060.png" alt="Empty Cart" className="w-16 h-16 opacity-60" />
+          <img src="/cart.png" alt="Empty Cart" className="w-16 h-16 opacity-60" />
         </div>
         <h2 className="text-2xl font-semibold text-[#5c4a32] mb-2">Giỏ hàng đang trống</h2>
         <p className="text-[#a08060] mb-8">Hãy thêm sản phẩm yêu thích để bắt đầu nhé!</p>
@@ -1792,7 +1793,7 @@ export default function ShoppingCartUI() {
               <p style={{ color: '#a09080', marginBottom: '1rem' }}>Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ sớm nhất.</p>
               <div style={{ background: '#fdf6ef', borderRadius: 10, padding: '10px 16px', display: 'inline-block' }}>
                 <span style={{ fontSize: '.82rem', color: '#a09080' }}>Mã đơn hàng: </span>
-                <span style={{ fontWeight: 700, color: '#8b5e3c', fontSize: '.9rem' }}>DH{Date.now().toString().slice(-8)}</span>
+                <span style={{ fontWeight: 700, color: '#8b5e3c', fontSize: '.9rem' }}>DH{(orderId || '').slice(0, 8).toUpperCase()}</span>
               </div>
             </div>
           </div>
