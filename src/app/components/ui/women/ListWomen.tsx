@@ -328,7 +328,7 @@ export default function womenListProduct({ clothes }: { clothes: Clothes[] }) {
                                     </p>
                                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                         <span style={{ fontSize: 15, fontWeight: 500, color: "#8b5e3c" }}>{formatPrice(getPrice(item))}</span>
-                                        <a href={`/women/${item.slug}`} style={{ fontSize: 12, color: "#7a6652", background: "#f3ede6", padding: "7px 16px", borderRadius: 50, textDecoration: "none" }}>
+                                        <a href={`/wowomen/${item.slug}`} style={{ fontSize: 12, color: "#7a6652", background: "#f3ede6", padding: "7px 16px", borderRadius: 50, textDecoration: "none" }}>
                                             Xem Chi Tiết
                                         </a>
                                     </div>
