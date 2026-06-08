@@ -14,7 +14,7 @@ interface FilterState {
     category: string;
 }
 
-export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
+export default function womenListProduct({ clothes }: { clothes: Clothes[] }) {
     const [hoveredId, setHoveredId] = useState<number | null>(null);
     const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
     const [sortOption, setSortOption] = useState<SortOption>("default");
@@ -295,7 +295,7 @@ export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
                                 style={{ background: "#fff", borderRadius: 16, border: "0.5px solid #e8ddd0", overflow: "hidden", boxShadow: hoveredId === itemIdNum ? "0 6px 24px rgba(100,60,20,.1)" : "none", transition: "box-shadow .25s" }}
                             >
                                 <div style={{ position: "relative", height: 240, overflow: "hidden", background: "#f3ede6" }}>
-                                    <Link href={`/men/${item.slug}`}>
+                                    <Link href={`/women/${item.slug}`}>
                                         <Image
                                             src={formatImageUrl(item.image_url)}
                                             alt={item.category?.name ?? ""}
@@ -343,7 +343,7 @@ export default function MenListProduct({ clothes }: { clothes: Clothes[] }) {
             <div style={{ textAlign: "center", borderTop: "0.5px solid #e8ddd0", paddingTop: 48 }}>
                 <h2 style={{ fontSize: 18, fontWeight: 500, color: "#3d2b1a", margin: "0 0 8px" }}>Cần trợ giúp tìm phong cách của bạn?</h2>
                 <p style={{ fontSize: 13, color: "#b0997e", margin: "0 0 20px" }}>Xem gợi ý phối đồ từ đội ngũ stylist của chúng tôi</p>
-                <a href="/men-style-guide" style={{ display: "inline-block", background: "#8b5e3c", color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 28px", borderRadius: 50, textDecoration: "none" }}>
+                <a href="/women-style-guide" style={{ display: "inline-block", background: "#8b5e3c", color: "#fff", fontSize: 13, fontWeight: 500, padding: "11px 28px", borderRadius: 50, textDecoration: "none" }}>
                     Xem hướng dẫn phong cách
                 </a>
             </div>

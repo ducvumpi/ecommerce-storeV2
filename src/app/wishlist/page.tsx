@@ -8,7 +8,7 @@ export default async function WishlistPage() {
 
     // Lấy session để có user_id
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect("/login");
+    if (!user) redirect("/auth/login");
 
     // Lấy profile để lấy id (nếu profiles.id = auth.uid thì dùng thẳng user.id)
     const { data: profile } = await supabase
@@ -17,7 +17,7 @@ export default async function WishlistPage() {
         .eq("id", user.id)
         .single();
 
-    if (!profile) redirect("/login");
+    if (!profile) redirect("/auth/login");
 
     const { data: wishlist, error } = await supabase
         .from("wishlists")
