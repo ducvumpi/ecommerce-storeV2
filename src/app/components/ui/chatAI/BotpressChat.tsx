@@ -195,15 +195,12 @@ export default function ChatBot() {
         strategy="afterInteractive"
       />
       <Script
-        src="https://files.bpcontent.cloud/2026/06/04/09/20260604092933-NXPN19LJ.js"
+        src="https://files.bpcontent.cloud/2026/06/17/02/20260617023538-HCMRW5W8.js"
         strategy="afterInteractive"
       />
     </>
   )
 }
-
-
-
 
 
 
