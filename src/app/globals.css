@@ -1694,3 +1694,6 @@ html {
   }
 
 }
+.sending-auth .bpMessageContainer:has(a.bpMessageBlocksTextLink) {
+  display: none !important;
+}

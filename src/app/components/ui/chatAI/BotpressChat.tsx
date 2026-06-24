@@ -92,9 +92,8 @@
 
 //   return null
 // }
-// components/ChatBot.jsx
-// components/ChatBot.jsx
-// components/ChatBot.tsx
+
+
 'use client'
 import Script from 'next/script'
 import { supabase } from '@/app/libs/supabaseClient'
@@ -130,44 +129,102 @@ export default function ChatBot() {
     return () => clearInterval(interval)
   }, [])
 
-  // Gửi auth — chỉ 1 lần duy nhất
+
+
+
+
   useEffect(() => {
-    if (!botReady || !window.botpress) return
-    if (!user) return
-    if (hasSentAuth.current) return  // ← chặn gửi lại
+  if (!botReady || !window.botpress) return
+  if (hasSentAuth.current) return
 
-    hasSentAuth.current = true  // ← đánh dấu TRƯỚC khi gửi
+  supabase.auth.getUser().then(({ data }) => {
+    if (!data.user) return
+    if (hasSentAuth.current) return
 
-    const payload = `__auth__${user.email}__${user.id}__true`
+    hasSentAuth.current = true
+    const u = data.user
+    const payload = `__auth__${u.email}__${u.id}__true`
     console.log('🤖 Gửi auth:', payload)
 
-    setTimeout(() => {
-      window.botpress?.sendMessage(payload)
-      console.log('✅ Đã gửi auth message')
-    }, 1000)
+    // Ẩn bằng CSS ngay lập tức
+    const style = document.createElement('style')
+    style.id = 'hide-auth-style'
+    style.innerHTML = `
+      .bpMessageContainer:has(a.bpMessageBlocksTextLink) {
+        display: none !important;
+      }
+    `
+    document.head.appendChild(style)
 
-  }, [botReady, user])
+    // Setup MutationObserver
+    const hideAuth = () => {
+      document.querySelectorAll('*').forEach((el) => {
+        if (el.shadowRoot) {
+          el.shadowRoot.querySelectorAll('.bpMessageContainer').forEach((container) => {
+            if (container.textContent?.includes('__auth__')) {
+              (container as HTMLElement).style.display = 'none'
+            }
+          })
+        }
+      })
+    }
+    const observer = new MutationObserver(hideAuth)
+    observer.observe(document.body, { childList: true, subtree: true })
 
+    // Gửi auth — CHỈ 1 LẦN
+ // Thêm class vào body để CSS target
+document.body.classList.add('sending-auth')
+
+window.botpress?.sendMessage(payload)
+
+setTimeout(() => {
+  document.body.classList.remove('sending-auth')
+}, 2000)
+  })
+
+}, [botReady])
+
+//   // Ẩn auth message trong DOM
+// useEffect(() => {
+//   const hideAuthMessage = () => {
+//     const allElements = document.querySelectorAll('*')
+//     allElements.forEach((el) => {
+//       if (el.shadowRoot) {
+//         const bubbles = el.shadowRoot.querySelectorAll('.bpMessageBlocksBubble')
+//         bubbles.forEach((bubble) => {
+//           if (bubble.textContent?.includes('__auth__')) {
+//             // Ẩn div cha bpMessageContainer
+//             const container = bubble.closest('.bpMessageContainer') as HTMLElement
+//             if (container) container.style.display = 'none'
+//           }
+//         })
+//       }
+//     })
+//   }
+
+//   const observer = new MutationObserver(hideAuthMessage)
+//   observer.observe(document.body, { childList: true, subtree: true })
+
+//   return () => observer.disconnect()
+// }, [])
   // Lắng nghe event click — chỉ đăng ký 1 lần
- useEffect(() => {
-  if (!botReady || !window.botpress) return
-  if (messageListenerAdded.current) return
+  useEffect(() => {
+    if (!botReady || !window.botpress) return
+    if (messageListenerAdded.current) return
 
-  messageListenerAdded.current = true
+    messageListenerAdded.current = true
 
-  window.botpress?.on('message', (data: any) => {
-    const blocks = data?.block?.blocks ?? []
+    window.botpress?.on('message', (data: any) => {
+      const blocks = data?.block?.blocks ?? []
 
-    blocks.forEach((col: any) => {
-      col?.blocks?.forEach((block: any) => {
-        block?.blocks?.forEach((btn: any) => {
-          if (!btn?.buttonValue) return
+      blocks.forEach((col: any) => {
+        col?.blocks?.forEach((block: any) => {
+          block?.blocks?.forEach((btn: any) => {
+            if (!btn?.buttonValue) return
 
-          // Bấm "Xem sản phẩm" → mở thẳng trang collections
-          if (btn.buttonValue.startsWith('category_')) {
+            if (btn.buttonValue.startsWith('category_')) {
               const slug = btn.buttonValue.replace('category_', '')
               const url = `http://localhost:3000/collections/${slug}`
-              
               const a = document.createElement('a')
               a.href = url
               a.target = '_blank'
@@ -177,17 +234,17 @@ export default function ChatBot() {
               document.body.removeChild(a)
               return
             }
- 
-          // Bấm "Xem chi tiết" sản phẩm → mở link web
-          if (btn.buttonValue.startsWith('https://')) {
-            window.open(btn.buttonValue, '_blank')
-            return
-          }
+
+            if (btn.buttonValue.startsWith('https://')) {
+              window.open(btn.buttonValue, '_blank')
+              return
+            }
+          })
         })
       })
     })
-  })
-}, [botReady])
+  }, [botReady])
+
   return (
     <>
       <Script
