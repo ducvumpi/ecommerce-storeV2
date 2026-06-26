@@ -131,11 +131,16 @@ export default function ChatBot() {
 
 
 
-
-
-  useEffect(() => {
+useEffect(() => {
   if (!botReady || !window.botpress) return
   if (hasSentAuth.current) return
+
+  // Lắng nghe logout
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (_event === 'SIGNED_OUT' && window.botpress) {
+      window.botpress?.sendMessage('__logout__')
+    }
+  })
 
   supabase.auth.getUser().then(({ data }) => {
     if (!data.user) return
@@ -147,10 +152,11 @@ export default function ChatBot() {
     console.log('🤖 Gửi auth:', payload)
 
     // Ẩn bằng CSS ngay lập tức
+    document.body.classList.add('sending-auth')
     const style = document.createElement('style')
     style.id = 'hide-auth-style'
     style.innerHTML = `
-      .bpMessageContainer:has(a.bpMessageBlocksTextLink) {
+      .sending-auth .bpMessageContainer:has(a.bpMessageBlocksTextLink) {
         display: none !important;
       }
     `
@@ -171,16 +177,18 @@ export default function ChatBot() {
     const observer = new MutationObserver(hideAuth)
     observer.observe(document.body, { childList: true, subtree: true })
 
-    // Gửi auth — CHỈ 1 LẦN
- // Thêm class vào body để CSS target
-document.body.classList.add('sending-auth')
+    // Gửi auth
+    window.botpress?.sendMessage(payload)
 
-window.botpress?.sendMessage(payload)
-
-setTimeout(() => {
-  document.body.classList.remove('sending-auth')
-}, 2000)
+    // Cleanup sau 3s
+    setTimeout(() => {
+      document.body.classList.remove('sending-auth')
+      document.getElementById('hide-auth-style')?.remove()
+      observer.disconnect()
+    }, 3000)
   })
+
+  return () => subscription.unsubscribe()
 
 }, [botReady])
 

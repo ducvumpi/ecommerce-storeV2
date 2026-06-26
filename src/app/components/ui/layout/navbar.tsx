@@ -273,6 +273,9 @@ export default function Navbar() {
               <Link href="/orders" className="drawer-action" onClick={() => setMobileOpen(false)}>
                 <ShoppingCart size={15} strokeWidth={1.6} className="drawer-action-icon" />Đơn mua
               </Link>
+                <Link href="/wishlist" className="dd-item" onClick={() => setDropdownOpen(false)}>
+                          <Heart size={14} strokeWidth={1.6} className="dd-icon" />Danh sách yêu thích
+                </Link>
               <Link href="/settings" className="drawer-action" onClick={() => setMobileOpen(false)}>
                 <Settings size={15} strokeWidth={1.6} className="drawer-action-icon" />Cài đặt
               </Link>

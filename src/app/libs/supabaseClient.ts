@@ -1,13 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON!;
-export async function uploadFile(file: any) {
-    const { data, error } = await supabase.storage.from('image').upload('123', file)
-    if (error) {
-        // Handle error
-    } else {
-        // Handle success
-    }
+export const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON!
+);
+
+export async function uploadFile(file: File) {
+  const { data, error } = await supabase.storage
+    .from("image")
+    .upload("123", file);
+
+  return { data, error };
 }
-export const supabase = createClient(supabaseUrl, supabaseKey);
