@@ -95,19 +95,20 @@
 'use client'
 import Script from 'next/script'
 import { supabase } from '@/app/libs/supabaseClient'
-import { User } from '@supabase/supabase-js'
 import { useEffect, useState, useRef } from 'react'
 
 export default function ChatBot() {
   const [botReady, setBotReady] = useState(false)
-  const botReadyRef = useRef(false) // ✅ ref để tránh stale closure
+  const botReadyRef = useRef(false)
   const hasSentAuth = useRef(false)
   const hasSentGuest = useRef(false)
   const messageListenerAdded = useRef(false)
 
-  const sendAuth = (email: string, id: string) => {
+const sendAuth = (email: string, id: string) => {
     if (!window.botpress?.sendMessage) return
+    if (hasSentAuth.current) return
     hasSentAuth.current = true
+
     const payload = `__auth__${email}__${id}__true`
     const style = document.createElement('style')
     style.id = 'hide-auth-style'
@@ -116,32 +117,28 @@ export default function ChatBot() {
     document.body.classList.add('sending-auth')
     window.botpress.sendMessage(payload)
     console.log('✅ Sent auth:', email)
+
     setTimeout(() => {
       document.body.classList.remove('sending-auth')
       document.getElementById('hide-auth-style')?.remove()
     }, 3000)
-  }
+}
 
-  // Lắng nghe auth state change
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        if (_event === 'SIGNED_IN' && session?.user) {
-          // ✅ Dùng ref thay vì state
-          if (hasSentAuth.current) return
-          const u = session.user
+if (_event === 'SIGNED_IN' && session?.user) {
+    const u = session.user
+    hasSentGuest.current = false
 
-          if (botReadyRef.current) {
-            sendAuth(u.email!, u.id)
-          } else {
-            // Bot chưa ready → chờ
-            const wait = setInterval(() => {
-              if (!botReadyRef.current) return
-              sendAuth(u.email!, u.id)
-              clearInterval(wait)
-            }, 300)
-          }
-        }
+    const wait = setInterval(() => {
+        if (!botReadyRef.current || !window.botpress?.sendMessage) return
+        clearInterval(wait) // ✅ clear trước
+        if (hasSentAuth.current) return // ✅ check sau khi clear
+        sendAuth(u.email!, u.id)
+    }, 300)
+    setTimeout(() => clearInterval(wait), 10000)
+}
 
         if (_event === 'SIGNED_OUT') {
           window.botpress?.sendMessage('__logout__')
@@ -153,7 +150,6 @@ export default function ChatBot() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Chờ bot ready
   useEffect(() => {
     const tryReady = () => {
       if (window.botpress) {
@@ -170,10 +166,8 @@ export default function ChatBot() {
     return () => clearInterval(interval)
   }, [])
 
-  // Gửi auth/guest lần đầu khi bot ready
   useEffect(() => {
     if (!botReady) return
-
     supabase.auth.getUser().then(({ data }) => {
       const u = data.user
       if (u && !hasSentAuth.current) {
@@ -185,7 +179,6 @@ export default function ChatBot() {
     })
   }, [botReady])
 
-  // Lắng nghe message event
   useEffect(() => {
     if (!botReady || messageListenerAdded.current) return
     messageListenerAdded.current = true
