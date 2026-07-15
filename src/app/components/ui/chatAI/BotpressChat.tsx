@@ -92,8 +92,6 @@
 
 //   return null
 // }
-
-
 'use client'
 import Script from 'next/script'
 import { supabase } from '@/app/libs/supabaseClient'
@@ -101,127 +99,103 @@ import { User } from '@supabase/supabase-js'
 import { useEffect, useState, useRef } from 'react'
 
 export default function ChatBot() {
-  const [user, setUser] = useState<User | null>(null)
   const [botReady, setBotReady] = useState(false)
+  const botReadyRef = useRef(false) // ✅ ref để tránh stale closure
   const hasSentAuth = useRef(false)
+  const hasSentGuest = useRef(false)
   const messageListenerAdded = useRef(false)
 
+  const sendAuth = (email: string, id: string) => {
+    if (!window.botpress?.sendMessage) return
+    hasSentAuth.current = true
+    const payload = `__auth__${email}__${id}__true`
+    const style = document.createElement('style')
+    style.id = 'hide-auth-style'
+    style.innerHTML = `.sending-auth .bpMessageContainer:has(a.bpMessageBlocksTextLink) { display: none !important; }`
+    document.head.appendChild(style)
+    document.body.classList.add('sending-auth')
+    window.botpress.sendMessage(payload)
+    console.log('✅ Sent auth:', email)
+    setTimeout(() => {
+      document.body.classList.remove('sending-auth')
+      document.getElementById('hide-auth-style')?.remove()
+    }, 3000)
+  }
+
+  // Lắng nghe auth state change
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user)
-    })
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null)
+        if (_event === 'SIGNED_IN' && session?.user) {
+          // ✅ Dùng ref thay vì state
+          if (hasSentAuth.current) return
+          const u = session.user
+
+          if (botReadyRef.current) {
+            sendAuth(u.email!, u.id)
+          } else {
+            // Bot chưa ready → chờ
+            const wait = setInterval(() => {
+              if (!botReadyRef.current) return
+              sendAuth(u.email!, u.id)
+              clearInterval(wait)
+            }, 300)
+          }
+        }
+
+        if (_event === 'SIGNED_OUT') {
+          window.botpress?.sendMessage('__logout__')
+          hasSentAuth.current = false
+          hasSentGuest.current = false
+        }
       }
     )
     return () => subscription.unsubscribe()
   }, [])
 
-  // Chờ botpress load xong
+  // Chờ bot ready
   useEffect(() => {
-    const interval = setInterval(() => {
+    const tryReady = () => {
       if (window.botpress) {
         setBotReady(true)
-        clearInterval(interval)
+        botReadyRef.current = true
+        return true
       }
+      return false
+    }
+    if (tryReady()) return
+    const interval = setInterval(() => {
+      if (tryReady()) clearInterval(interval)
     }, 300)
     return () => clearInterval(interval)
   }, [])
 
-
-
-
-
+  // Gửi auth/guest lần đầu khi bot ready
   useEffect(() => {
-  if (!botReady || !window.botpress) return
-  if (hasSentAuth.current) return
+    if (!botReady) return
 
-  supabase.auth.getUser().then(({ data }) => {
-    if (!data.user) return
-    if (hasSentAuth.current) return
-
-    hasSentAuth.current = true
-    const u = data.user
-    const payload = `__auth__${u.email}__${u.id}__true`
-    console.log('🤖 Gửi auth:', payload)
-
-    // Ẩn bằng CSS ngay lập tức
-    const style = document.createElement('style')
-    style.id = 'hide-auth-style'
-    style.innerHTML = `
-      .bpMessageContainer:has(a.bpMessageBlocksTextLink) {
-        display: none !important;
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data.user
+      if (u && !hasSentAuth.current) {
+        sendAuth(u.email!, u.id)
+      } else if (!u && !hasSentGuest.current) {
+        hasSentGuest.current = true
+        window.botpress?.sendMessage('__guest__')
       }
-    `
-    document.head.appendChild(style)
+    })
+  }, [botReady])
 
-    // Setup MutationObserver
-    const hideAuth = () => {
-      document.querySelectorAll('*').forEach((el) => {
-        if (el.shadowRoot) {
-          el.shadowRoot.querySelectorAll('.bpMessageContainer').forEach((container) => {
-            if (container.textContent?.includes('__auth__')) {
-              (container as HTMLElement).style.display = 'none'
-            }
-          })
-        }
-      })
-    }
-    const observer = new MutationObserver(hideAuth)
-    observer.observe(document.body, { childList: true, subtree: true })
-
-    // Gửi auth — CHỈ 1 LẦN
- // Thêm class vào body để CSS target
-document.body.classList.add('sending-auth')
-
-window.botpress?.sendMessage(payload)
-
-setTimeout(() => {
-  document.body.classList.remove('sending-auth')
-}, 2000)
-  })
-
-}, [botReady])
-
-//   // Ẩn auth message trong DOM
-// useEffect(() => {
-//   const hideAuthMessage = () => {
-//     const allElements = document.querySelectorAll('*')
-//     allElements.forEach((el) => {
-//       if (el.shadowRoot) {
-//         const bubbles = el.shadowRoot.querySelectorAll('.bpMessageBlocksBubble')
-//         bubbles.forEach((bubble) => {
-//           if (bubble.textContent?.includes('__auth__')) {
-//             // Ẩn div cha bpMessageContainer
-//             const container = bubble.closest('.bpMessageContainer') as HTMLElement
-//             if (container) container.style.display = 'none'
-//           }
-//         })
-//       }
-//     })
-//   }
-
-//   const observer = new MutationObserver(hideAuthMessage)
-//   observer.observe(document.body, { childList: true, subtree: true })
-
-//   return () => observer.disconnect()
-// }, [])
-  // Lắng nghe event click — chỉ đăng ký 1 lần
+  // Lắng nghe message event
   useEffect(() => {
-    if (!botReady || !window.botpress) return
-    if (messageListenerAdded.current) return
-
+    if (!botReady || messageListenerAdded.current) return
     messageListenerAdded.current = true
 
     window.botpress?.on('message', (data: any) => {
       const blocks = data?.block?.blocks ?? []
-
       blocks.forEach((col: any) => {
         col?.blocks?.forEach((block: any) => {
           block?.blocks?.forEach((btn: any) => {
             if (!btn?.buttonValue) return
-
             if (btn.buttonValue.startsWith('category_')) {
               const slug = btn.buttonValue.replace('category_', '')
               const url = `http://localhost:3000/collections/${slug}`
@@ -234,10 +208,8 @@ setTimeout(() => {
               document.body.removeChild(a)
               return
             }
-
             if (btn.buttonValue.startsWith('https://')) {
               window.open(btn.buttonValue, '_blank')
-              return
             }
           })
         })
@@ -250,28 +222,14 @@ setTimeout(() => {
       <Script
         src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"
         strategy="afterInteractive"
+        onLoad={() => { if (window.botpress) { setBotReady(true); botReadyRef.current = true } }}
       />
       <Script
         src="https://files.bpcontent.cloud/2026/06/17/02/20260617023538-HCMRW5W8.js"
         strategy="afterInteractive"
+        onLoad={() => { if (window.botpress) { setBotReady(true); botReadyRef.current = true } }}
       />
     </>
   )
 }
 
-
-
-
-
-//  return (
-//     <>
-//       <Script
-//         src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"
-//         strategy="afterInteractive"
-//       />
-//       <Script
-//         src="https://files.bpcontent.cloud/2025/12/11/08/20251211081314-GCM8M5CS.js"
-//         strategy="afterInteractive"
-//       />
-//     </>
-//   )
