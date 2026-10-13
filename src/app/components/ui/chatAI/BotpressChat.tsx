@@ -1,186 +1,119 @@
-// 'use client'
-
-// import { useEffect, useRef } from 'react'
-// import { useAuthStore } from '@/app/store/isLoggedIn'
-// import { supabase } from '@/app/libs/supabaseClient'
-
-// export default function BotpressChat() {
-//   const { isLoggedIn } = useAuthStore()
-//   const scriptLoaded = useRef(false)
-//   const userRef = useRef<any>(null)
-//   const tokenRef = useRef<string | null>(null)
-
-//   const loadScript = (src: string): Promise<void> => {
-//     return new Promise((resolve, reject) => {
-//       if (document.querySelector(`script[src="${src}"]`)) {
-//         resolve()
-//         return
-//       }
-//       const script = document.createElement('script')
-//       script.src = src
-//       script.async = true
-//       script.onload = () => resolve()
-//       script.onerror = () => reject()
-//       document.body.appendChild(script)
-//     })
-//   }
-
-//     useEffect(() => {
-//       if (scriptLoaded.current) return
-//       scriptLoaded.current = true
-
-//       const init = async () => {
-//         const { data: { session } } = await supabase.auth.getSession()
-//         const user = session?.user
-
-//         userRef.current = user
-
-//         await loadScript('https://cdn.botpress.cloud/webchat/v3.6/inject.js')
-//         await loadScript('https://files.bpcontent.cloud/2025/12/11/08/20251211081314-GCM8M5CS.js')
-
-//         // Gửi ngay sau khi script load, trước khi user mở chat
-//         const bp = (window as any).botpress
-//         if (bp?.on) {
-//     bp.on('webchat:ready', () => {
-//   const user = userRef.current
-  
-//   // Thử format khác
-//   bp.updateUser({
-//     email: user?.email ?? null,
-//     name: user?.user_metadata?.full_name ?? user?.email ?? null,
-//     data: {
-//       userId: user?.id ?? null,
-//       email: user?.email ?? null,
-//       isLoggedIn: !!user,
-//     }
-//   })
-//   console.log('✅ updateUser fired with email:', user?.email)
-// })
-//         }
-//       }
-
-//       init()
-//     }, [])
-
-//   // Cập nhật localStorage khi login/logout
-//   useEffect(() => {
-//     const syncUser = async () => {
-//       const { data: { session } } = await supabase.auth.getSession()
-//       const user = session?.user
-//       const token = session?.access_token ?? null
-
-//       userRef.current = user
-//       tokenRef.current = token
-
-//       if (token) {
-//         localStorage.setItem('bp_user_token', token)
-//         localStorage.setItem('bp_user_email', user?.email ?? '')
-//         localStorage.setItem('bp_user_id', user?.id ?? '')
-//         localStorage.setItem('bp_is_logged_in', 'true')
-//       } else {
-//         localStorage.removeItem('bp_user_token')
-//         localStorage.removeItem('bp_user_email')
-//         localStorage.removeItem('bp_user_id')
-//         localStorage.setItem('bp_is_logged_in', 'false')
-//       }
-
-//       console.log('👤 sync user:', user?.email, '| isLoggedIn:', !!user)
-//     }
-
-//     syncUser()
-//   }, [isLoggedIn])
-
-//   return null
-// }
 'use client'
 import Script from 'next/script'
 import { supabase } from '@/app/libs/supabaseClient'
+import { User } from '@supabase/supabase-js'
 import { useEffect, useState, useRef } from 'react'
 
 export default function ChatBot() {
+  const [user, setUser] = useState<User | null>(null)
   const [botReady, setBotReady] = useState(false)
-  const botReadyRef = useRef(false)
+  const [injectReady, setInjectReady] = useState(false)
   const hasSentAuth = useRef(false)
-  const hasSentGuest = useRef(false)
   const messageListenerAdded = useRef(false)
+  const readyListenerAdded = useRef(false)
+  const botReadyRef = useRef(false)
 
-const sendAuth = (email: string, id: string) => {
-    if (!window.botpress?.sendMessage) return
-    if (hasSentAuth.current) return
-    hasSentAuth.current = true
+  const handleInjectReady = () => {
+    if (!window.botpress) return
+    if (!readyListenerAdded.current) {
+      readyListenerAdded.current = true
+      window.botpress.on('webchat:ready', () => {
+        botReadyRef.current = true
+        setBotReady(true)
+      })
+    }
+    // Only load the configuration after the SDK and its ready listener exist.
+    setInjectReady(true)
+  }
 
+  const sendAuthMessage = (email: string, id: string) => {
     const payload = `__auth__${email}__${id}__true`
+
     const style = document.createElement('style')
     style.id = 'hide-auth-style'
     style.innerHTML = `.sending-auth .bpMessageContainer:has(a.bpMessageBlocksTextLink) { display: none !important; }`
     document.head.appendChild(style)
     document.body.classList.add('sending-auth')
-    window.botpress.sendMessage(payload)
-    console.log('✅ Sent auth:', email)
+
+    window.botpress?.sendMessage(payload)
+    hasSentAuth.current = true
+    console.log('✅ Gửi auth:', payload)
 
     setTimeout(() => {
       document.body.classList.remove('sending-auth')
       document.getElementById('hide-auth-style')?.remove()
     }, 3000)
-}
+  }
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+    })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-if (_event === 'SIGNED_IN' && session?.user) {
-    const u = session.user
-    hasSentGuest.current = false
+        setUser(session?.user ?? null)
 
-    const wait = setInterval(() => {
-        if (!botReadyRef.current || !window.botpress?.sendMessage) return
-        clearInterval(wait) // ✅ clear trước
-        if (hasSentAuth.current) return // ✅ check sau khi clear
-        sendAuth(u.email!, u.id)
-    }, 300)
-    setTimeout(() => clearInterval(wait), 10000)
-}
+        if (_event === 'SIGNED_IN' && session?.user) {
+          hasSentAuth.current = false
+          const u = session.user
 
-        if (_event === 'SIGNED_OUT') {
+          const trySend = setInterval(() => {
+            if (!botReadyRef.current || !window.botpress?.sendMessage) return
+            clearInterval(trySend)
+            sendAuthMessage(u.email ?? '', u.id)
+          }, 300)
+        }
+
+        if (_event === 'SIGNED_OUT' && botReadyRef.current && window.botpress) {
           window.botpress?.sendMessage('__logout__')
           hasSentAuth.current = false
-          hasSentGuest.current = false
         }
       }
     )
     return () => subscription.unsubscribe()
   }, [])
 
-  useEffect(() => {
-    const tryReady = () => {
-      if (window.botpress) {
-        setBotReady(true)
-        botReadyRef.current = true
-        return true
-      }
-      return false
-    }
-    if (tryReady()) return
-    const interval = setInterval(() => {
-      if (tryReady()) clearInterval(interval)
-    }, 300)
-    return () => clearInterval(interval)
-  }, [])
-
+  // Gửi auth/guest lần đầu
   useEffect(() => {
     if (!botReady) return
-    supabase.auth.getUser().then(({ data }) => {
-      const u = data.user
-      if (u && !hasSentAuth.current) {
-        sendAuth(u.email!, u.id)
-      } else if (!u && !hasSentGuest.current) {
-        hasSentGuest.current = true
-        window.botpress?.sendMessage('__guest__')
+
+    const sendInitMessage = async () => {
+      let attempts = 0
+      while (!window.botpress?.sendMessage && attempts < 20) {
+        await new Promise(r => setTimeout(r, 300))
+        attempts++
       }
-    })
+
+      if (!window.botpress?.sendMessage) return
+      if (hasSentAuth.current) return
+
+      const { data } = await supabase.auth.getUser()
+      if (hasSentAuth.current) return
+
+      const u = data.user
+      if (u) {
+        sendAuthMessage(u.email ?? '', u.id)
+      } else {
+        // Delay 3s trước khi gửi __guest__
+        // để tránh ghi đè nếu user đã nhập tin nhắn
+        setTimeout(() => {
+          if (hasSentAuth.current) return
+          hasSentAuth.current = true
+          window.botpress?.sendMessage('__guest__')
+          console.log('✅ Gửi: __guest__')
+        }, 3000)
+      }
+    }
+
+    sendInitMessage()
   }, [botReady])
 
+  // Lắng nghe event click — chỉ đăng ký 1 lần
   useEffect(() => {
-    if (!botReady || messageListenerAdded.current) return
+    if (!botReady || !window.botpress) return
+    if (messageListenerAdded.current) return
+
     messageListenerAdded.current = true
 
     window.botpress?.on('message', (data: any) => {
@@ -189,6 +122,7 @@ if (_event === 'SIGNED_IN' && session?.user) {
         col?.blocks?.forEach((block: any) => {
           block?.blocks?.forEach((btn: any) => {
             if (!btn?.buttonValue) return
+
             if (btn.buttonValue.startsWith('category_')) {
               const slug = btn.buttonValue.replace('category_', '')
               const url = `http://localhost:3000/collections/${slug}`
@@ -201,8 +135,10 @@ if (_event === 'SIGNED_IN' && session?.user) {
               document.body.removeChild(a)
               return
             }
+
             if (btn.buttonValue.startsWith('https://')) {
               window.open(btn.buttonValue, '_blank')
+              return
             }
           })
         })
@@ -215,14 +151,15 @@ if (_event === 'SIGNED_IN' && session?.user) {
       <Script
         src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"
         strategy="afterInteractive"
-        onLoad={() => { if (window.botpress) { setBotReady(true); botReadyRef.current = true } }}
+        onReady={handleInjectReady}
       />
-      <Script
+      {injectReady && <Script
         src="https://files.bpcontent.cloud/2026/06/17/02/20260617023538-HCMRW5W8.js"
         strategy="afterInteractive"
-        onLoad={() => { if (window.botpress) { setBotReady(true); botReadyRef.current = true } }}
-      />
+      />}
     </>
   )
 }
+
+
 
