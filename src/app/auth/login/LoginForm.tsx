@@ -30,7 +30,8 @@ export default function LoginFormAuth() {
     const handleLogin = async (data: LoginData) => {
         const success = await onSubmit(data);
         if (success) {
-            window.location.href = "/";
+            router.replace("/");
+            router.refresh();
         }
     };
 

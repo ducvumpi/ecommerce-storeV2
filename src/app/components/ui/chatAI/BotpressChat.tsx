@@ -8,6 +8,7 @@ export default function ChatBot() {
   const [user, setUser] = useState<User | null | undefined>(undefined)
   const [botReady, setBotReady] = useState(false)
   const [injectReady, setInjectReady] = useState(false)
+  const [botInitialized, setBotInitialized] = useState(false)
   const lastIdentity = useRef<string | null>(null)
   const wasAuthenticated = useRef(false)
   const messageListenerAdded = useRef(false)
@@ -17,6 +18,9 @@ export default function ChatBot() {
     if (!window.botpress) return
     if (!readyListenerAdded.current) {
       readyListenerAdded.current = true
+      window.botpress.on('webchat:initialized', () => {
+        setBotInitialized(true)
+      })
       window.botpress.on('webchat:ready', () => {
         setBotReady(true)
       })
@@ -48,6 +52,13 @@ export default function ChatBot() {
     }
   }, [])
 
+  // The SDK cannot send events until Webchat has been opened once.
+  useEffect(() => {
+    if (botInitialized && user && !botReady) {
+      window.botpress?.open()
+    }
+  }, [botInitialized, botReady, user])
+
   // Synchronize identity once, including repeated SIGNED_IN notifications.
   useEffect(() => {
     if (!botReady || user === undefined || !window.botpress?.sendEvent) return
@@ -73,7 +84,9 @@ export default function ChatBot() {
         }
     lastIdentity.current = identity
     wasAuthenticated.current = !!user
-    void window.botpress.sendEvent(payload).catch((error: unknown) => {
+    void window.botpress.sendEvent(payload).then(() => {
+      console.info('[Botpress] Identity event sent:', type)
+    }).catch((error: unknown) => {
       if (lastIdentity.current === identity) {
         lastIdentity.current = previousIdentity
         wasAuthenticated.current = previousAuth
