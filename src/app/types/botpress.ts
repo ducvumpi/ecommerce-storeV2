@@ -16,7 +16,7 @@ declare global {
   interface Window {
   botpress?: {
     on: (event: string, callback: (data?: any) => void) => void
-    sendEvent: (event: { type: string; payload?: Record<string, any> }) => void
+    sendEvent: (event: Record<string, unknown>) => Promise<void>
     sendMessage: (message: string) => void  // ← thêm dòng này
     mergeConfig: (config: Record<string, unknown>) => void
     open: () => void
