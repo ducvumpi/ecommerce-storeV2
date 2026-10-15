@@ -69,19 +69,19 @@ export default function ChatBot() {
     const type = user ? 'auth' : previousAuth ? 'logout' : 'guest'
     const payload = user
       ? {
-          type,
-          text: `__auth__${user.email ?? ''}__${user.id}__true`,
-          email: user.email ?? '',
-          userId: user.id,
-          isLoggedIn: true,
-        }
+        type,
+        text: `__auth__${user.email ?? ''}__${user.id}__true`,
+        email: user.email ?? '',
+        userId: user.id,
+        isLoggedIn: true,
+      }
       : {
-          type,
-          text: type === 'logout' ? '__logout__' : '__guest__',
-          email: null,
-          userId: null,
-          isLoggedIn: false,
-        }
+        type,
+        text: type === 'logout' ? '__logout__' : '__guest__',
+        email: null,
+        userId: null,
+        isLoggedIn: false,
+      }
     lastIdentity.current = identity
     wasAuthenticated.current = !!user
     void window.botpress.sendEvent(payload).then(() => {
@@ -120,7 +120,6 @@ export default function ChatBot() {
               document.body.removeChild(a)
               return
             }
-
             if (btn.buttonValue.startsWith('https://')) {
               window.open(btn.buttonValue, '_blank')
               return
@@ -134,12 +133,12 @@ export default function ChatBot() {
   return (
     <>
       <Script
-        src="https://cdn.botpress.cloud/webchat/v3.6/inject.js"
+        src="https://cdn.botpress.cloud/webchat/v3.7/inject.js"
         strategy="afterInteractive"
         onReady={handleInjectReady}
       />
       {injectReady && <Script
-        src="https://files.bpcontent.cloud/2026/06/17/02/20260617023538-HCMRW5W8.js"
+        src="https://files.bpcontent.cloud/2026/10/15/01/20261015013058-XZTWHIPM.js"
         strategy="afterInteractive"
       />}
     </>
