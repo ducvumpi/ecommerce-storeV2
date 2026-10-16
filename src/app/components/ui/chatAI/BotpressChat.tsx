@@ -6,6 +6,15 @@ import { useEffect, useState, useRef } from 'react'
 
 const IDENTITY_STORAGE_KEY = 'store:botpress:last-sent-identity:v1'
 
+function readStoredIdentity() {
+  try {
+    const identity = window.localStorage.getItem(IDENTITY_STORAGE_KEY)
+    return identity === 'guest' || identity?.startsWith('auth:') ? identity : null
+  } catch {
+    return null
+  }
+}
+
 export default function ChatBot() {
   const [user, setUser] = useState<User | null | undefined>(undefined)
   const [botReady, setBotReady] = useState(false)
@@ -16,17 +25,19 @@ export default function ChatBot() {
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
 
-  // sessionStorage survives reloads in this tab, unlike useRef.
+  // localStorage shares successful sends across reloads and tabs.
   useEffect(() => {
-    try {
-      const identity = window.sessionStorage.getItem(IDENTITY_STORAGE_KEY)
-      if (identity === 'guest' || identity?.startsWith('auth:')) {
-        lastIdentity.current = identity
-        wasAuthenticated.current = identity.startsWith('auth:')
-      }
-    } catch {
-      // Keep in-memory deduplication when browser storage is unavailable.
+    const restoreIdentity = () => {
+      const identity = readStoredIdentity()
+      lastIdentity.current = identity
+      wasAuthenticated.current = identity?.startsWith('auth:') ?? false
     }
+    restoreIdentity()
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === IDENTITY_STORAGE_KEY || event.key === null) restoreIdentity()
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
   const handleInjectReady = () => {
@@ -71,7 +82,7 @@ export default function ChatBot() {
   useEffect(() => {
     if (user === undefined) return
     const identity = user ? `auth:${user.id}:${user.email ?? ''}` : 'guest'
-    if (botInitialized && !botReady && lastIdentity.current !== identity) {
+    if (botInitialized && !botReady && lastIdentity.current !== identity && readStoredIdentity() !== identity) {
       window.botpress?.open()
     }
   }, [botInitialized, botReady, user])
@@ -83,8 +94,16 @@ export default function ChatBot() {
     if (lastIdentity.current === identity) return
     const previousIdentity = lastIdentity.current
     const previousAuth = wasAuthenticated.current
-    const type = user ? 'auth' : previousAuth ? 'logout' : 'guest'
-    const payload = user
+    lastIdentity.current = identity
+    wasAuthenticated.current = !!user
+
+    const sendIdentity = async () => {
+      // A different tab may have finished sending while this tab waited.
+      const storedIdentity = readStoredIdentity()
+      if (storedIdentity === identity) return
+      const previouslyAuthenticated = storedIdentity?.startsWith('auth:') ?? previousAuth
+      const type = user ? 'auth' : previouslyAuthenticated ? 'logout' : 'guest'
+      const payload = user
       ? {
         type,
         text: `__auth__${user.email ?? ''}__${user.id}__true`,
@@ -99,19 +118,20 @@ export default function ChatBot() {
         userId: null,
         isLoggedIn: false,
       }
-    lastIdentity.current = identity
-    wasAuthenticated.current = !!user
-    void window.botpress.sendEvent(payload).then(() => {
-      // Persist only successful sends, and never replace a newer identity.
-      if (lastIdentity.current === identity) {
-        try {
-          window.sessionStorage.setItem(IDENTITY_STORAGE_KEY, identity)
-        } catch {
-          // The event was sent even if browser storage is unavailable.
-        }
+      await window.botpress!.sendEvent(payload)
+      try {
+        window.localStorage.setItem(IDENTITY_STORAGE_KEY, identity)
+      } catch {
+        // The event was sent even if browser storage is unavailable.
       }
       console.info('[Botpress] Identity event sent:', type)
-    }).catch((error: unknown) => {
+    }
+
+    // Serialize sends across tabs on browsers supporting Web Locks.
+    const sending = navigator.locks
+      ? navigator.locks.request(IDENTITY_STORAGE_KEY, sendIdentity)
+      : sendIdentity()
+    void sending.catch((error: unknown) => {
       if (lastIdentity.current === identity) {
         lastIdentity.current = previousIdentity
         wasAuthenticated.current = previousAuth
