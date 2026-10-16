@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 function sortObject(obj: Record<string, string>) {
     return Object.keys(obj)
         .sort()
@@ -67,6 +62,17 @@ export async function POST(req: NextRequest) {
 
 // ✅ IPN - VNPAY GỌI ĐỂ XÁC NHẬN
 export async function GET(req: NextRequest) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const hashSecret = process.env.VNPAY_HASH_SECRET;
+
+    if (!supabaseUrl || !serviceRoleKey || !hashSecret) {
+        return NextResponse.json(
+            { RspCode: "99", Message: "Payment service is not configured" },
+            { status: 503 }
+        );
+    }
+
     const searchParams = req.nextUrl.searchParams;
     const params: Record<string, string> = {};
     searchParams.forEach((value, key) => {
@@ -79,7 +85,7 @@ export async function GET(req: NextRequest) {
 
     const sorted = sortObject(params);
     const signData = new URLSearchParams(sorted).toString();
-    const hmac = crypto.createHmac("sha512", process.env.VNPAY_HASH_SECRET!);
+    const hmac = crypto.createHmac("sha512", hashSecret);
     const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
     if (secureHash !== signed) {
@@ -91,6 +97,8 @@ export async function GET(req: NextRequest) {
     const orderId = orderInfo.replace("Thanh toan don hang ", "").trim();
     const responseCode = params["vnp_ResponseCode"];
     const status = responseCode === "00" ? "paid" : "failed";
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     await supabase
         .from("orders")

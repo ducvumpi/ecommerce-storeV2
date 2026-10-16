@@ -7,7 +7,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "f8b76dc6c57eaa6870529a78be469450d716e2b71fe55e31448dcceeeaa4a089",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-nam-toi-gian-collection-basic.jpg"
   },
   {
     "category_slug": "ao-thun-nam-toi-gian",
@@ -17,7 +18,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "e16de33893d0662468e7ab3cfbc38ce26f41a871d4b0ca1132b7b37182331c8a",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-nam-toi-gian-collection-daily.jpg"
   },
   {
     "category_slug": "ao-thun-nam-toi-gian",
@@ -27,7 +29,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "a6750f7b2a7f50d1b4a7066e4aee0851f2ea6d2f91732850b55cd2fab5cf562c",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-nam-toi-gian-collection-weekend.jpg"
   },
   {
     "category_slug": "ao-thun-nam-toi-gian",
@@ -37,7 +40,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "b9c1fc529758464857fae4893e5e78f81d2d423731ca04c0e002cc41057a9e52",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-nam-toi-gian-collection-urban.jpg"
   },
   {
     "category_slug": "ao-thun-nam-toi-gian",
@@ -47,7 +51,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "a807b4e308ff69c86abcb9c6031153528aac742f7d588821c071becfc0c8d817",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-nam-toi-gian-collection-premium.jpg"
   },
   {
     "category_slug": "so-mi-nam-cong-so",
@@ -57,7 +62,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "2a219fecc815f2cb53ccdc1878b2ad4a59d920ada3091e22ca836f31be67ebd5",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-cong-so-collection-basic.jpg"
   },
   {
     "category_slug": "so-mi-nam-cong-so",
@@ -67,7 +73,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "64a531a2071ac2351c0cd7a200d30b7c8555787ae384bdeb17d7bb143ec86a44",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-cong-so-collection-daily.jpg"
   },
   {
     "category_slug": "so-mi-nam-cong-so",
@@ -77,7 +84,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "b98449e4695f416a4874748063fe1c0ec62d20725a501583e329a290f578bfe2",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-cong-so-collection-weekend.jpg"
   },
   {
     "category_slug": "so-mi-nam-cong-so",
@@ -87,7 +95,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "167d95f6fcb66be85df061c83eed1b84215e9d508a259825bc9a0c3be1c1eac2",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-cong-so-collection-urban.jpg"
   },
   {
     "category_slug": "so-mi-nam-cong-so",
@@ -97,7 +106,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "be49abef05ba94ba60c95342d8e9b77f664a21e6eccc1d66f6ae19f56ac58297",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-cong-so-collection-premium.jpg"
   },
   {
     "category_slug": "denim-nam-hang-ngay",
@@ -107,7 +117,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "f5b641cc579e4bc670f2085064a52e0a8b5f9db2078d608b9a2360d9efc0ee65",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/denim-nam-hang-ngay-collection-basic.jpg"
   },
   {
     "category_slug": "denim-nam-hang-ngay",
@@ -117,7 +128,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "99b61364f5f4f0d9c0d1d1e05359d61698b7d1e3a5ed9269585a51831acf3232",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/denim-nam-hang-ngay-collection-daily.jpg"
   },
   {
     "category_slug": "denim-nam-hang-ngay",
@@ -127,7 +139,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "8fdd60295e9439f253121debd121f88b813d954c122d6067d51405555a4921db",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/denim-nam-hang-ngay-collection-weekend.jpg"
   },
   {
     "category_slug": "denim-nam-hang-ngay",
@@ -137,7 +150,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "33548485e00f0ac4b09dd6119c4f54be9530bcfe99cf090e75dff6ea3cf98f03",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/denim-nam-hang-ngay-collection-urban.jpg"
   },
   {
     "category_slug": "denim-nam-hang-ngay",
@@ -147,7 +161,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "6505509c239ed7c4e155c22a06a37223e26746728d4c827844f30b521a3650c6",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/denim-nam-hang-ngay-collection-premium.jpg"
   },
   {
     "category_slug": "ao-khoac-da-nam",
@@ -157,7 +172,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "39c1fb414ccedce0b5ef95cf15838dbcb5870ef12cb28a343bf585aa80484b8a",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-khoac-da-nam-collection-basic.jpg"
   },
   {
     "category_slug": "ao-khoac-da-nam",
@@ -167,7 +183,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "01d7a4ec7d7057dd2bbaac458d7e5957263051ef61d5503331299e864cff1176",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-khoac-da-nam-collection-daily.jpg"
   },
   {
     "category_slug": "ao-khoac-da-nam",
@@ -177,7 +194,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "6a8113026a898c16142ce268da7dc27179b7cd39d418f0410d24387dbfd4566d",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-khoac-da-nam-collection-weekend.jpg"
   },
   {
     "category_slug": "ao-khoac-da-nam",
@@ -187,7 +205,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "99ea2c292be6453d0e71adf71951204dc883158e821843de22016f01245c3be8",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-khoac-da-nam-collection-urban.jpg"
   },
   {
     "category_slug": "ao-khoac-da-nam",
@@ -197,7 +216,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "599de9f07eded3a587f5dfbf47cce17df161578fa385f2c6870ac2e92b32f774",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-khoac-da-nam-collection-premium.jpg"
   },
   {
     "category_slug": "ao-dai-tay-nam-toi-mau",
@@ -207,7 +227,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "f7c75276d001c90c6f92c81684c61bf92d8d9ad8682cdf3549cc4dd143510c5d",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-dai-tay-nam-toi-mau-collection-basic.jpg"
   },
   {
     "category_slug": "ao-dai-tay-nam-toi-mau",
@@ -217,7 +238,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "32f988d955018794623f342dd8d7a1f46c4efc2ec3a4067594ff471a15dc37f9",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-dai-tay-nam-toi-mau-collection-daily.jpg"
   },
   {
     "category_slug": "ao-dai-tay-nam-toi-mau",
@@ -227,7 +249,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "50231404982580f24256b5a4d0a047b7769ed228007c0d468de0129d176a0ab3",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-dai-tay-nam-toi-mau-collection-weekend.jpg"
   },
   {
     "category_slug": "ao-dai-tay-nam-toi-mau",
@@ -237,7 +260,8 @@
     "http_status": 200,
     "content_type": "image/jpg",
     "sha256": "b2b24af70ea2da3ae08941fa06e1e902c3a670855ac6318a759b8fb138b0418b",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-dai-tay-nam-toi-mau-collection-urban.jpg"
   },
   {
     "category_slug": "ao-dai-tay-nam-toi-mau",
@@ -247,7 +271,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "6bbce447e5cdf1d5e2d32d762cbaba00ce30113be7b7c2c35ebdb22e31f2f4d8",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-dai-tay-nam-toi-mau-collection-premium.jpg"
   },
   {
     "category_slug": "hoodie-nam-dao-pho",
@@ -257,7 +282,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "5d61f2d9738d17dfee7cf2b8982f763d770e692fda39ded7a802ced8452019c8",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/hoodie-nam-dao-pho-collection-basic.jpg"
   },
   {
     "category_slug": "hoodie-nam-dao-pho",
@@ -267,7 +293,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "44e5e9a8e11da262bf7b68788f11e132ecfd2f0fa21e9edda0ca34d587a5d931",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/hoodie-nam-dao-pho-collection-daily.jpg"
   },
   {
     "category_slug": "hoodie-nam-dao-pho",
@@ -277,7 +304,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "04335e316a73fb17e725b5b87ffb57f81600d6f87c2de91e7277c30d289aab53",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/hoodie-nam-dao-pho-collection-weekend.jpg"
   },
   {
     "category_slug": "hoodie-nam-dao-pho",
@@ -287,7 +315,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "eaa6a05bf95b638a5ba21b12ec581ade1e41f900f4e77d0dd23c1dc430d1e4e8",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/hoodie-nam-dao-pho-collection-urban.jpg"
   },
   {
     "category_slug": "hoodie-nam-dao-pho",
@@ -297,7 +326,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "fc64a4a37a4426ea7d20da5de9b78a9475ec57a814dce59080939f054ce6606b",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/hoodie-nam-dao-pho-collection-premium.jpg"
   },
   {
     "category_slug": "so-mi-nam-thanh-lich",
@@ -307,7 +337,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "81fded02da34960422b1da3b1ec7be56e6e98aac3f602764556c390a95001134",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-thanh-lich-collection-basic.jpg"
   },
   {
     "category_slug": "so-mi-nam-thanh-lich",
@@ -317,7 +348,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "7db7c48b166f57281b9259f6c1ac75a00f9fc2724ce5ac8a95066e4d3e78b7ba",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-thanh-lich-collection-daily.jpg"
   },
   {
     "category_slug": "so-mi-nam-thanh-lich",
@@ -327,7 +359,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "a60c0e76058e149fa625cf3a54ea8fcc26b6168f7ff7c86817eaf0e7de66f53b",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-thanh-lich-collection-weekend.jpg"
   },
   {
     "category_slug": "so-mi-nam-thanh-lich",
@@ -337,7 +370,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "5c3537d02b42bf237d505cc120c5e4c0dd0d0a8a4c5d1ef32c6a4de6b2f4aa73",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-thanh-lich-collection-urban.jpg"
   },
   {
     "category_slug": "so-mi-nam-thanh-lich",
@@ -347,7 +381,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "e54d2e203fbee930e4c84f48d9ff940ab82e4acbafa70283e868d4bd1ae8f1fe",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/so-mi-nam-thanh-lich-collection-premium.jpg"
   },
   {
     "category_slug": "dam-trang-nu-thanh-lich",
@@ -357,7 +392,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "7d3e9a60f8b4d8d5aa3a56f042f1dd45d36c0ab838ee24ac8a33b46051626767",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/dam-trang-nu-thanh-lich-collection-basic.jpg"
   },
   {
     "category_slug": "dam-trang-nu-thanh-lich",
@@ -367,7 +403,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "023ddb83ff4d0bb4037600cd9a74a35de41a067cb7a8973923133d0e45981dfd",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/dam-trang-nu-thanh-lich-collection-daily.jpg"
   },
   {
     "category_slug": "dam-trang-nu-thanh-lich",
@@ -377,7 +414,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "3fc390ea058435188bb1b7f25c7feb69630dd425134f883c0c0e18fd54b07ede",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/dam-trang-nu-thanh-lich-collection-weekend.jpg"
   },
   {
     "category_slug": "dam-trang-nu-thanh-lich",
@@ -387,7 +425,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "fb7198d17349d7cf99d3195f2257a7659a07bd5f4e7df04f193e7cdf1ab5df72",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/dam-trang-nu-thanh-lich-collection-urban.jpg"
   },
   {
     "category_slug": "dam-trang-nu-thanh-lich",
@@ -397,7 +436,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "5d13dd5b1c2df5dcb9766fdce0c9870168959ce25187dee349d03e16d951ded5",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/dam-trang-nu-thanh-lich-collection-premium.jpg"
   },
   {
     "category_slug": "vay-hoa-nu-di-bien",
@@ -407,7 +447,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "29a5133656d166848a2546c78ec751c3e148e4a48467d85789103609f89153e3",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/vay-hoa-nu-di-bien-collection-basic.jpg"
   },
   {
     "category_slug": "vay-hoa-nu-di-bien",
@@ -417,7 +458,8 @@
     "http_status": 200,
     "content_type": "image/webp",
     "sha256": "ec5c63a1ee3f885cd643c5654e21649955e77e1d0df4d96c92a87983ddf2df4b",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/vay-hoa-nu-di-bien-collection-daily.webp"
   },
   {
     "category_slug": "vay-hoa-nu-di-bien",
@@ -427,7 +469,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "5336ec235c85e4caca84107ecfdc3e4bb130be96f133a09f891d1e7f3833b498",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/vay-hoa-nu-di-bien-collection-weekend.jpg"
   },
   {
     "category_slug": "vay-hoa-nu-di-bien",
@@ -437,7 +480,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "c5588498b647caae8907c7eb72879e875c1cfd78d00b9502646d7fb27d686f7a",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/vay-hoa-nu-di-bien-collection-urban.jpg"
   },
   {
     "category_slug": "vay-hoa-nu-di-bien",
@@ -447,7 +491,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "81337f7fe4eb5fe9ccc85e8c820f8197a48221958faab098b36cd3021fc10ad6",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/vay-hoa-nu-di-bien-collection-premium.jpg"
   },
   {
     "category_slug": "quan-nu-mau-pastel",
@@ -457,7 +502,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "d001cf23bc533cafbb7ca37a7920ddd4212578fb726254dd8dac287f90994a50",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/quan-nu-mau-pastel-collection-basic.jpg"
   },
   {
     "category_slug": "quan-nu-mau-pastel",
@@ -467,7 +513,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "dc97817069e27cab4ca1884c3a76744f32055786a3b751cfaed4ba7eea29f31c",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/quan-nu-mau-pastel-collection-daily.jpg"
   },
   {
     "category_slug": "quan-nu-mau-pastel",
@@ -477,7 +524,8 @@
     "http_status": 200,
     "content_type": "image/webp",
     "sha256": "13d296c3acf2ce0340c440f7950b70ece0f254ec6ed612200fadb4d2008d20c6",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/quan-nu-mau-pastel-collection-weekend.webp"
   },
   {
     "category_slug": "quan-nu-mau-pastel",
@@ -487,7 +535,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "62c90777c4eae8fb60d54a6d60c326e083030c7856cd7abf4389dd8a0ab2d2ed",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/quan-nu-mau-pastel-collection-urban.jpg"
   },
   {
     "category_slug": "quan-nu-mau-pastel",
@@ -497,7 +546,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "640e6910ddb6fd997f73bcb55830f1a1e0a63fa7316bfb0ef0b579a661f74e19",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/quan-nu-mau-pastel-collection-premium.jpg"
   },
   {
     "category_slug": "chan-vay-nu-phoi-so-mi",
@@ -507,7 +557,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "87629dd13a061e001912924af4c185e24c1c24a2e29a33c2ae79adfdf8509678",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/chan-vay-nu-phoi-so-mi-collection-basic.jpg"
   },
   {
     "category_slug": "chan-vay-nu-phoi-so-mi",
@@ -517,7 +568,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "77ae56ec4f9c2432f7250f1bd8a4ce1e352dc679e7428868761ba01c1db67460",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/chan-vay-nu-phoi-so-mi-collection-daily.jpg"
   },
   {
     "category_slug": "chan-vay-nu-phoi-so-mi",
@@ -527,7 +579,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "6682502b715115f4d3e846a5ae6795c1fa77491e713b9a5580ab1f3992b35e4c",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/chan-vay-nu-phoi-so-mi-collection-weekend.jpg"
   },
   {
     "category_slug": "chan-vay-nu-phoi-so-mi",
@@ -537,7 +590,8 @@
     "http_status": 200,
     "content_type": "image/png",
     "sha256": "39dbf9f4535fc5115ae74017ac173fe6d9fc4d8a7d7b2b918758ae53e16616af",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/chan-vay-nu-phoi-so-mi-collection-urban.png"
   },
   {
     "category_slug": "chan-vay-nu-phoi-so-mi",
@@ -547,7 +601,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "1e738ac986345569497584a30d457d2c59671a0e3863f52ed0f84fcc6d4dcd42",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/chan-vay-nu-phoi-so-mi-collection-premium.jpg"
   },
   {
     "category_slug": "tu-do-nu-tong-trung-tinh",
@@ -557,7 +612,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "5ce063f13f3a72077ba7705432313a5a43946642145cd2d157c7e49ebf451138",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/tu-do-nu-tong-trung-tinh-collection-basic.jpg"
   },
   {
     "category_slug": "tu-do-nu-tong-trung-tinh",
@@ -567,7 +623,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "07bbd299c3f0a4a420071472e541f9841ee0f5fa982db4869441f3f8bffc46cb",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/tu-do-nu-tong-trung-tinh-collection-daily.jpg"
   },
   {
     "category_slug": "tu-do-nu-tong-trung-tinh",
@@ -577,7 +634,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "55388b853931835dfa384b8bc7eaaf7f0f540fde22ebf40fad27edda71a32119",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/tu-do-nu-tong-trung-tinh-collection-weekend.jpg"
   },
   {
     "category_slug": "tu-do-nu-tong-trung-tinh",
@@ -587,7 +645,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "f5090a2b6aa8ec3106ccae7a3e9378e58c1e1719108c683c030649b58007e6a1",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/tu-do-nu-tong-trung-tinh-collection-urban.jpg"
   },
   {
     "category_slug": "tu-do-nu-tong-trung-tinh",
@@ -597,7 +656,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "89c41ebcebd79110e8a31cd63bcab99ef4712a761635dce8d3f621c88f6e3bb3",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/tu-do-nu-tong-trung-tinh-collection-premium.jpg"
   },
   {
     "category_slug": "ao-len-nu-mau-kem",
@@ -607,7 +667,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "ba404d6e356c01c746ed2982646cc746d61a135f59954c328f75e8a47a07fdd4",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-len-nu-mau-kem-collection-basic.jpg"
   },
   {
     "category_slug": "ao-len-nu-mau-kem",
@@ -617,7 +678,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "40818450fe00508ee460fc0db857bc015d99da6afb42f45fd6fdc4501a02adbc",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-len-nu-mau-kem-collection-daily.jpg"
   },
   {
     "category_slug": "ao-len-nu-mau-kem",
@@ -627,7 +689,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "0e5af836efe1b4a1af97cc81d8928928484708945e64ec4edf6884f4b09e55e7",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-len-nu-mau-kem-collection-weekend.jpg"
   },
   {
     "category_slug": "ao-len-nu-mau-kem",
@@ -637,7 +700,8 @@
     "http_status": 200,
     "content_type": "image/png",
     "sha256": "96ccb0d1d231bf387b5a0027ca6455dae489a84086125b6aad5f0d2355872c95",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-len-nu-mau-kem-collection-urban.png"
   },
   {
     "category_slug": "ao-len-nu-mau-kem",
@@ -647,7 +711,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "02dc772f1c69f0819bbeab3d81500caa11978e620f4bd39a142ed4ed2ee279e9",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-len-nu-mau-kem-collection-premium.jpg"
   },
   {
     "category_slug": "phong-cach-nu-thanh-thi",
@@ -657,7 +722,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "13190eb69c9fca5135d1223c89e51ef33e3f22d290094acaf6020edf446e1e32",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/phong-cach-nu-thanh-thi-collection-basic.jpg"
   },
   {
     "category_slug": "phong-cach-nu-thanh-thi",
@@ -667,7 +733,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "af2745c7a7c759becf057e4409f20c6f77886a2ec1fc32de24507d0ac497e90a",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/phong-cach-nu-thanh-thi-collection-daily.jpg"
   },
   {
     "category_slug": "phong-cach-nu-thanh-thi",
@@ -677,7 +744,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "d3270c6b73f24871cc1aa9696bd0a96c93e1d782f68bb3efffe1b30ec6ed4da2",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/phong-cach-nu-thanh-thi-collection-weekend.jpg"
   },
   {
     "category_slug": "phong-cach-nu-thanh-thi",
@@ -687,7 +755,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "4d81313eed3a2451f35dbe7f05d6875f46a581109ab6efb1624474f612f94ba3",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/phong-cach-nu-thanh-thi-collection-urban.jpg"
   },
   {
     "category_slug": "phong-cach-nu-thanh-thi",
@@ -697,7 +766,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "1431aad7dc78b3f1f4233343fdd77f5cafff05ce5c3c2f152f61282afc428d57",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/phong-cach-nu-thanh-thi-collection-premium.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-do-hoa",
@@ -707,7 +777,8 @@
     "http_status": 200,
     "content_type": "image/png",
     "sha256": "ed0387589ec0ff960dcdfbcb9f5f581d4e4e78ce7a4893ea4d4f7dd921b108d2",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-do-hoa-collection-basic.png"
   },
   {
     "category_slug": "ao-thun-unisex-do-hoa",
@@ -717,7 +788,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "b1cb488d848581f304fa8f617a832ab2d2e7baf1910587bc5e1430ec3a5fc51c",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-do-hoa-collection-daily.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-do-hoa",
@@ -727,7 +799,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "a20d7a71f88973d8b8d7e4d3363358f4e1a484b4f12b6d6a9e92a454944fdfdb",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-do-hoa-collection-weekend.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-do-hoa",
@@ -737,7 +810,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "72d883eb68e4f3de5d353210bc7164ca9abc86d86e4040bc479dce27479a5310",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-do-hoa-collection-urban.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-do-hoa",
@@ -747,7 +821,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "a9add9796fda59edbd2b5e830c8b20c3e5bcaf51fddd8879ac7d2a81700c80b2",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-do-hoa-collection-premium.jpg"
   },
   {
     "category_slug": "ao-ni-unisex-toi-gian",
@@ -757,7 +832,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "8f767468ede58cec3b5645b343e90626ef04c38f7b55691a616fc88735f1febb",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-ni-unisex-toi-gian-collection-basic.jpg"
   },
   {
     "category_slug": "ao-ni-unisex-toi-gian",
@@ -767,7 +843,8 @@
     "http_status": 200,
     "content_type": "image/jpeg;charset=UTF-8",
     "sha256": "b1e8e555c667b2632823e441573c2654ec2a703726daadd16f8fd50f6182184d",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-ni-unisex-toi-gian-collection-daily.jpg"
   },
   {
     "category_slug": "ao-ni-unisex-toi-gian",
@@ -777,7 +854,8 @@
     "http_status": 200,
     "content_type": "image/png",
     "sha256": "b8babd69389159a4078742667469748dc6ef8908606568fb1bbc0dd0890c9833",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-ni-unisex-toi-gian-collection-weekend.png"
   },
   {
     "category_slug": "ao-ni-unisex-toi-gian",
@@ -787,7 +865,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "213209a8a089425b424d0750757c249806129b0b309d1927590cd138b2e4727e",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-ni-unisex-toi-gian-collection-urban.jpg"
   },
   {
     "category_slug": "ao-ni-unisex-toi-gian",
@@ -797,7 +876,8 @@
     "http_status": 200,
     "content_type": "image/png",
     "sha256": "290cae68bdfe5ed3c53da1b6527ce8c0c9a428e6403a3da57b5c168d66c1fb47",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-ni-unisex-toi-gian-collection-premium.png"
   },
   {
     "category_slug": "unisex-phong-cach-duong-pho",
@@ -807,7 +887,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "98c6d3804cc4e82d4c19f9647976f05ac99948774e03e37d45d64feac8622465",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-phong-cach-duong-pho-collection-basic.jpg"
   },
   {
     "category_slug": "unisex-phong-cach-duong-pho",
@@ -817,7 +898,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "5d89a4cca370f35bf50e81e4d0de3e0e0cff0bd53b1b13a8786790736f5640b6",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-phong-cach-duong-pho-collection-daily.jpg"
   },
   {
     "category_slug": "unisex-phong-cach-duong-pho",
@@ -827,7 +909,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "9136a21b9ac789cce81e0e2c01768a88bfaa321084e3736605ffd0ca5d167f7c",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-phong-cach-duong-pho-collection-weekend.jpg"
   },
   {
     "category_slug": "unisex-phong-cach-duong-pho",
@@ -837,7 +920,8 @@
     "http_status": 200,
     "content_type": "image/webp",
     "sha256": "04113418f656bddd05f425535e96ac0ffe59827eac50e3bb999ef87fa4826365",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-phong-cach-duong-pho-collection-urban.webp"
   },
   {
     "category_slug": "unisex-phong-cach-duong-pho",
@@ -847,7 +931,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "71351920956d20ec436227863cb7097c902c28d0f8ed2b5d81520c3d2966a80b",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-phong-cach-duong-pho-collection-premium.jpg"
   },
   {
     "category_slug": "unisex-denim-va-sneakers",
@@ -857,7 +942,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "b64dde740bd8b796e7479184123bf52732523462ddc07d6f16c376f9081554b5",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-denim-va-sneakers-collection-basic.jpg"
   },
   {
     "category_slug": "unisex-denim-va-sneakers",
@@ -867,7 +953,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "448c0fe5add127fb03993e03996c3d99536012203196c7a93fdc8ca79405d569",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-denim-va-sneakers-collection-daily.jpg"
   },
   {
     "category_slug": "unisex-denim-va-sneakers",
@@ -877,7 +964,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "78d47dea19b1486e42acfa39e6354925ed98063f0f7503dbe8dd6c401f29306b",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-denim-va-sneakers-collection-weekend.jpg"
   },
   {
     "category_slug": "unisex-denim-va-sneakers",
@@ -887,7 +975,8 @@
     "http_status": 200,
     "content_type": "image/jpeg;charset=UTF-8",
     "sha256": "23980f0226e18be90ed222a6f0afa08d51b76363c1be3b70cfd0f79547431beb",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-denim-va-sneakers-collection-urban.jpg"
   },
   {
     "category_slug": "unisex-denim-va-sneakers",
@@ -897,7 +986,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "06f0db03029b7f468b7bb279c04bc6ae78f3dc876c9add3019a527ead31dcf86",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-denim-va-sneakers-collection-premium.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-da-sac",
@@ -907,7 +997,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "1d9340c35ffab60286bda6c27a5e8401c591852f164269268c5aadb258548af9",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-da-sac-collection-basic.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-da-sac",
@@ -917,7 +1008,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "fd1d83482df058d0fc3dfcfd0b905b93e6130ae845ff65754153903cb8c7ed16",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-da-sac-collection-daily.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-da-sac",
@@ -927,7 +1019,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "685a226a05a408b7cb82e41dd22d0c40b8188a9b89308aea873917b8d6bdfd33",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-da-sac-collection-weekend.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-da-sac",
@@ -937,7 +1030,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "57be5fddd85e251f3f81e6b198c9fdca8afdd0805824f2f7609cab441485d4ec",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-da-sac-collection-urban.jpg"
   },
   {
     "category_slug": "ao-thun-unisex-da-sac",
@@ -947,7 +1041,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "6623d681f1f096781815ad3246c488fba8bb29111174d8d670c3b146cc7b13e2",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/ao-thun-unisex-da-sac-collection-premium.jpg"
   },
   {
     "category_slug": "unisex-cam-hung-sporty",
@@ -957,7 +1052,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "120cac2bf077f5582181589625484b42015a253f95654a8cdeab3497b7b68b4b",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-cam-hung-sporty-collection-basic.jpg"
   },
   {
     "category_slug": "unisex-cam-hung-sporty",
@@ -967,7 +1063,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "5f2a90e3bc7037fcfd6030985eacced02cc1713ab180a2ae9c9427a764c64684",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-cam-hung-sporty-collection-daily.jpg"
   },
   {
     "category_slug": "unisex-cam-hung-sporty",
@@ -977,7 +1074,8 @@
     "http_status": 200,
     "content_type": "image/webp",
     "sha256": "5358e3c24815204df668088624ce888e42023ec21ff3b7998658f835e4fad8ce",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-cam-hung-sporty-collection-weekend.webp"
   },
   {
     "category_slug": "unisex-cam-hung-sporty",
@@ -987,7 +1085,8 @@
     "http_status": 200,
     "content_type": "image/jpeg",
     "sha256": "d8a6b9d460cd5faa8450f6a7bba9433cf3f0f4b3c109f5298f3fd37829e90a0e",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-cam-hung-sporty-collection-urban.jpg"
   },
   {
     "category_slug": "unisex-cam-hung-sporty",
@@ -997,6 +1096,7 @@
     "http_status": 200,
     "content_type": "image/webp",
     "sha256": "b323dbd68433f8b9b4c3e08a6131b762b27036016ce90cdf69a966ad04f0b233",
-    "checked_date": "2026-10-16"
+    "checked_date": "2026-10-16",
+    "local_path": "/images/seed-products/unisex-cam-hung-sporty-collection-premium.webp"
   }
 ]
