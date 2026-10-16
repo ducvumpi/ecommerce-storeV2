@@ -4,6 +4,8 @@ import { supabase } from '@/app/libs/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import { useEffect, useState, useRef } from 'react'
 
+const IDENTITY_STORAGE_KEY = 'store:botpress:last-sent-identity:v1'
+
 export default function ChatBot() {
   const [user, setUser] = useState<User | null | undefined>(undefined)
   const [botReady, setBotReady] = useState(false)
@@ -13,6 +15,19 @@ export default function ChatBot() {
   const wasAuthenticated = useRef(false)
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
+
+  // sessionStorage survives reloads in this tab, unlike useRef.
+  useEffect(() => {
+    try {
+      const identity = window.sessionStorage.getItem(IDENTITY_STORAGE_KEY)
+      if (identity === 'guest' || identity?.startsWith('auth:')) {
+        lastIdentity.current = identity
+        wasAuthenticated.current = identity.startsWith('auth:')
+      }
+    } catch {
+      // Keep in-memory deduplication when browser storage is unavailable.
+    }
+  }, [])
 
   const handleInjectReady = () => {
     if (!window.botpress) return
@@ -54,7 +69,9 @@ export default function ChatBot() {
 
   // The SDK cannot send events until Webchat has been opened once.
   useEffect(() => {
-    if (botInitialized && user !== undefined && !botReady) {
+    if (user === undefined) return
+    const identity = user ? `auth:${user.id}:${user.email ?? ''}` : 'guest'
+    if (botInitialized && !botReady && lastIdentity.current !== identity) {
       window.botpress?.open()
     }
   }, [botInitialized, botReady, user])
@@ -85,6 +102,14 @@ export default function ChatBot() {
     lastIdentity.current = identity
     wasAuthenticated.current = !!user
     void window.botpress.sendEvent(payload).then(() => {
+      // Persist only successful sends, and never replace a newer identity.
+      if (lastIdentity.current === identity) {
+        try {
+          window.sessionStorage.setItem(IDENTITY_STORAGE_KEY, identity)
+        } catch {
+          // The event was sent even if browser storage is unavailable.
+        }
+      }
       console.info('[Botpress] Identity event sent:', type)
     }).catch((error: unknown) => {
       if (lastIdentity.current === identity) {
