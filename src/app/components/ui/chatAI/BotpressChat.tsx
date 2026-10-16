@@ -3,6 +3,7 @@ import Script from 'next/script'
 import { supabase } from '@/app/libs/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import { useEffect, useState, useRef } from 'react'
+import './botpress-launcher.css'
 
 const IDENTITY_STORAGE_KEY = 'store:botpress:last-sent-identity:v1'
 

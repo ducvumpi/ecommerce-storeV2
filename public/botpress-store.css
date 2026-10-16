@@ -1,0 +1,254 @@
+/* Paste this file into Botpress > Webchat > Styles, then publish configuration. */
+.bpContainer {
+  --store-chat-brand: #8b5e3c;
+  --store-chat-brand-dark: #684329;
+  --store-chat-ink: #3d2b1a;
+  --store-chat-muted: #786657;
+  --store-chat-line: #e8ddd0;
+  --store-chat-surface: #fdfbf7;
+  background: var(--store-chat-surface);
+  color: var(--store-chat-ink);
+  font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  border: 1px solid var(--store-chat-line);
+  border-radius: 22px;
+  overflow: hidden;
+  color-scheme: light;
+}
+
+.bpHeaderContainer {
+  background: linear-gradient(135deg, #8b5e3c, #684329);
+  color: #fff;
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
+  padding: 18px 16px;
+}
+
+.bpHeaderContentTitle {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.bpHeaderContentDescription {
+  color: #f5e6d8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.bpHeaderContentActionsIcons,
+.bpHeaderSoundToggleButton,
+.bpHeaderNewConversationIcon {
+  color: #fff;
+}
+
+.bpHeaderContentAvatarContainer,
+.bpHeaderContentAvatarFallback {
+  background: #f3e8db;
+  color: #684329;
+  border-radius: 14px;
+}
+
+.bpHeaderExpandedContentContainer {
+  background: #fffaf4;
+  color: #3d2b1a;
+}
+
+.bpHeaderExpandedContentDescriptionItemsLink {
+  color: #684329;
+  text-underline-offset: 3px;
+}
+
+.bpMessageListContainer,
+.bpMessageListViewport {
+  background: #fdfbf7;
+}
+
+.bpMessageListViewport {
+  scrollbar-width: thin;
+  scrollbar-color: #cdbba6 transparent;
+}
+
+.bpMessageContainer {
+  margin-block: 10px;
+}
+
+.bpMessageBlocksBubble {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgb(61 43 26 / 5%);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.bpMessageBlocksTextText,
+.bpMessageBlocksTextListItem {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.bpMessageBlocksTextLink {
+  color: #684329;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.bpMessageAvatarFallback {
+  background: #f3e8db;
+  color: #684329;
+  border: 1px solid #e8ddd0;
+}
+
+.bpMessageBlocksButton {
+  min-height: 44px;
+  padding: 11px 16px;
+  background: #fff;
+  color: #684329;
+  border: 1px solid #d8c4af;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: normal;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.bpMessageBlocksButton:hover:not(:disabled) {
+  background: #f5ece1;
+  border-color: #8b5e3c;
+}
+
+.bpMessageBlocksButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bpMessageBlocksImageImage,
+.bpMessageBlocksTextImage {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.bpMessageBlocksCarouselBackButton,
+.bpMessageBlocksCarouselNextButton,
+.bpMessageListScrollDownButton {
+  background: #fff;
+  color: #684329;
+  border: 1px solid #e8ddd0;
+  box-shadow: 0 3px 12px rgb(61 43 26 / 10%);
+}
+
+.bpComposerWrapper {
+  background: #fff;
+  border-top: 1px solid #e8ddd0;
+  padding: 12px;
+}
+
+.bpComposerContainer {
+  background: #fff;
+}
+
+.bpComposerInputContainer {
+  background: #f8f3ed;
+  border: 1px solid #e8ddd0;
+  border-radius: 14px;
+}
+
+.bpComposerInputContainer:focus-within {
+  border-color: #8b5e3c;
+  box-shadow: 0 0 0 3px rgb(139 94 60 / 12%);
+}
+
+.bpComposerInput {
+  min-height: 44px;
+  background: transparent;
+  color: #3d2b1a;
+  font: inherit;
+  caret-color: #8b5e3c;
+}
+
+.bpComposerInput::placeholder {
+  color: #786657;
+  opacity: 1;
+}
+
+.bpComposerSendButton {
+  background: #8b5e3c;
+  color: #fff;
+  border-radius: 12px;
+  transition: background-color 160ms ease;
+}
+
+.bpComposerSendButton:hover:not(:disabled) {
+  background: #684329;
+}
+
+.bpComposerUploadButton,
+.bpComposerVoiceButton {
+  color: #786657;
+}
+
+.bpComposerFooter,
+.bpMessageDeliveryStatus {
+  color: #786657;
+  font-size: 11px;
+}
+
+.bpMessageBlocksTextTableContainer {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e8ddd0;
+  border-radius: 10px;
+}
+
+.bpMessageBlocksTextTable {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.bpMessageBlocksTextTableHeader {
+  background: #f3e8db;
+  color: #684329;
+}
+
+.bpMessageBlocksTextTableHeader,
+.bpMessageBlocksTextTableData {
+  padding: 9px 12px;
+  border-bottom: 1px solid #e8ddd0;
+  text-align: left;
+}
+
+.bpMessageBlocksButton:focus-visible,
+.bpComposerSendButton:focus-visible,
+.bpComposerUploadButton:focus-visible,
+.bpComposerVoiceButton:focus-visible,
+.bpMessageListScrollDownButton:focus-visible {
+  outline: 3px solid #8b5e3c;
+  outline-offset: 3px;
+}
+
+.bpFabContainer {
+  background: #8b5e3c;
+  color: #fff;
+  border: 1px solid #aa805c;
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgb(104 67 41 / 25%);
+}
+
+.bpFabIcon {
+  color: #fff;
+}
+
+@media (max-width: 480px) {
+  .bpContainer { border-radius: 18px; }
+  .bpHeaderContainer { padding: 14px; }
+  .bpComposerWrapper { padding: 10px; }
+  .bpComposerInput { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bpMessageBlocksButton,
+  .bpComposerSendButton { transition: none; }
+}
