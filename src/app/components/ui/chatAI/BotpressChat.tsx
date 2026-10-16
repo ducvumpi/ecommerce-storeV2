@@ -54,7 +54,7 @@ export default function ChatBot() {
 
   // The SDK cannot send events until Webchat has been opened once.
   useEffect(() => {
-    if (botInitialized && user && !botReady) {
+    if (botInitialized && user !== undefined && !botReady) {
       window.botpress?.open()
     }
   }, [botInitialized, botReady, user])
