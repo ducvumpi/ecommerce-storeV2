@@ -5,11 +5,16 @@ import type { User } from '@supabase/supabase-js'
 import { useEffect, useState, useRef } from 'react'
 import './botpress-launcher.css'
 
-const IDENTITY_STORAGE_KEY = 'store:botpress:last-sent-identity:v1'
+const IDENTITY_STORAGE_PREFIX = 'store:botpress:identity:v2'
 
-function readStoredIdentity() {
+function identityStorageKey(conversationId: string) {
+  const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
+  return `${IDENTITY_STORAGE_PREFIX}:${botId}:${conversationId}`
+}
+
+function readStoredIdentity(key: string) {
   try {
-    const identity = window.localStorage.getItem(IDENTITY_STORAGE_KEY)
+    const identity = window.localStorage.getItem(key)
     return identity === 'guest' || identity?.startsWith('auth:') ? identity : null
   } catch {
     return null
@@ -21,36 +26,30 @@ export default function ChatBot() {
   const [botReady, setBotReady] = useState(false)
   const [injectReady, setInjectReady] = useState(false)
   const [botInitialized, setBotInitialized] = useState(false)
-  const lastIdentity = useRef<string | null>(null)
-  const wasAuthenticated = useRef(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const sentIdentities = useRef(new Map<string, string>())
+  const pendingIdentities = useRef(new Set<string>())
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
-
-  // localStorage shares successful sends across reloads and tabs.
-  useEffect(() => {
-    const restoreIdentity = () => {
-      const identity = readStoredIdentity()
-      lastIdentity.current = identity
-      wasAuthenticated.current = identity?.startsWith('auth:') ?? false
-    }
-    restoreIdentity()
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === IDENTITY_STORAGE_KEY || event.key === null) restoreIdentity()
-    }
-    window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
-  }, [])
 
   const handleInjectReady = () => {
     if (!window.botpress) return
     if (!readyListenerAdded.current) {
       readyListenerAdded.current = true
+      const syncConversation = (id?: unknown) => {
+        const currentId = typeof id === 'string' ? id : window.botpress?.conversationId
+        if (currentId) setConversationId(currentId)
+      }
       window.botpress.on('webchat:initialized', () => {
+        syncConversation()
         setBotInitialized(true)
       })
       window.botpress.on('webchat:ready', () => {
+        syncConversation()
         setBotReady(true)
       })
+      window.botpress.on('conversation', syncConversation)
+      window.botpress.on('webchat:opened', () => syncConversation())
     }
     // Only load the configuration after the SDK and its ready listener exist.
     setInjectReady(true)
@@ -83,26 +82,33 @@ export default function ChatBot() {
   useEffect(() => {
     if (user === undefined) return
     const identity = user ? `auth:${user.id}:${user.email ?? ''}` : 'guest'
-    if (botInitialized && !botReady && lastIdentity.current !== identity && readStoredIdentity() !== identity) {
+    const currentId = window.botpress?.conversationId
+    const key = currentId ? identityStorageKey(currentId) : null
+    const previousIdentity = key
+      ? readStoredIdentity(key) ?? sentIdentities.current.get(key)
+      : null
+    if (botInitialized && !botReady && previousIdentity !== identity) {
       window.botpress?.open()
     }
-  }, [botInitialized, botReady, user])
+  }, [botInitialized, botReady, conversationId, user])
 
   // Synchronize identity once, including repeated SIGNED_IN notifications.
   useEffect(() => {
-    if (!botReady || user === undefined || !window.botpress?.sendEvent) return
+    if (!botReady || !conversationId || user === undefined || !window.botpress?.sendEvent) return
     const identity = user ? `auth:${user.id}:${user.email ?? ''}` : 'guest'
-    if (lastIdentity.current === identity) return
-    const previousIdentity = lastIdentity.current
-    const previousAuth = wasAuthenticated.current
-    lastIdentity.current = identity
-    wasAuthenticated.current = !!user
+    const key = identityStorageKey(conversationId)
+    const previousIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
+    const pendingKey = `${key}:${identity}`
+    if (previousIdentity === identity || pendingIdentities.current.has(pendingKey)) return
+    pendingIdentities.current.add(pendingKey)
 
     const sendIdentity = async () => {
+      // Do not send a queued event to a different conversation after a reset.
+      if (window.botpress?.conversationId !== conversationId) return
       // A different tab may have finished sending while this tab waited.
-      const storedIdentity = readStoredIdentity()
+      const storedIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
       if (storedIdentity === identity) return
-      const previouslyAuthenticated = storedIdentity?.startsWith('auth:') ?? previousAuth
+      const previouslyAuthenticated = storedIdentity?.startsWith('auth:') ?? false
       const type = user ? 'auth' : previouslyAuthenticated ? 'logout' : 'guest'
       const payload = user
       ? {
@@ -120,26 +126,25 @@ export default function ChatBot() {
         isLoggedIn: false,
       }
       await window.botpress!.sendEvent(payload)
+      sentIdentities.current.set(key, identity)
       try {
-        window.localStorage.setItem(IDENTITY_STORAGE_KEY, identity)
+        window.localStorage.setItem(key, identity)
       } catch {
         // The event was sent even if browser storage is unavailable.
       }
-      console.info('[Botpress] Identity event sent:', type)
+      console.info('[Botpress] Identity event sent:', type, '| conversation:', conversationId)
     }
 
     // Serialize sends across tabs on browsers supporting Web Locks.
     const sending = navigator.locks
-      ? navigator.locks.request(IDENTITY_STORAGE_KEY, sendIdentity)
+      ? navigator.locks.request(key, sendIdentity)
       : sendIdentity()
     void sending.catch((error: unknown) => {
-      if (lastIdentity.current === identity) {
-        lastIdentity.current = previousIdentity
-        wasAuthenticated.current = previousAuth
-      }
       console.error('Failed to synchronize Botpress identity:', error)
+    }).finally(() => {
+      pendingIdentities.current.delete(pendingKey)
     })
-  }, [botReady, user])
+  }, [botReady, conversationId, user])
 
   useEffect(() => {
     if (!botReady || !window.botpress) return

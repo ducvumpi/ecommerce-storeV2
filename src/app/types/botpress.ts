@@ -15,6 +15,9 @@ export interface BotpressConfig {
 declare global {
   interface Window {
   botpress?: {
+    readonly conversationId?: string
+    readonly botId?: string
+    readonly clientId?: string
     on: (event: string, callback: (data?: any) => void) => void
     sendEvent: (event: Record<string, unknown>) => Promise<void>
     sendMessage: (message: string) => void  // ← thêm dòng này
