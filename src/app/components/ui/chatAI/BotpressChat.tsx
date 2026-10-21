@@ -29,6 +29,7 @@ export default function ChatBot() {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const sentIdentities = useRef(new Map<string, string>())
   const pendingIdentities = useRef(new Set<string>())
+  const desiredIdentity = useRef<string | null>(null)
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
 
@@ -94,22 +95,28 @@ export default function ChatBot() {
 
   // Synchronize identity once, including repeated SIGNED_IN notifications.
   useEffect(() => {
-    if (!botReady || !conversationId || user === undefined || !window.botpress?.sendEvent) return
+    if (user === undefined) return
     const identity = user ? `auth:${user.id}:${user.email ?? ''}` : 'guest'
+    desiredIdentity.current = identity
+    if (!botReady || !conversationId || !window.botpress?.sendEvent) return
     const key = identityStorageKey(conversationId)
     const previousIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
     const pendingKey = `${key}:${identity}`
-    if (previousIdentity === identity || pendingIdentities.current.has(pendingKey)) return
+    if (pendingIdentities.current.has(pendingKey)) return
+    // A pending auth send may still replace the stored guest state.
+    if (previousIdentity === identity && pendingIdentities.current.size === 0) return
     pendingIdentities.current.add(pendingKey)
 
     const sendIdentity = async () => {
       // Do not send a queued event to a different conversation after a reset.
       if (window.botpress?.conversationId !== conversationId) return
+      if (desiredIdentity.current !== identity) return
       // A different tab may have finished sending while this tab waited.
       const storedIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
       if (storedIdentity === identity) return
       const previouslyAuthenticated = storedIdentity?.startsWith('auth:') ?? false
-      const type = user ? 'auth' : previouslyAuthenticated ? 'logout' : 'guest'
+      // The bot has auth/guest triggers, so logout must enter the guest trigger.
+      const type = user ? 'auth' : 'guest'
       const payload = user
       ? {
         type,
@@ -120,7 +127,8 @@ export default function ChatBot() {
       }
       : {
         type,
-        text: type === 'logout' ? '__logout__' : '__guest__',
+        text: '__guest__',
+        reason: previouslyAuthenticated ? 'logout' : 'guest',
         email: null,
         userId: null,
         isLoggedIn: false,
