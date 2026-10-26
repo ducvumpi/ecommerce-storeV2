@@ -173,43 +173,85 @@ export default function ChatBot() {
 
     messageListenerAdded.current = true
 
+    const productUrlFor = async (productName: string) => {
+      let productUrl = productLinkCache.current.get(productName)
+      if (productUrl === undefined) {
+        const { data, error } = await supabase
+          .from('products')
+          .select('slug, gender_id')
+          .eq('name', productName)
+          .maybeSingle()
+
+        productUrl = !error && data?.slug && (data.gender_id === 1 || data.gender_id === 2)
+          ? `/${data.gender_id === 1 ? 'men' : 'women'}/${encodeURIComponent(data.slug)}`
+          : null
+        productLinkCache.current.set(productName, productUrl)
+      }
+      return productUrl
+    }
+
+    const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
     const repairProductLinks = async () => {
-      const links = document.querySelectorAll<HTMLAnchorElement>(
-        '.bpWebchat a.bpMessageBlocksTextLink:not([href]), .bpWebchat a.bpMessageBlocksTextLink[href="null"]'
-      )
+      const items = document.querySelectorAll<HTMLElement>('.bpWebchat li')
+      await Promise.all(Array.from(items).map(async (item) => {
+        if (item.dataset.productLinkRepair) return
+        const itemText = item.textContent?.trim() ?? ''
 
-      for (const link of links) {
-        if (link.dataset.productLinkRepair) continue
-
-        const productName = link.textContent?.trim().replace(/^Xem sản phẩm\s+/i, '')
-        if (!productName) continue
-        link.dataset.productLinkRepair = 'pending'
-
-        let productUrl = productLinkCache.current.get(productName)
-        if (productUrl === undefined) {
-          const { data, error } = await supabase
-            .from('products')
-            .select('slug, gender_id')
-            .eq('name', productName)
-            .maybeSingle()
-
-          productUrl = !error && data?.slug && (data.gender_id === 1 || data.gender_id === 2)
-            ? `/${data.gender_id === 1 ? 'men' : 'women'}/${encodeURIComponent(data.slug)}`
-            : null
-          productLinkCache.current.set(productName, productUrl)
+        // Botpress can render the CTA as plain text or as an anchor without href.
+        const productName = itemText.split(/\s+[\u2014\u2013-]\s+/)[0]?.trim()
+        if (!productName) return
+        item.dataset.productLinkRepair = 'pending'
+        const productUrl = await productUrlFor(productName)
+        if (!productUrl) {
+          delete item.dataset.productLinkRepair
+          return
         }
 
-        if (productUrl) {
+        const cta = Array.from(item.querySelectorAll<HTMLAnchorElement>('a'))
+          .find((anchor) => normalizeText(anchor.textContent ?? '').includes('xem san pham'))
+        if (cta) {
+          cta.href = productUrl
+          cta.target = '_blank'
+          cta.rel = 'noopener noreferrer'
+        } else {
+          const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT)
+          let node: Node | null
+          while ((node = walker.nextNode())) {
+            const text = node.textContent ?? ''
+            const normalized = normalizeText(text)
+            const index = normalized.indexOf('xem san pham')
+            if (index < 0 || !node.parentNode) continue
+            const phraseLength = 'xem san pham'.length
+            // Match the original accented text while locating its normalized range.
+            const startOffset = Array.from(text).slice(0, index).join('').length
+            const endOffset = Array.from(text).slice(0, index + phraseLength).join('').length
+            const fragment = document.createDocumentFragment()
+            if (startOffset > 0) fragment.append(text.slice(0, startOffset))
+            const link = document.createElement('a')
+            link.textContent = text.slice(startOffset, endOffset)
+            link.href = productUrl
+            link.target = '_blank'
+            link.rel = 'noopener noreferrer'
+            fragment.append(link)
+            const after = text.slice(endOffset)
+            if (after) fragment.append(after)
+            node.parentNode.replaceChild(fragment, node)
+            break
+          }
+        }
+        if (!cta && !normalizeText(itemText).includes('xem san pham')) {
+          const link = document.createElement('a')
+          link.textContent = 'Xem san pham'
           link.href = productUrl
           link.target = '_blank'
           link.rel = 'noopener noreferrer'
-          link.dataset.productLinkRepair = 'done'
-        } else {
-          delete link.dataset.productLinkRepair
+          link.style.marginLeft = '0.35em'
+          item.append(' ', link)
         }
-      }
+        item.dataset.productLinkRepair = 'done'
+      }))
     }
-
     const linkObserver = new MutationObserver(() => {
       void repairProductLinks()
     })
