@@ -29,6 +29,7 @@ export default function ChatBot() {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const sentIdentities = useRef(new Map<string, string>())
   const pendingIdentities = useRef(new Set<string>())
+  const productLinkCache = useRef(new Map<string, string | null>())
   const desiredIdentity = useRef<string | null>(null)
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
@@ -115,6 +116,18 @@ export default function ChatBot() {
       const storedIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
       if (storedIdentity === identity) return
       const previouslyAuthenticated = storedIdentity?.startsWith('auth:') ?? false
+      // A new guest session has no identity transition to announce. Sending a
+      // synthetic guest event here fires Botpress' guest trigger as a turn and
+      // can make the bot reply even though the visitor has not asked anything.
+      if (!user && !previouslyAuthenticated) {
+        sentIdentities.current.set(key, identity)
+        try {
+          window.localStorage.setItem(key, identity)
+        } catch {
+          // The local identity cache is optional when browser storage is blocked.
+        }
+        return
+      }
       // The bot has auth/guest triggers, so logout must enter the guest trigger.
       const type = user ? 'auth' : 'guest'
       const payload = user
@@ -160,6 +173,49 @@ export default function ChatBot() {
 
     messageListenerAdded.current = true
 
+    const repairProductLinks = async () => {
+      const links = document.querySelectorAll<HTMLAnchorElement>(
+        '.bpWebchat a.bpMessageBlocksTextLink:not([href]), .bpWebchat a.bpMessageBlocksTextLink[href="null"]'
+      )
+
+      for (const link of links) {
+        if (link.dataset.productLinkRepair) continue
+
+        const productName = link.textContent?.trim().replace(/^Xem sản phẩm\s+/i, '')
+        if (!productName) continue
+        link.dataset.productLinkRepair = 'pending'
+
+        let productUrl = productLinkCache.current.get(productName)
+        if (productUrl === undefined) {
+          const { data, error } = await supabase
+            .from('products')
+            .select('slug, gender_id')
+            .eq('name', productName)
+            .maybeSingle()
+
+          productUrl = !error && data?.slug && (data.gender_id === 1 || data.gender_id === 2)
+            ? `/${data.gender_id === 1 ? 'men' : 'women'}/${encodeURIComponent(data.slug)}`
+            : null
+          productLinkCache.current.set(productName, productUrl)
+        }
+
+        if (productUrl) {
+          link.href = productUrl
+          link.target = '_blank'
+          link.rel = 'noopener noreferrer'
+          link.dataset.productLinkRepair = 'done'
+        } else {
+          delete link.dataset.productLinkRepair
+        }
+      }
+    }
+
+    const linkObserver = new MutationObserver(() => {
+      void repairProductLinks()
+    })
+    linkObserver.observe(document.body, { childList: true, subtree: true })
+    void repairProductLinks()
+
     window.botpress?.on('message', (data: any) => {
       const blocks = data?.block?.blocks ?? []
       blocks.forEach((col: any) => {
@@ -169,7 +225,7 @@ export default function ChatBot() {
 
             if (btn.buttonValue.startsWith('category_')) {
               const slug = btn.buttonValue.replace('category_', '')
-              const url = `http://localhost:3000/collections/${slug}`
+              const url = new URL(`/collections/${slug}`, window.location.origin).toString()
               const a = document.createElement('a')
               a.href = url
               a.target = '_blank'
@@ -187,6 +243,8 @@ export default function ChatBot() {
         })
       })
     })
+
+    return () => linkObserver.disconnect()
   }, [botReady])
 
   return (
