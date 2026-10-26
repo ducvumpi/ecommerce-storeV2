@@ -28,6 +28,7 @@ export default function ChatBot() {
   const [botInitialized, setBotInitialized] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const sentIdentities = useRef(new Map<string, string>())
+  const sentGuestEvents = useRef(new Set<string>())
   const pendingIdentities = useRef(new Set<string>())
   const productLinkCache = useRef(new Map<string, string | null>())
   const desiredIdentity = useRef<string | null>(null)
@@ -104,8 +105,18 @@ export default function ChatBot() {
     const previousIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
     const pendingKey = `${key}:${identity}`
     if (pendingIdentities.current.has(pendingKey)) return
+    // Older builds cached "guest" without actually sending the event. Keep a
+    // separate marker so those existing sessions can emit it once after update.
+    const guestEventSentKey = `${key}:guest-event:v1`
+    const guestEventWasSent = sentGuestEvents.current.has(key) || (() => {
+      try {
+        return window.localStorage.getItem(guestEventSentKey) === 'sent'
+      } catch {
+        return false
+      }
+    })()
     // A pending auth send may still replace the stored guest state.
-    if (previousIdentity === identity && pendingIdentities.current.size === 0) return
+    if (previousIdentity === identity && pendingIdentities.current.size === 0 && (user || guestEventWasSent)) return
     pendingIdentities.current.add(pendingKey)
 
     const sendIdentity = async () => {
@@ -114,21 +125,10 @@ export default function ChatBot() {
       if (desiredIdentity.current !== identity) return
       // A different tab may have finished sending while this tab waited.
       const storedIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
-      if (storedIdentity === identity) return
+      if (storedIdentity === identity && (user || guestEventWasSent)) return
       const previouslyAuthenticated = storedIdentity?.startsWith('auth:') ?? false
-      // A new guest session has no identity transition to announce. Sending a
-      // synthetic guest event here fires Botpress' guest trigger as a turn and
-      // can make the bot reply even though the visitor has not asked anything.
-      if (!user && !previouslyAuthenticated) {
-        sentIdentities.current.set(key, identity)
-        try {
-          window.localStorage.setItem(key, identity)
-        } catch {
-          // The local identity cache is optional when browser storage is blocked.
-        }
-        return
-      }
-      // The bot has auth/guest triggers, so logout must enter the guest trigger.
+      // Send guest identity on first visit as well as on logout so Botpress can
+      // run its guest trigger and record the event in the conversation logs.
       const type = user ? 'auth' : 'guest'
       const payload = user
       ? {
@@ -148,8 +148,10 @@ export default function ChatBot() {
       }
       await window.botpress!.sendEvent(payload)
       sentIdentities.current.set(key, identity)
+      if (!user) sentGuestEvents.current.add(key)
       try {
         window.localStorage.setItem(key, identity)
+        if (!user) window.localStorage.setItem(guestEventSentKey, 'sent')
       } catch {
         // The event was sent even if browser storage is unavailable.
       }
@@ -199,7 +201,11 @@ export default function ChatBot() {
         const itemText = item.textContent?.trim() ?? ''
 
         // Botpress can render the CTA as plain text or as an anchor without href.
-        const productName = itemText.split(/\s+[\u2014\u2013-]\s+/)[0]?.trim()
+        const productName = itemText
+          .split(/\s+[\u2014\u2013-]\s+/)[0]
+          ?.replace(/^\s*\d+[.)]\s*/, '')
+          .replace(/[`*_]/g, '')
+          .trim()
         if (!productName) return
         item.dataset.productLinkRepair = 'pending'
         const productUrl = await productUrlFor(productName)
