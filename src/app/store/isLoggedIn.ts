@@ -88,6 +88,13 @@ export const useAuthStore = create<AuthContextType>()(
         const { data, error } = await supabase.auth.signUp({
           email: values.email,
           password: values.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              first_name: values.firstName,
+              last_name: values.lastName,
+            },
+          },
         });
 
         if (error) {
@@ -101,27 +108,20 @@ export const useAuthStore = create<AuthContextType>()(
           return;
         }
 
-        // 1. Tạo address trống trước
-        const { data: addressData, error: addressErr } = await supabase
-          .from("addresses")
-          .insert({
-            // điền các field NOT NULL nếu có, hoặc để trống nếu tất cả nullable
-          })
-          .select("id")
-          .single();
-
-        if (addressErr || !addressData) {
-          toast.error("Không tạo được địa chỉ!");
+        // With email confirmation enabled, Supabase deliberately returns no
+        // session. The auth callback creates the profile after confirmation.
+        if (!data.session) {
+          toast.success("Đăng ký thành công! Vui lòng xác nhận email để tiếp tục.");
           return;
         }
 
-        // 2. Insert profile với address_id vừa tạo
+        // Create only the user's profile. Addresses are created later with
+        // their owner id, when the customer enters a real shipping address.
         const { error: profileErr } = await supabase.from("profiles").insert({
           id: userId,
           email: values.email,
           first_name: values.firstName,
           last_name: values.lastName,
-          address_id: addressData.id,
         });
 
         if (profileErr) {

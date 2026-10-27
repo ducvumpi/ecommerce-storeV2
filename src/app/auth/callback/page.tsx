@@ -29,8 +29,8 @@ export default function AuthCallback() {
                     id: user.id,
                     email: user.email,
                     avatar_url: user.user_metadata?.avatar_url ?? null,
-                    first_name: user.user_metadata?.given_name ?? '',
-                    last_name: user.user_metadata?.family_name ?? '',
+                    first_name: user.user_metadata?.first_name ?? user.user_metadata?.given_name ?? '',
+                    last_name: user.user_metadata?.last_name ?? user.user_metadata?.family_name ?? '',
                     role: 'user',
                     updated_at: new Date().toISOString(),
                 }, { onConflict: 'id' });

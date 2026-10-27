@@ -130,21 +130,41 @@ export default function ChatBot() {
       // Send guest identity on first visit as well as on logout so Botpress can
       // run its guest trigger and record the event in the conversation logs.
       const type = user ? 'auth' : 'guest'
-      const payload = user
-      ? {
-        type,
-        text: `__auth__${user.email ?? ''}__${user.id}__true`,
-        email: user.email ?? '',
-        userId: user.id,
-        isLoggedIn: true,
-      }
-      : {
+      let payload
+      if (user) {
+        // The server verifies the Supabase session, then reads only the user's
+        // profile under the own-row RLS rule.
+        const { data: { session } } = await supabase.auth.getSession()
+        const profileResponse = await fetch('/api/chat/profile', {
+          method: 'POST',
+          cache: 'no-store',
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : undefined,
+        })
+        if (!profileResponse.ok) {
+          throw new Error(`Profile verification failed (${profileResponse.status}).`)
+        }
+
+        const { profile, chatOrderToken } = await profileResponse.json()
+        payload = {
+          type,
+          text: `__auth__${profile.email}__${profile.id}__true`,
+          email: profile.email,
+          userId: profile.id,
+          profile,
+          chatOrderToken,
+          isLoggedIn: true,
+        }
+      } else {
+        payload = {
         type,
         text: '__guest__',
         reason: previouslyAuthenticated ? 'logout' : 'guest',
         email: null,
         userId: null,
         isLoggedIn: false,
+      }
       }
       await window.botpress!.sendEvent(payload)
       sentIdentities.current.set(key, identity)
@@ -175,17 +195,27 @@ export default function ChatBot() {
 
     messageListenerAdded.current = true
 
+    let productCatalogPromise: Promise<Array<{ name: string; slug: string; gender_id: number }> | null> | null = null
+
     const productUrlFor = async (productName: string) => {
       let productUrl = productLinkCache.current.get(productName)
       if (productUrl === undefined) {
-        const { data, error } = await supabase
-          .from('products')
-          .select('slug, gender_id')
-          .eq('name', productName)
-          .maybeSingle()
+        productCatalogPromise ??= Promise.resolve(
+          supabase.from('products').select('name, slug, gender_id')
+        ).then(({ data, error }) => error ? null : data)
 
-        productUrl = !error && data?.slug && (data.gender_id === 1 || data.gender_id === 2)
-          ? `/${data.gender_id === 1 ? 'men' : 'women'}/${encodeURIComponent(data.slug)}`
+        const normalize = (value: string) => value
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLocaleLowerCase('vi')
+          .replace(/\s+/g, ' ')
+          .trim()
+        const products = await productCatalogPromise
+        const product = products
+          ?.find((entry) => normalize(entry.name) === normalize(productName))
+
+        productUrl = product?.slug && (product.gender_id === 1 || product.gender_id === 2)
+          ? `/${product.gender_id === 1 ? 'men' : 'women'}/${encodeURIComponent(product.slug)}`
           : null
         productLinkCache.current.set(productName, productUrl)
       }
@@ -201,10 +231,16 @@ export default function ChatBot() {
         const itemText = item.textContent?.trim() ?? ''
 
         // Botpress can render the CTA as plain text or as an anchor without href.
-        const productName = itemText
+        const anchor = Array.from(item.querySelectorAll<HTMLAnchorElement>('a'))
+          .find((link) => normalizeText(link.textContent ?? '').startsWith('xem '))
+        const anchorProductName = anchor?.textContent
+          ?.replace(/^\s*(?:xem san pham|chi tiet san pham|xem)\s*/i, '')
+          .trim()
+        const productName = (anchorProductName || itemText)
           .split(/\s+[\u2014\u2013-]\s+/)[0]
           ?.replace(/^\s*\d+[.)]\s*/, '')
           .replace(/[`*_]/g, '')
+          .replace(/\s*[|·].*$/, '')
           .trim()
         if (!productName) return
         item.dataset.productLinkRepair = 'pending'
@@ -214,8 +250,8 @@ export default function ChatBot() {
           return
         }
 
-        const cta = Array.from(item.querySelectorAll<HTMLAnchorElement>('a'))
-          .find((anchor) => normalizeText(anchor.textContent ?? '').includes('xem san pham'))
+        const cta = anchor ?? Array.from(item.querySelectorAll<HTMLAnchorElement>('a'))
+          .find((link) => normalizeText(link.textContent ?? '').includes('xem san pham'))
         if (cta) {
           cta.href = productUrl
           cta.target = '_blank'
@@ -248,7 +284,7 @@ export default function ChatBot() {
         }
         if (!cta && !normalizeText(itemText).includes('xem san pham')) {
           const link = document.createElement('a')
-          link.textContent = 'Xem san pham'
+          link.textContent = 'Xem sản phẩm'
           link.href = productUrl
           link.target = '_blank'
           link.rel = 'noopener noreferrer'

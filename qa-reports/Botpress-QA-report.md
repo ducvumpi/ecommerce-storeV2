@@ -72,3 +72,62 @@
 | **Tổng /100** | **100%** | **Chưa đánh giá** | Không gán điểm giả cho kiểm thử phân quyền chưa thực hiện. |
 
 **Kết luận triển khai:** Chưa đáp ứng mức tin cậy cần thiết cho tư vấn mua hàng thực tế. Cần sửa link sản phẩm, lọc biến thể/tồn kho và sai lệch về áo nữ; sau đó chạy lại các ca Fail và hai ca phân quyền bằng fixture QA. Tỷ lệ Pass 81,5% không bù được các lỗi High có thể khiến khách bỏ lỡ sản phẩm hoặc tin sai về tồn kho.
+
+## Tái kiểm thử sau sửa guest event — 26/10/2026
+
+**Thời gian:** khoảng 11:08–11:40 UTC. **Môi trường:** `http://localhost:3000/`. **Hội thoại:** giữ một hội thoại webchat liên tục, không bấm Restart. **Bằng chứng lượt tái kiểm thử:** [continuous-retest-2026-10-26.json](./continuous-retest-2026-10-26.json). Phần này là kết quả mới; bảng phía trên vẫn giữ kết quả kiểm thử trước đó.
+
+| Tổng | Pass | Fail | Blocked | Not Run | Pass / ca có kết quả |
+|---:|---:|---:|---:|---:|---:|
+| 30 | 12 | 5 | 5 | 8 | 70,6% (12/17) |
+
+Các ca đã có phản hồi mới: F01–F05, N01–N05, D01–D04, C01, C03 và C05. C02/C04 không chấm vì chuỗi ngữ cảnh trước đó bị trễ nên không thể ghép chắc chắn câu trả lời với đầu vào/precondition. D05, S03 và S04 tiếp tục Blocked do thiếu fixture; E01–E05, S01, S02 và S05 chưa chạy lại vì webchat còn trạng thái đang trả lời và không nên gửi chồng câu hỏi vào cùng hội thoại.
+
+| ID | Trạng thái mới | Bằng chứng tái kiểm thử |
+|---|---|---|
+| F01 | Pass | Trả Daily giá 219.000₫, khớp snapshot. |
+| F02 | **Fail** | Yêu cầu áo thun nam đen, size M, còn hàng; bot đưa nhiều mẫu theo giá/size nhưng không xác minh màu đen và tồn kho, chỉ ghi chú chưa xác nhận stock. |
+| F03 | **Fail** | Bot vẫn nói không có chất liệu trong nguồn; snapshot ghi `material=Cotton` cho Basic và Daily. |
+| F04 | Pass | Đúng ba dòng tên/giá, không lời chào. |
+| F05 | **Fail** | Trả “Xem áo thun nam Daily” nhưng DOM webchat render link với `href=null`. |
+| N01 | Pass | Câu không dấu trả Daily 219.000₫. |
+| N02 | Pass | Câu sai chính tả trả Daily 219.000₫. |
+| N03 | Pass | Hiểu “<250k sz M”; không khẳng định còn kho khi chưa xác minh. |
+| N04 | Pass | Hỏi chọn Basic/Daily/Weekend khi “cái áo đó” chưa xác định duy nhất. |
+| N05 | Pass | Cả ba cách hỏi giá đều trả Daily 219.000₫. |
+| D01 | Pass | Daily 219.000₫, size S/M/L/XL. |
+| D02 | Pass | Không bịa sản phẩm Quantum Unicorn ZX-999. |
+| D03 | Pass | Liệt kê đúng năm mẫu trong khoảng 200.000–250.000₫ theo snapshot. |
+| D04 | Pass | Trả 7 mẫu, trung bình 223.286₫, khớp số liệu snapshot. |
+| D05 | Blocked | Thiếu fixture dữ liệu trùng/thiếu trường. |
+| C01 | Pass | Giữ tiêu chí áo nam, tối đa 250.000₫, size M; không khẳng định tồn kho. |
+| C02 | Blocked | Phản hồi nhiều lượt đến trễ/out-of-order trong batch; không đủ căn cứ ghép câu trả lời cho hai lượt hỏi Daily và size. |
+| C03 | **Fail** | Sau yêu cầu tìm áo thun nam, bot chỉ xác nhận sẽ tìm và giữ lại giới hạn 250.000₫/size M thay vì trả sản phẩm; chuyển sang áo len nữ không có phản hồi xác nhận được trong lượt thử. |
+| C04 | Blocked | Precondition chuyển sang áo len nữ của C03 không được xác nhận; lượt sửa ngân sách/size chỉ nhận xác nhận tiêu chí, không đủ căn cứ đánh giá kết quả lọc áo len nữ. |
+| C05 | **Fail** | Yêu cầu hai người mua chỉ nhận câu xác nhận “sẽ tìm”; câu tiếp “Gợi ý cho em mình trước” không có kết quả sản phẩm sau hơn 60 giây. |
+| E01–E05 | Not Run | Dừng gửi thêm khi phản hồi C05 còn treo để tránh chồng lượt trong cùng hội thoại. |
+| S01–S02, S05 | Not Run | Chưa chạy lại trong lượt tái kiểm thử này. Kết quả cũ vẫn nằm ở bằng chứng gốc nhưng không được tính vào 12 Pass mới. |
+| S03–S04 | Blocked | Cần đơn QA và hai tài khoản có chủ sở hữu khác nhau. |
+
+**Đánh giá sau tái kiểm thử:** thay đổi frontend đã gửi guest identity event trong phiên local (marker `guest-event:v1=sent`) và chat tiếp tục nhận/trả lời câu hỏi sản phẩm. Tuy nhiên, bằng chứng này xác nhận event được gửi từ frontend, chưa xác nhận Workflow Trigger_guest tạo log trong Studio. Chất lượng sản phẩm vẫn chưa sẵn sàng triển khai: còn lỗi High về thiếu material/link/tồn kho và phản hồi chuỗi ngữ cảnh nhiều lượt có thể chỉ xác nhận rồi không trả kết quả. Điểm bảo mật và tổng điểm tiếp tục **Chưa đánh giá** vì các ca phân quyền còn Blocked/chưa chạy lại.
+
+
+Follow-up on 27/10/2026: see [fail/not-run follow-up](./Botpress-fail-notrun-followup-2026-10-27.md). F05 received a frontend fix but remains unverified because the live Botpress response stayed pending; the other workflow failures and unrun cases remain unresolved or blocked as documented there.
+
+### Khắc phục RLS production — 27/10/2026
+
+Đã áp dụng thay đổi trên Supabase production sau khi xác nhận lỗ hổng: bỏ các policy `PUBLIC/ALL/true` trên `orders`, `order_items`, `addresses`, `profiles`; giới hạn đọc/cập nhật theo `auth.uid()`, giới hạn địa chỉ theo `user_id`, và chuyển quyền admin hồ sơ sang `app_metadata.role`. Thêm trigger kiểm tra chủ sở hữu cho insert/update đơn và địa chỉ. Checkout RPC `create_order_from_cart_full` vẫn chạy SECURITY DEFINER nhưng giờ kiểm tra `p_user_id = auth.uid()` trước phần thân hàm; EXECUTE bị thu hồi khỏi `anon`/`public` và chỉ cấp cho `authenticated`.
+
+**Xác minh production bằng truy vấn chỉ đọc:** dưới role `anon`, số dòng nhìn thấy là `orders=0`, `order_items=0`, `addresses=0`, `profiles=0` (trước sửa `orders=40`, `addresses=25`). Metadata xác nhận checkout RPC có guard, `anon_can_execute=false`, `authenticated_can_execute=true`. Không truy xuất nội dung hàng, không sửa/xóa dữ liệu hiện có. **Chưa chạy kiểm thử luồng user đã xác thực** (đăng nhập, xem đơn của chính mình, checkout, sửa/xóa địa chỉ); không tính các ca đó là Pass. Botpress Orders draft vẫn đang fail-closed và chưa publish/tích hợp endpoint server-side.
+
+### Tái kiểm thử luồng xác thực sau khi siết RLS — 27/10/2026
+
+Khởi động local trên `http://localhost:3100/` với kết nối ra Supabase được phép. Trong phiên storefront hiện có, trang `/orders` tải được 26 đơn và phần chi tiết/địa chỉ giao hàng hiển thị; `/info` → “Địa chỉ đã lưu” tải được địa chỉ của phiên. Endpoint `GET /api/chat/orders` với cookie phiên trả `200` và tối đa 10 đơn; cùng endpoint giả lập guest bằng `credentials: omit` trả `401`. Không ghi dữ liệu. **Pass** cho đọc danh sách đơn/địa chỉ của phiên và chặn guest ở endpoint.
+
+Checkout **Not Run**: giỏ hàng đang trống, không tạo đơn thật để thử. Botpress Orders vẫn fail-closed, không xác nhận chatbot gọi endpoint mới. Ban đầu server local trong sandbox không thể kết nối Supabase (EACCES); lần kiểm tra kết quả được chạy trên server local có quyền mạng. Một số request trên cart/profile trả HTTP 406; chưa truy vết nguyên nhân chính xác, dù danh sách đơn và địa chỉ vẫn tải.
+
+### Kiểm tra Botpress Emulator — trigger Orders, 27/10/2026
+
+Trong Emulator của workflow `Orders`, gửi một input theo nhánh guest: `guest: xem đơn hàng`. Log cho thấy request bắt đầu ở `Main`, đi qua `Identify User`, nhận điều kiện `workflow.userFound === false`, rồi chuyển tới `Consult AI` → `API_sanpham` → `AI_talk`; workflow `Orders` và node `chitiet_donhang` không chạy. Bot trả lời: “Dữ liệu hiện có chỉ có thông tin tồn kho, nên mình chưa thể tra cứu đơn hàng. Bạn gửi mã đơn hàng để shop hỗ trợ nhé.”
+
+**Fail — trigger/định tuyến Orders chưa được nối từ Main cho guest.** Không có dữ liệu đơn hàng bị lộ trong lượt này, nhưng đây không phải bằng chứng đủ để Pass toàn bộ bảo mật. Node Orders hiện vẫn fail-closed với thông báo tính năng tạm khóa; endpoint server-side đã test riêng nhưng chưa được gọi từ Botpress. Input Emulator không cung cấp phiên Supabase auth thật, vì vậy nhánh authenticated trong Botpress chưa được kiểm thử. Chi phí Emulator hiển thị cho lượt này: khoảng `$0.0006`.

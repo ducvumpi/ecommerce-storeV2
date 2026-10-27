@@ -1,0 +1,46 @@
+{
+  "runDate": "2026-10-26",
+  "approximateWindowUtc": "11:08-11:40",
+  "environment": "http://localhost:3000/",
+  "conversationId": "conv_01M5VYN9FAC8GH107E1J5FB9RS",
+  "conversationPolicy": "One continuous webchat session; Restart was not clicked.",
+  "catalogReference": "catalog-baseline.json (captured 2026-10-26T06:55:38.152Z; stock may have changed)",
+  "statusCounts": {
+    "total": 30,
+    "pass": 12,
+    "fail": 5,
+    "blocked": 5,
+    "notRun": 8,
+    "passRateOnCasesWithResults": "12/17 = 70.6%"
+  },
+  "cases": [
+    { "id": "F01", "status": "Pass", "input": "Áo thun nam Daily giá bao nhiêu?", "response": "Áo thun nam Daily giá 219.000₫; xem sản phẩm; hỏi muốn xem chi tiết/lọc." },
+    { "id": "F02", "status": "Fail", "input": "Tìm áo thun nam dưới 250.000đ, size M, màu đen, còn hàng.", "response": "Listed multiple products filtered by price/size; explicitly said black size M stock was not confirmed. Does not fulfill the requested color and in-stock filter." },
+    { "id": "F03", "status": "Fail", "input": "So sánh Basic và Daily về giá, chất liệu, size. Điểm nào chưa biết thì nói rõ.", "response": "Gave prices/sizes but said material was absent; catalog snapshot contains material=Cotton for both." },
+    { "id": "F04", "status": "Pass", "input": "Đưa tối đa 3 mẫu áo thun nam, mỗi mẫu một dòng gồm tên và giá, không thêm lời chào.", "response": "Three product-name/price lines, no greeting." },
+    { "id": "F05", "status": "Fail", "input": "Gửi link bấm được để xem áo thun nam Daily.", "response": "Rendered 'Xem áo thun nam Daily'; DOM anchor href was null." },
+    { "id": "N01", "status": "Pass", "input": "ao thun nam daily gia bao nhieu", "response": "Áo thun nam Daily giá 219.000₫." },
+    { "id": "N02", "status": "Pass", "input": "Áo thung namm Daily giá bnhiu?", "response": "Áo thun nam Daily giá 219.000₫." },
+    { "id": "N03", "status": "Pass", "input": "Shop có áo thun nam <250k sz M ko?", "response": "Listed products under 250.000₫ with size M and did not claim current stock." },
+    { "id": "N04", "status": "Pass", "input": "Cho mình cái áo đó.", "response": "Asked which product among Basic, Daily, Weekend." },
+    { "id": "N05", "status": "Pass", "inputs": ["Daily bao nhiêu tiền?", "Giá bán áo thun nam Daily?", "Muốn mua Daily thì hết mấy đồng?"], "response": "All three returned Daily at 219.000₫." },
+    { "id": "D01", "status": "Pass", "input": "Cho mình tên, giá và các size của áo thun nam Daily.", "response": "Daily — 219.000₫; S, M, L, XL." },
+    { "id": "D02", "status": "Pass", "input": "Shop có áo Quantum Unicorn ZX-999 không?", "response": "Said product was not found in the men's catalog." },
+    { "id": "D03", "status": "Pass", "input": "Liệt kê tất cả áo thun nam có giá từ 200.000đ đến 250.000đ, tính cả hai đầu.", "response": "Listed five products in the requested range, matching the baseline." },
+    { "id": "D04", "status": "Pass", "input": "Có bao nhiêu mẫu áo thun nam dưới 250.000đ? Giá trung bình là bao nhiêu? Đếm theo sản phẩm, không theo màu/size.", "response": "7 products; average 223.286₫, matching the baseline." },
+    { "id": "D05", "status": "Blocked", "reason": "No duplicate/missing-field fixture." },
+    { "id": "C01", "status": "Pass", "input": "Mình tìm áo nam, ngân sách tối đa 250.000đ, size M.", "response": "Returned men's products at or below 250.000₫ with size M; did not claim stock." },
+    { "id": "C02", "status": "Blocked", "reason": "Multi-turn replies were delayed/out of order; could not reliably pair the two requested turns with their responses." },
+    { "id": "C03", "status": "Fail", "inputs": ["Tìm áo thun nam.", "Giờ mình muốn xem áo len nữ."], "response": "For the men's T-shirt request, only acknowledged searching and retained stale budget/size constraints; the category-switch response was not confirmed." },
+    { "id": "C04", "status": "Blocked", "reason": "C03 did not establish the women's-sweater context; subsequent reply only acknowledged updated criteria, so the intended filter could not be validated." },
+    { "id": "C05", "status": "Fail", "inputs": ["Mình cần áo nam size M dưới 250k; em mình cần áo nữ size S dưới 400k.", "Gợi ý cho em mình trước."], "response": "Only acknowledged searching for both people; follow-up remained without product results for over 60 seconds." },
+    { "id": "E01-E05", "status": "Not Run", "reason": "Stopped sending new turns while the current webchat response remained pending to avoid overlapping prompts." },
+    { "id": "S01-S02,S05", "status": "Not Run", "reason": "Not rerun in this retest; prior run evidence remains in continuous-evidence.json and is excluded from the new retest counts." },
+    { "id": "S03-S04", "status": "Blocked", "reason": "Requires QA orders and two separate QA account owners." }
+  ],
+  "guestEventRetest": {
+    "frontendSendEventResolved": true,
+    "evidence": "localStorage marker store:botpress:identity:v2:<botId>:<conversationId>:guest-event:v1 = sent",
+    "scope": "Confirms frontend sendEvent completed; does not prove the Botpress Studio Logs tab recorded the trigger."
+  }
+}
