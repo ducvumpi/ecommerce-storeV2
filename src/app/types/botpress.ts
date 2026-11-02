@@ -18,9 +18,10 @@ declare global {
     readonly conversationId?: string
     readonly botId?: string
     readonly clientId?: string
-    on: (event: string, callback: (data?: any) => void) => void
+    on: (event: string, callback: (data?: any) => void) => (() => void) | void
     sendEvent: (event: Record<string, unknown>) => Promise<void>
     sendMessage: (message: string) => void  // ← thêm dòng này
+    restartConversation: () => Promise<void>
     mergeConfig: (config: Record<string, unknown>) => void
     open: () => void
     close: () => void

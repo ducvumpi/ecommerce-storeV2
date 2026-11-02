@@ -6,10 +6,17 @@ import { useEffect, useState, useRef } from 'react'
 import './botpress-launcher.css'
 
 const IDENTITY_STORAGE_PREFIX = 'store:botpress:identity:v2'
+const CHAT_ACTIVITY_STORAGE_PREFIX = 'store:botpress:last-activity:v1'
+const CONVERSATION_IDLE_TIMEOUT_MS = 30 * 60 * 1000
 
 function identityStorageKey(conversationId: string) {
   const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
   return `${IDENTITY_STORAGE_PREFIX}:${botId}:${conversationId}`
+}
+
+function chatActivityStorageKey(conversationId: string) {
+  const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
+  return `${CHAT_ACTIVITY_STORAGE_PREFIX}:${botId}:${conversationId}`
 }
 
 function readStoredIdentity(key: string) {
@@ -34,6 +41,7 @@ export default function ChatBot() {
   const desiredIdentity = useRef<string | null>(null)
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
+  const chatActivity = useRef(new Map<string, number>())
 
   const handleInjectReady = () => {
     if (!window.botpress) return
@@ -188,6 +196,173 @@ export default function ChatBot() {
       pendingIdentities.current.delete(pendingKey)
     })
   }, [botReady, conversationId, user])
+
+  useEffect(() => {
+    const webchat = window.botpress
+    if (!botReady || !conversationId || !webchat) return
+
+    const activityKey = chatActivityStorageKey(conversationId)
+    let idleTimer: ReturnType<typeof setTimeout> | null = null
+    let resetInProgress = false
+    let active = true
+
+    const getLastActivity = () => {
+      try {
+        const stored = Number(window.localStorage.getItem(activityKey))
+        if (Number.isFinite(stored) && stored > 0) {
+          chatActivity.current.set(activityKey, stored)
+          return stored
+        }
+      } catch {
+        // Fall back to the in-memory timestamp when browser storage is unavailable.
+      }
+      return chatActivity.current.get(activityKey) ?? null
+    }
+
+    const setLastActivity = (timestamp: number) => {
+      chatActivity.current.set(activityKey, timestamp)
+      try {
+        window.localStorage.setItem(activityKey, String(timestamp))
+      } catch {
+        // The idle timer still works for this page when browser storage is unavailable.
+      }
+    }
+
+    const scheduleIdleReset = () => {
+      if (idleTimer) clearTimeout(idleTimer)
+      const lastActivity = getLastActivity()
+      if (lastActivity === null) return
+      const delay = Math.max(0, CONVERSATION_IDLE_TIMEOUT_MS - (Date.now() - lastActivity))
+      idleTimer = setTimeout(() => {
+        void resetIfIdle()
+      }, delay)
+    }
+
+    const resetIfIdle = async () => {
+      if (!active || resetInProgress || window.botpress?.conversationId !== conversationId) return
+      const lastActivity = getLastActivity()
+      if (lastActivity === null) return
+      const remaining = CONVERSATION_IDLE_TIMEOUT_MS - (Date.now() - lastActivity)
+      if (remaining > 0) {
+        scheduleIdleReset()
+        return
+      }
+
+      resetInProgress = true
+      const startNewConversation = async () => {
+        if (!active || window.botpress?.conversationId !== conversationId) return
+        const latestActivity = getLastActivity()
+        if (latestActivity === null || Date.now() - latestActivity < CONVERSATION_IDLE_TIMEOUT_MS) {
+          scheduleIdleReset()
+          return
+        }
+
+        try {
+          let unsubscribeConversation: (() => void) | undefined
+          let conversationTimeout: ReturnType<typeof setTimeout> | undefined
+          const conversationChanged = new Promise<string>((resolve) => {
+            unsubscribeConversation = webchat.on('conversation', (nextId) => {
+              if (typeof nextId === 'string' && nextId !== conversationId) resolve(nextId)
+            }) ?? undefined
+          })
+
+          try {
+            await webchat.restartConversation()
+            const nextConversationId = webchat.conversationId
+            const confirmedConversationId = nextConversationId && nextConversationId !== conversationId
+              ? nextConversationId
+              : await Promise.race([
+                  conversationChanged,
+                  new Promise<string>((_, reject) => {
+                    conversationTimeout = setTimeout(() => {
+                      reject(new Error('Botpress did not confirm the new conversation.'))
+                    }, 10_000)
+                  }),
+                ])
+            setConversationId(confirmedConversationId)
+          } finally {
+            if (conversationTimeout) clearTimeout(conversationTimeout)
+            unsubscribeConversation?.()
+          }
+        } catch (error) {
+          console.error('Failed to start a new Botpress conversation after inactivity:', error)
+          idleTimer = setTimeout(() => {
+            void resetIfIdle()
+          }, 30_000)
+        }
+      }
+
+      try {
+        if (navigator.locks) {
+          await navigator.locks.request(`botpress-idle-reset:${activityKey}`, startNewConversation)
+        } else {
+          await startNewConversation()
+        }
+      } catch (error) {
+        console.error('Failed to acquire the Botpress conversation reset lock:', error)
+        idleTimer = setTimeout(() => {
+          void resetIfIdle()
+        }, 30_000)
+      } finally {
+        resetInProgress = false
+      }
+    }
+
+    const recordChatActivity = () => {
+      if (!active || window.botpress?.conversationId !== conversationId) return
+      const now = Date.now()
+      const lastActivity = getLastActivity()
+      if (lastActivity !== null && now - lastActivity >= CONVERSATION_IDLE_TIMEOUT_MS) {
+        void resetIfIdle()
+        return
+      }
+      setLastActivity(now)
+      scheduleIdleReset()
+    }
+
+    const handleChatInteraction = (event: Event) => {
+      const target = event.target
+      if (!(target instanceof Element) || !target.closest('.bpWebchat, .bpChatContainer')) return
+      recordChatActivity()
+    }
+
+    const checkIdleOnReturn = () => {
+      if (document.visibilityState === 'visible') void resetIfIdle()
+    }
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === activityKey) scheduleIdleReset()
+    }
+
+    const unsubscribeMessageSent = webchat.on('messageSent', recordChatActivity)
+    const unsubscribeOpened = webchat.on('webchat:opened', recordChatActivity)
+    document.addEventListener('pointerdown', handleChatInteraction, true)
+    document.addEventListener('keydown', handleChatInteraction, true)
+    document.addEventListener('input', handleChatInteraction, true)
+    document.addEventListener('visibilitychange', checkIdleOnReturn)
+    window.addEventListener('focus', checkIdleOnReturn)
+    window.addEventListener('storage', handleStorageChange)
+
+    const initializeIdleTimer = () => {
+      if (getLastActivity() === null) setLastActivity(Date.now())
+      scheduleIdleReset()
+    }
+
+    initializeIdleTimer()
+
+    return () => {
+      active = false
+      if (idleTimer) clearTimeout(idleTimer)
+      if (typeof unsubscribeMessageSent === 'function') unsubscribeMessageSent()
+      if (typeof unsubscribeOpened === 'function') unsubscribeOpened()
+      document.removeEventListener('pointerdown', handleChatInteraction, true)
+      document.removeEventListener('keydown', handleChatInteraction, true)
+      document.removeEventListener('input', handleChatInteraction, true)
+      document.removeEventListener('visibilitychange', checkIdleOnReturn)
+      window.removeEventListener('focus', checkIdleOnReturn)
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [botReady, conversationId])
 
   useEffect(() => {
     if (!botReady || !window.botpress) return
@@ -345,6 +520,3 @@ export default function ChatBot() {
     </>
   )
 }
-
-
-
