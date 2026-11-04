@@ -166,13 +166,13 @@ export default function ChatBot() {
         }
       } else {
         payload = {
-        type,
-        text: '__guest__',
-        reason: previouslyAuthenticated ? 'logout' : 'guest',
-        email: null,
-        userId: null,
-        isLoggedIn: false,
-      }
+          type,
+          text: '__guest__',
+          reason: previouslyAuthenticated ? 'logout' : 'guest',
+          email: null,
+          userId: null,
+          isLoggedIn: false,
+        }
       }
       await window.botpress!.sendEvent(payload)
       sentIdentities.current.set(key, identity)
@@ -272,13 +272,13 @@ export default function ChatBot() {
             const confirmedConversationId = nextConversationId && nextConversationId !== conversationId
               ? nextConversationId
               : await Promise.race([
-                  conversationChanged,
-                  new Promise<string>((_, reject) => {
-                    conversationTimeout = setTimeout(() => {
-                      reject(new Error('Botpress did not confirm the new conversation.'))
-                    }, 10_000)
-                  }),
-                ])
+                conversationChanged,
+                new Promise<string>((_, reject) => {
+                  conversationTimeout = setTimeout(() => {
+                    reject(new Error('Botpress did not confirm the new conversation.'))
+                  }, 10_000)
+                }),
+              ])
             setConversationId(confirmedConversationId)
           } finally {
             if (conversationTimeout) clearTimeout(conversationTimeout)
@@ -486,7 +486,7 @@ export default function ChatBot() {
         onReady={handleInjectReady}
       />
       {injectReady && <Script
-        src="https://files.bpcontent.cloud/2026/10/15/01/20261015013058-XZTWHIPM.js"
+        src="https://files.bpcontent.cloud/2026/11/04/10/20261104104139-YKEB1I3J.js"
         strategy="afterInteractive"
       />}
     </>
