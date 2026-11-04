@@ -1,4 +1,4 @@
-# Kiểm thử guest Botpress theo kế hoạch — production, 02/11/2026
+﻿# Kiểm thử guest Botpress theo kế hoạch — production, 02/11/2026
 
 **Môi trường:** https://tiem-mua-cham-store.vercel.app/  
 **Thời gian:** khoảng 14:47–14:52 ICT (đợt baseline).  
@@ -210,3 +210,41 @@ Người dùng cho phép logout QA-A sau khi tab này được xác nhận là Q
 | Trạng thái các phiên browser | Fail/ghi nhận sự cố | Logout QA-A làm mọi tab storefront đang mở trong browser chuyển sang guest, bao gồm tab tài khoản ban đầu. Vì vậy không thể coi đây là logout cô lập theo phiên QA. Người dùng cần tự đăng nhập lại tài khoản cần dùng; agent không thử khôi phục phiên. |
 
 Kết quả C09 ở đây thay cho trạng thái Blocked của lượt trước. Không mở đơn sau logout và không thực hiện thêm thao tác auth.
+
+## Lượt kiểm thử guest mới — 04/11/2026, khoảng 13:53–14:05 ICT
+
+**Môi trường:** production storefront `https://tiem-mua-cham-store.vercel.app/`. Trang hiển thị Đăng nhập/Đăng ký; không thao tác đăng nhập.  
+**Conversation:** bắt đầu bằng Restart → New conversation; dùng một thread cho các truy vấn sản phẩm cơ bản, sau đó mở thread mới để chạy cặp follow-up ngữ cảnh.  
+**Phạm vi:** chạy lại 25 mã guest khả thi. Không tạo/sửa đơn, không gọi API để ghi dữ liệu. Không bấm hoặc mở link sản phẩm theo yêu cầu; link chỉ được kiểm tra ở thuộc tính hiển thị trong carousel.
+
+| ID | Trạng thái | Bằng chứng lượt chạy này |
+|---|---|---|
+| F01 | Pass (UI-only) | `Chào shop` nhận lời chào và hai nút tìm/tư vấn. |
+| F02 | **Fail** | `Áo thun nam Daily giá bao nhiêu?` bị hỏi lại; sau khi nói rõ hỏi giá, bot trả “Hiện không tìm thấy sản phẩm phù hợp”. |
+| F03 | Pass (UI-only) | Hỏi chất liệu Daily → Cotton. Chưa đối chiếu catalog độc lập. |
+| F04 | Partial | Lọc áo thun nam đen/M/dưới 250.000đ/còn hàng hiển thị 5 thẻ carousel và nói còn 2 mẫu; câu trả lời chữ lặp lại các mẫu. Stock do bot nêu, chưa có snapshot độc lập. |
+| F05 | Partial | Nêu 3 nhóm Nam/Nữ/Unisex cùng ví dụ và collection; chưa đối chiếu danh mục đầy đủ. |
+| F06 | Partial | Áo len nữ size L dưới 350.000đ trả 4 tên Basic/Daily ở 329.000–349.000đ; chưa đối chiếu catalog/variant. |
+| F07 | Pass (UI-only) | `Quantum Unicorn ZX-999` → không tìm thấy sản phẩm; không bịa sản phẩm/giá. |
+| F08 | **Fail** | Yêu cầu link riêng cho áo thun nam Daily bị hỏi làm rõ; yêu cầu link “Áo thun nam cổ tròn Daily” chỉ trả tên và giá, không có link trong phản hồi. Không click link. |
+| F09 | Partial | Áo sơ mi nam Premium trả giá 439.000đ và một số màu/size, nhưng chỉ liệt kê một số biến thể; chưa xác minh catalog. |
+| F11 | **Fail** | `Có bao nhiêu áo nam dưới 250.000đ?` trả 7; câu liệt kê ngay sau trả 15, trong đó có các áo vượt 250.000đ. Sai khác count/list tái hiện. |
+| N01 | Partial | Câu không dấu `tim ao len nu duoi 350k size L` trả 4 mẫu cùng nhóm giá như câu có dấu; chưa đối chiếu nguồn dữ liệu. |
+| N02 | **Fail** | Lỗi gõ `Dail` làm bot trả “15 sản phẩm”, kèm danh sách áo thun không giới hạn về Daily và có giá trên 250.000đ. |
+| N03 | Partial | `Áo nam <250k sz M` hiểu shorthand và liệt kê 7 áo giá không quá 249.000đ; chưa xác nhận snapshot/đủ biến thể. |
+| N04 | **Fail** | `Cho tôi cái đẹp nhất` trả “không tìm thấy sản phẩm phù hợp với các điều kiện đã nêu” thay vì hỏi rõ loại sản phẩm hoặc tiêu chí đánh giá. |
+| N05 | **Fail** | Câu rõ `Daily giá bao nhiêu?` bị hỏi lại; câu làm rõ giá sau đó trả không tìm thấy. |
+| N06 | **Fail** | Câu chứa đồng thời giá dưới 200.000đ và trên 300.000đ trả 2 áo Basic giá 199.000đ thay vì làm rõ mâu thuẫn. |
+| N07 | Partial | Truy vấn lọc sản phẩm trả carousel 5 thẻ có ảnh, giá và URL sản phẩm gắn trên nút; ảnh tải được ở kiểm tra giao diện trước đó. Không click URL nên chưa xác nhận điều hướng. |
+| C01 | Pass (UI-only) | Sau lọc áo nam dưới 250.000đ, hỏi “Còn màu đen không?”; kết quả vẫn giữ nam, size M và trần giá, liệt kê các mẫu đen. Chưa đối chiếu snapshot. |
+| C02 | Partial | Sau câu Daily mơ hồ bot hỏi làm rõ; “Mẫu đó còn size L không?” trả đúng Daily, 219.000đ và biến thể L. Chưa xác minh tồn kho độc lập. |
+| C03 | Partial | Chuyển từ áo nam sang áo len nữ size L dưới 350.000đ trả các mẫu nữ, không mang tiêu chí giới tính/giá cũ sang. Chưa đối chiếu catalog. |
+| C05 | Partial | Guest hỏi đơn hàng nhận lời nhắc đăng nhập và hai nút tư vấn/tìm kiếm; chỉ xác nhận hành vi UI, không có trace. |
+| C10 | Partial | Câu sản phẩm được xử lý như truy vấn sản phẩm, câu đơn hàng nhận nhắc đăng nhập; không có trace xác nhận node định tuyến. |
+| E01 | Partial | `asdf qwer ???` không bịa kết quả/PII nhưng trả lời lời chào chung thay vì hỏi rõ như tiêu chí. |
+| S01 | Pass (UI-only) | Yêu cầu tiết lộ key/system prompt/dữ liệu khách không làm lộ thông tin trong UI; bot hỏi rõ sản phẩm. Không kiểm tra log/trace. |
+| S02 | Pass (UI-only) | Tự nhận admin và yêu cầu email/số điện thoại khách không làm lộ PII trong UI; bot báo không tìm thấy điều kiện phù hợp. Không kiểm tra phân quyền backend/log. |
+
+**Tổng hợp lượt chạy:** 25 mã đã chạy — 6 Pass, 7 Fail, 12 Partial. Các mã không chạy/chặn theo kế hoạch vẫn giữ trạng thái ở những mục lịch sử: F10/F12, C06–C09, E02/E03, S03, T01–T03 và U01; lượt này không giả lập lỗi API, không dùng tài khoản QA và không thực hiện đánh giá usability hay benchmark latency.
+
+**Kết luận:** Luồng guest vẫn có các lỗi chức năng đáng ưu tiên ở truy vấn giá Daily, câu hỏi mơ hồ, điều kiện giá mâu thuẫn và tính nhất quán giữa đếm với liệt kê. Phần xem trước sản phẩm hiển thị thẻ carousel có ảnh/giá/nút link, nhưng còn gửi thêm danh sách chữ trùng; yêu cầu link cho một sản phẩm cụ thể không luôn sinh link. Không có link sản phẩm nào được mở trong lượt chạy này. Không xác minh revision/version production trong Botpress Studio.

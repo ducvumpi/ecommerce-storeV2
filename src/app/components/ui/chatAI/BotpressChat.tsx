@@ -429,7 +429,7 @@ export default function ChatBot() {
           .find((link) => normalizeText(link.textContent ?? '').includes('xem san pham'))
         if (cta) {
           cta.href = productUrl
-          cta.target = '_blank'
+          cta.target = '_self'
           cta.rel = 'noopener noreferrer'
         } else {
           const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT)
@@ -448,7 +448,7 @@ export default function ChatBot() {
             const link = document.createElement('a')
             link.textContent = text.slice(startOffset, endOffset)
             link.href = productUrl
-            link.target = '_blank'
+            link.target = '_self'
             link.rel = 'noopener noreferrer'
             fragment.append(link)
             const after = text.slice(endOffset)
@@ -461,7 +461,7 @@ export default function ChatBot() {
           const link = document.createElement('a')
           link.textContent = 'Xem sản phẩm'
           link.href = productUrl
-          link.target = '_blank'
+          link.target = '_self'
           link.rel = 'noopener noreferrer'
           link.style.marginLeft = '0.35em'
           item.append(' ', link)
@@ -474,34 +474,6 @@ export default function ChatBot() {
     })
     linkObserver.observe(document.body, { childList: true, subtree: true })
     void repairProductLinks()
-
-    window.botpress?.on('message', (data: any) => {
-      const blocks = data?.block?.blocks ?? []
-      blocks.forEach((col: any) => {
-        col?.blocks?.forEach((block: any) => {
-          block?.blocks?.forEach((btn: any) => {
-            if (!btn?.buttonValue) return
-
-            if (btn.buttonValue.startsWith('category_')) {
-              const slug = btn.buttonValue.replace('category_', '')
-              const url = new URL(`/collections/${slug}`, window.location.origin).toString()
-              const a = document.createElement('a')
-              a.href = url
-              a.target = '_blank'
-              a.rel = 'noopener noreferrer'
-              document.body.appendChild(a)
-              a.click()
-              document.body.removeChild(a)
-              return
-            }
-            if (btn.buttonValue.startsWith('https://')) {
-              window.open(btn.buttonValue, '_blank')
-              return
-            }
-          })
-        })
-      })
-    })
 
     return () => linkObserver.disconnect()
   }, [botReady])
