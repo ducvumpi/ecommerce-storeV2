@@ -1,32 +1,52 @@
-﻿# Kiểm thử guest Botpress trên production — lượt chạy 04/11/2026
+# Báo cáo chạy lại kiểm thử guest Botpress trên production — 04/11/2026
 
-**Môi trường:** https://tiem-mua-cham-store.vercel.app/  
-**Ngày chạy:** 04/11/2026 (ICT).  
-**Danh tính:** guest; mở conversation mới và kiểm tra giao diện storefront có trạng thái đăng nhập.  
-**Phạm vi:** kiểm thử trực tiếp các câu hỏi guest theo kế hoạch `Botpress-thesis-production-run-2026-11-02.md`. Tất cả ca chat chạy trong cùng conversation.  
-**Giới hạn sản phẩm:** không bấm, mở hoặc điều hướng tới bất kỳ link sản phẩm nào. Các card/link chỉ được quan sát trong nội dung chat. Không lấy snapshot catalog/variant/tồn kho độc lập và không có Botpress trace; các kết luận về dữ liệu sản phẩm do đó chỉ đánh giá câu trả lời hiển thị.
+## Phạm vi và cách chạy
 
-## Kết quả lượt chạy
+- Website production: https://tiem-mua-cham-store.vercel.app/
+- Botpress webchat: **Trợ lý Nai Tiệm Mùa Chậm**.
+- Trạng thái: guest; giao diện storefront hiển thị Đăng nhập/Đăng ký. Không đăng nhập.
+- Chạy lại các case guest chọn lọc trong [kế hoạch production](./Botpress-thesis-production-run-2026-11-02.md).
+- Dùng conversation đang mở sẵn trên trang; không bấm Restart Conversation. Các tin nhắn được gửi liên tiếp trong cùng thread, vì vậy các kết quả có thể chịu ảnh hưởng bởi ngữ cảnh trước đó.
+- Không bấm hoặc mở link sản phẩm. Chỉ ghi nhận link `href` hiển thị trong các thẻ xem trước.
+- Không tạo đơn, sửa dữ liệu cửa hàng, gọi API ghi dữ liệu, hoặc dùng tài khoản QA.
+- Thời gian: khoảng 17:45 ICT, 04/11/2026. Không đo latency chính xác và không lưu conversation ID.
 
-| Ca | Trạng thái | Bằng chứng production |
+## Tổng hợp
+
+| Trạng thái | Số case |
+|---|---:|
+| Pass | 5 |
+| Fail | 2 |
+| Partial | 3 |
+| Blocked / Not run trong lượt này | Các case còn lại của kế hoạch |
+
+Đây là lượt chạy chọn lọc, không phải nghiệm thu toàn bộ kế hoạch. Các kết luận về tính đầy đủ của danh mục, biến thể và tồn kho cần snapshot dữ liệu độc lập; các nhánh cần tài khoản, trace hoặc giả lập lỗi không được kiểm thử.
+
+## Kết quả chi tiết
+
+| Case | Trạng thái | Kết quả quan sát trên production |
 |---|---|---|
-| F01 — chào mừng | Pass | Conversation mới mở lời chào; nêu rõ cần đăng nhập để tra cứu đơn hàng. |
-| F02 — giá sản phẩm | Pass | `Áo thun nam Daily giá bao nhiêu?` → thẻ sản phẩm hiển thị 219.000đ và câu trả lời cũng nêu 219.000đ. Không mở card/link. |
-| F03 — chất liệu | Pass | `Áo thun nam Daily có chất liệu gì?` → `Áo thun nam Daily có chất liệu Cotton.` |
-| F04 — lọc giới tính/màu/size/giá/tồn kho | Partial | `Tìm áo thun nam màu đen size M dưới 250.000đ còn hàng` → nêu 7 tên phù hợp, nhưng câu trả lời hỏi lại màu/size của mẫu nào và không xác nhận từng biến thể/tồn kho. Không có snapshot độc lập để đối chiếu. |
-| F05 — danh mục | Pass (định dạng câu trả lời) | `Shop có những loại sản phẩm nào?` → câu trả lời gọn thành 3 nhóm Nam/Nữ/Unisex, kèm ví dụ danh mục và câu hỏi chọn nhóm. |
-| F06 — áo len nữ, giá và size | Partial | `Tìm áo len nữ dưới 350.000đ size L` → liệt kê 4 tên: màu kem Basic, Basic, màu kem Daily, Daily; card hiển thị giá 329.000đ. Chưa xác nhận độc lập size L/giá/variant của cả bốn. |
-| F07 — sản phẩm không tồn tại | Pass | `Có mẫu Quantum Unicorn ZX-999 không?` → `Không tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.` Không bịa sản phẩm. |
-| F11 — đếm sản phẩm dưới ngưỡng | Partial | `Có bao nhiêu áo nam dưới 250.000đ?` → `Có 7 sản phẩm phù hợp.` Chưa đối chiếu độc lập với catalog hiện hành nên chưa kết luận tính chính xác của số đếm. |
-| F11 — liệt kê sản phẩm dưới ngưỡng | Partial | `Liệt kê tất cả áo nam dưới 250.000đ` → 7 tên, giá từ 199.000đ đến 249.000đ. Cùng con số với câu đếm; chưa có snapshot catalog độc lập để xác nhận “tất cả”. Không mở link trên card. |
-| N06/policy — đổi size và phí ship | Pass về tính thận trọng | Hỏi thời hạn đổi size và bên chịu phí vận chuyển → bot nói chưa có thông tin xác thực và hướng tới mục Vận chuyển & trả hàng/chăm sóc khách hàng; không tự bịa chính sách. |
-| E01 — input vô nghĩa | Partial/Fail UX | `asdf qwer ???` → `Không tìm thấy sản phẩm phù hợp với các điều kiện hiện tại.` Bot không bịa dữ liệu nhưng nên hỏi lại/đề nghị diễn đạt rõ thay vì hiểu mặc định là truy vấn sản phẩm. |
-| C05 — guest tra cứu đơn | Pass ở UI | `Tôi muốn xem đơn hàng của tôi` → bot nhắc đăng nhập; không hiển thị dữ liệu đơn hàng và không yêu cầu mật khẩu/OTP. Không kiểm tra trace/backend trong lượt này. |
+| F01 — chào hỏi | **Pass (UI)** | `Chào shop` → lời chào và hai nút `Tìm sản phẩm`, `Tư vấn sản phẩm`. |
+| F02 — giá sản phẩm cụ thể | **Pass (UI)** | `Áo thun nam Daily giá bao nhiêu?` → `Áo thun nam Daily — 219.000đ`. Chưa đối chiếu snapshot catalog hiện thời. |
+| F05 — hỏi nhóm/danh mục sản phẩm | **Partial** | `Shop có những loại sản phẩm nào?` → 3 nhóm Nam/Nữ/Unisex, kèm ví dụ và bộ sưu tập. Không có snapshot để xác nhận câu trả lời bao quát đầy đủ các danh mục hiện có. |
+| F11 — đếm so với liệt kê | **Fail** | `Có bao nhiêu áo nam dưới 250.000đ?` không trả con số; thay vào đó là 5 thẻ sản phẩm Basic/Daily/Weekend và phần chữ lệch ngữ cảnh: `Giá các mẫu Daily phù hợp`. Câu kế tiếp `Liệt kê tất cả áo nam dưới 250.000đ` trả 7 mục: Basic, Daily, Weekend và áo dài tay Basic. Hai cách hỏi không cho cùng một định dạng/kết quả đếm; câu đếm không trả số lượng được hỏi. Không có snapshot catalog để xác nhận 7 là tổng chính xác. |
+| F07 — sản phẩm không tồn tại | **Pass (UI)** | `Có mẫu Quantum Unicorn ZX-999 không?` → `Không tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.` Không gợi ý giá hay sản phẩm bịa. |
+| C05 — guest hỏi đơn hàng | **Partial** | `Tôi muốn xem đơn hàng của tôi` → lời nhắc đăng nhập, không hiển thị dữ liệu đơn hàng và kèm nút tìm/tư vấn. Hành vi giao diện đạt mục tiêu guest; chưa có trace/backend evidence để xác nhận nhánh bảo mật. |
+| N06 — điều kiện giá mâu thuẫn | **Pass (UI)** | `Tìm áo dưới 200.000đ và trên 300.000đ` → bot nói hai điều kiện mâu thuẫn và hỏi người dùng muốn giữ điều kiện nào. |
+| N02 — lỗi gõ tên Daily | **Pass (UI)** | `Áo thun nam Dail giá bao nhiêu?` → nhận diện thành `Áo thun nam Daily — 219.000đ`. |
+| N04 — yêu cầu mơ hồ | **Fail** | `Cho tôi cái đẹp nhất` → `Chưa tìm thấy sản phẩm phù hợp với điều kiện hiện tại.` Bot không hỏi người dùng muốn loại sản phẩm nào hoặc tiêu chí lựa chọn nào. |
+| F04 — lọc nhiều điều kiện | **Partial** | `Tìm áo thun nam màu đen, size M, dưới 250.000đ và còn hàng` → thẻ sản phẩm và danh sách nói có 7 mẫu; các mẫu hiển thị nêu màu Đen, size M, tồn kho 20. Chưa đối chiếu SKU/variant và stock với snapshot độc lập; không kết luận độ đầy đủ/tồn kho chính xác. |
 
-## Tổng kết
+## Quan sát về thẻ sản phẩm và link
 
-- 7 ca Pass về hành vi hiển thị; 4 ca Partial; 1 ca Partial/Fail về UX. Phân loại F11 chỉ xác nhận được định dạng/độ nhất quán giữa câu đếm và danh sách, chưa xác nhận tính đầy đủ của dữ liệu.
-- Lỗi rõ nhất quan sát được trong lượt này là câu vô nghĩa bị định tuyến thành tìm sản phẩm thay vì hỏi làm rõ.
-- Các truy vấn lọc phức tạp có kết quả nhưng cần nguồn catalog/variant/tồn kho độc lập để xác minh; không suy diễn các tên được bot nêu là đã thỏa toàn bộ điều kiện.
-- Không chạy các ca cần tài khoản/đơn fixture, giả lập lỗi API/timeout, thay đổi dữ liệu production hoặc kiểm tra link sản phẩm. Link sản phẩm tuyệt đối không được mở theo yêu cầu người dùng.
-- Đây là lượt kiểm thử UI production; không sửa workflow, không publish và không khẳng định workflow/revision đang live chỉ từ giao diện storefront.
+Trong câu trả lời lọc sản phẩm, giao diện hiển thị carousel gồm ảnh, tên, giá và liên kết `Xem sản phẩm`; snapshot giao diện cho thấy `href` trỏ đến URL sản phẩm trên cùng domain storefront. Không có link nào được click, không quan sát thấy điều hướng hay tab mới trong lượt này. Vì vậy lượt chạy chỉ xác nhận có `href` trong DOM, không xác nhận hành vi khi người dùng bấm.
+
+Ở ca F11, câu hỏi đếm hiển thị 5 thẻ trong carousel; câu liệt kê kế tiếp hiển thị 7 mục dạng danh sách chữ. Cùng thread vẫn còn đoạn trả lời `Giá các mẫu Daily phù hợp` từ ca đếm, cho thấy ngữ cảnh cũ có thể đang ảnh hưởng tới phản hồi. Cần chạy lại F11 trong conversation sạch sau khi có quota phù hợp và sửa logic đếm/ngữ cảnh.
+
+## Kết luận và việc cần làm
+
+Các nhánh chào hỏi, giá Daily, lỗi gõ tên, câu hỏi sản phẩm không tồn tại, guest hỏi đơn và điều kiện giá mâu thuẫn phản hồi hợp lý ở mức giao diện. Hai lỗi tái hiện trong lượt này là **F11 đếm sản phẩm không trả số và lệch ngữ cảnh** và **N04 không làm rõ yêu cầu mơ hồ**. F04/F05/C05 còn thiếu bằng chứng độc lập về dữ liệu hoặc backend.
+
+Ưu tiên xử lý: (1) tách intent đếm khỏi nhánh tư vấn/liệt kê và đảm bảo câu trả lời có số đếm nhất quán với danh sách; (2) khi tiêu chí sản phẩm mơ hồ, hỏi lại thay vì trả kết quả rỗng; (3) sau khi sửa, chạy F11/N04 trong conversation guest mới, rồi xác minh F04/F05 bằng snapshot và C05 bằng trace đã che dữ liệu cá nhân.
+
+Không xác minh Botpress revision/version production trong lượt này. Các case còn lại của kế hoạch không được chạy lại.

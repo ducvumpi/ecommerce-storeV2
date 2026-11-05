@@ -8,6 +8,7 @@ import './botpress-launcher.css'
 const IDENTITY_STORAGE_PREFIX = 'store:botpress:identity:v2'
 const CHAT_ACTIVITY_STORAGE_PREFIX = 'store:botpress:last-activity:v1'
 const CONVERSATION_IDLE_TIMEOUT_MS = 30 * 60 * 1000
+const CHAT_ORDER_TOKEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 
 function identityStorageKey(conversationId: string) {
   const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
@@ -42,6 +43,7 @@ export default function ChatBot() {
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
   const chatActivity = useRef(new Map<string, number>())
+  const chatOrderTokenRefresh = useRef(new Map<string, number>())
 
   const handleInjectReady = () => {
     if (!window.botpress) return
@@ -176,6 +178,8 @@ export default function ChatBot() {
       }
       await window.botpress!.sendEvent(payload)
       sentIdentities.current.set(key, identity)
+      if (user) chatOrderTokenRefresh.current.set(conversationId, Date.now())
+      else chatOrderTokenRefresh.current.delete(conversationId)
       if (!user) sentGuestEvents.current.add(key)
       try {
         window.localStorage.setItem(key, identity)
@@ -195,6 +199,83 @@ export default function ChatBot() {
     }).finally(() => {
       pendingIdentities.current.delete(pendingKey)
     })
+  }, [botReady, conversationId, user])
+
+  // The order capability expires after 15 minutes. Refresh it from the
+  // authenticated Supabase session while the same Botpress conversation is
+  // open, without restarting the conversation or showing the greeting again.
+  useEffect(() => {
+    const webchat = window.botpress
+    if (!user || !botReady || !conversationId || !webchat?.sendEvent) return
+
+    const identity = `auth:${user.id}:${user.email ?? ''}`
+    const identityKey = identityStorageKey(conversationId)
+    const pendingIdentityKey = `${identityKey}:${identity}`
+    let active = true
+    let refreshing = false
+
+    const refreshTokenIfNeeded = async () => {
+      if (
+        !active || refreshing ||
+        window.botpress?.conversationId !== conversationId ||
+        desiredIdentity.current !== identity ||
+        pendingIdentities.current.has(pendingIdentityKey)
+      ) return
+
+      const lastRefresh = chatOrderTokenRefresh.current.get(conversationId) ?? 0
+      if (Date.now() - lastRefresh < CHAT_ORDER_TOKEN_REFRESH_INTERVAL_MS) return
+
+      refreshing = true
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error || !session?.access_token) return
+
+        const profileResponse = await fetch('/api/chat/profile', {
+          method: 'POST',
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (!profileResponse.ok) return
+
+        const { profile, chatOrderToken } = await profileResponse.json()
+        if (
+          !chatOrderToken || profile?.id !== user.id || !active ||
+          desiredIdentity.current !== identity ||
+          window.botpress?.conversationId !== conversationId
+        ) return
+
+        await webchat.sendEvent({
+          type: 'auth',
+          text: `__auth__${profile.email}__${profile.id}__true`,
+          email: profile.email,
+          userId: profile.id,
+          profile,
+          chatOrderToken,
+          tokenRefreshOnly: true,
+        })
+        chatOrderTokenRefresh.current.set(conversationId, Date.now())
+      } catch (error) {
+        console.error('Failed to refresh the Botpress order token:', error)
+      } finally {
+        refreshing = false
+      }
+    }
+
+    const interval = setInterval(() => void refreshTokenIfNeeded(), 60_000)
+    const handleFocus = () => void refreshTokenIfNeeded()
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') void refreshTokenIfNeeded()
+    }
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibility)
+    void refreshTokenIfNeeded()
+
+    return () => {
+      active = false
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [botReady, conversationId, user])
 
   useEffect(() => {
