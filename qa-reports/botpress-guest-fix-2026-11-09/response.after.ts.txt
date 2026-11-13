@@ -1,0 +1,68 @@
+// Render verified query results without allowing one intent to hide another.
+const normalize = (value: any) => String(value ?? '').normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
+const query = normalize(workflow.userMessage)
+let products: any[] = []
+try {
+  const raw = workflow.productsJson
+  const parsed = Array.isArray(raw) ? raw : JSON.parse(String(raw || '[]'))
+  products = Array.isArray(parsed) ? parsed : []
+} catch (_) {}
+const total = Number.isFinite(Number(workflow.productCount)) ? Number(workflow.productCount) : products.length
+const sourceText = String(workflow.productsText || '')
+const price = (value: any) => typeof value === 'number' && Number.isFinite(value)
+  ? value.toLocaleString('vi-VN') + 'đ' : 'chưa cập nhật'
+const asksVariants = /\b(?:size|sz|mau|con hang|ton kho|hang con)\b/.test(query)
+const asksMaterial = /\b(?:chat lieu|vai gi|lam tu)\b/.test(query)
+const asksCount = /\b(?:dem so|tong so|bao nhieu (?:san pham|mau|loai|ao|quan|vay|dam))\b/.test(query)
+const asksList = /\b(?:liet ke|danh sach|tat ca|toan bo|cac mau|nhung mau)\b/.test(query)
+const clarification = /^(?:Bạn đang tìm cho hai người|Hai mức giá|Bạn đang tìm loại sản phẩm|Mình chưa có thông tin xác thực|Hiện chưa thể truy vấn|Shop đang bán các danh mục)/.test(sourceText)
+const vagueWorkwear = /\b(?:di lam|cong so)\b/.test(query) &&
+  !/\b(?:nam|nu|so mi|thun|len|hoodie|size|sz|duoi|toi da|ngan sach|basic|daily|weekend|urban|premium)\b/.test(query)
+
+if (clarification) {
+  workflow.consultText = sourceText
+} else if (vagueWorkwear) {
+  workflow.consultText = 'Bạn muốn áo sơ mi hay áo thun để đi làm, cho nam hay nữ? Bạn cho mình thêm ngân sách hoặc size để mình lọc theo danh mục nhé.'
+} else if (!products.length) {
+  if (/\b(?:khoang|tam)\b/.test(query) && /\bnu\b/.test(query)) {
+    workflow.consultText = 'Chưa có áo nữ khớp ngân sách và các điều kiện bạn nêu. Bạn có thể tăng ngân sách một chút hoặc muốn xem thêm áo unisex không? Mình sẽ giữ các tiêu chí còn lại; chưa tự đổi ngân sách hay nhóm sản phẩm.'
+  } else {
+    workflow.consultText = sourceText || 'Chưa xác minh được sản phẩm theo điều kiện bạn nêu. Bạn thử lại giúp mình nhé.'
+  }
+} else {
+  const shown = products.slice(0, asksList || asksCount ? 8 : 5)
+  const lines = shown.map((product: any, index: number) => {
+    const basePrice = price(product.minPrice)
+    const details: string[] = []
+    if (asksVariants) {
+      const variants = Array.isArray(product.variants) ? product.variants : []
+      const visibleVariants = variants.slice(0, products.length === 1 ? 12 : 3)
+      if (!variants.length) {
+        details.push('Chưa có biến thể khớp màu/size đã hỏi; không xác nhận còn hàng.')
+      } else {
+        details.push(visibleVariants.map((v: any) => {
+          const stock = typeof v.stock === 'number' && Number.isFinite(v.stock)
+            ? v.stock > 0 ? 'còn ' + v.stock : 'hết hàng'
+            : 'chưa xác minh tồn kho'
+          return 'màu ' + String(v.color || 'chưa cập nhật') + ', size ' +
+            String(v.size || 'chưa cập nhật') + ': ' + stock +
+            (typeof v.price === 'number' ? ', giá biến thể ' + price(v.price)
+              : ', chưa cập nhật giá riêng của biến thể')
+        }).join('; '))
+        if (visibleVariants.length < variants.length) details.push('Đang hiển thị ' + visibleVariants.length + '/' + variants.length + ' biến thể khớp.')
+      }
+    }
+    if (asksMaterial || /\b(?:mem|di lam)\b/.test(query)) {
+      details.push('Chất liệu: ' + String(product.material || 'chưa cập nhật') + '.')
+    }
+    return (index + 1) + '. ' + String(product.name || 'Sản phẩm') + ' — ' + basePrice +
+      (details.length ? '. ' + details.join(' ') : '')
+  })
+  const header = total === 1 ? 'Mẫu phù hợp trong danh mục:' : 'Có ' + total + ' sản phẩm khớp các bộ lọc trong danh mục:'
+  const footer: string[] = []
+  if (total > shown.length) footer.push('Đang hiển thị ' + shown.length + '/' + total + ' mẫu; còn ' + (total - shown.length) + ' mẫu khớp khác.')
+  if (/\b(?:mem|di lam|cong so)\b/.test(query)) footer.push('Danh mục chưa có tiêu chí đánh giá độ mềm hoặc mức phù hợp đi làm; mình chỉ xác nhận các thông tin sản phẩm và biến thể ở trên.')
+  workflow.consultText = [header, ...lines, ...footer].join('\n')
+}
+

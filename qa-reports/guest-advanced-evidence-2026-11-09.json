@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-09",
+  "environment": "https://tiem-mua-cham-store.vercel.app/",
+  "scope": "Guest chatbot G01-G12; UI transcript only; no product link navigation",
+  "evidence": [
+    {
+      "id": "G01",
+      "at": "2026-11-09T02:40:53.527Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nShop có áo nào dễ mặc đi làm không?\n\nDelivered\nÁo thun nam cổ tròn Basic\n\nGiá tham khảo: 199.000đ\n\nXem sản phẩm\n\nShop có 95 mẫu phù hợp để mặc đi làm. Bạn có thể tham khảo Áo thun nam cổ tròn Basic hoặc Áo thun nam Basic, đều có giá 199.000đ.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G02-G04",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nMình tìm áo len nữ mặc đi làm, màu trung tính như be, kem hoặc nâu, size M, giá tối đa 400 nghìn; ưu tiên loại mềm và còn hàng nhé.\n\nDelivered\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình chưa tìm thấy mẫu khớp để báo giá. Bạn cho mình biết thêm loại áo hoặc tên mẫu nhé.\n\nNếu không có màu kem thì đổi sang be hoặc nâu cũng được, miễn dưới 400 nghìn. À size S cũng được nếu không còn M.\n\nDelivered\n\nMình chưa tìm thấy mẫu khớp để báo giá. Bạn cho mình biết thêm loại áo hoặc tên mẫu nhé.\n\nThôi tìm áo thun nam màu đen size M dưới 250 nghìn cho chồng mình; bỏ tiêu chí áo len và nữ nhé.\n\nDelivered\n\nKhông tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.\n\n⚡ by Botpress"
+    },
+    {
+      "id": "G02-confirm",
+      "at": "2026-11-09T02:41:16.971Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình tìm áo len nữ mặc đi làm, màu trung tính như be, kem hoặc nâu, size M, giá tối đa 400 nghìn; ưu tiên loại mềm và còn hàng nhé.\n\nDelivered\n\nMình chưa tìm thấy mẫu khớp để báo giá. Bạn cho mình biết thêm loại áo hoặc tên mẫu nhé.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G05a",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nÁo thun nam Daily giá bao nhiêu?\n\nDelivered\nÁo thun nam Daily\n\nGiá tham khảo: 219.000đ\n\nXem sản phẩm\n\nÁo thun nam Daily — 219.000đ\n\n⚡ by Botpress"
+    },
+    {
+      "id": "G05b",
+      "at": "2026-11-09T02:37:19.910Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nÁo thun nam Daily giá bao nhiêu?\n\nDelivered\nÁo thun nam Daily\n\nGiá tham khảo: 219.000đ\n\nXem sản phẩm\n\nÁo thun nam Daily — 219.000đ\n\nNếu lấy size M màu đen thì giá có khác không và hiện shop có xác nhận còn hàng không?\n\nDelivered\nÁo thun nam Daily\n\nGiá tham khảo: 219.000đ\n\nXem sản phẩm\n\nÁo thun nam Daily — 219.000đ\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G07",
+      "at": "2026-11-09T02:37:32.569Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nCó bao nhiêu áo thun nam dưới 250 nghìn màu đen còn size M? Liệt kê giúp mình các mẫu đó, nhưng đừng tính mẫu hết hàng.\n\nDelivered\n\nCó 0 sản phẩm phù hợp.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G08",
+      "at": "2026-11-09T02:37:51.203Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình tìm Quantum Unicorn ZX-999, nếu hết thì cho mẫu gần giống nhất dưới 300 nghìn, màu tối, size M.\n\nDelivered\n\nKhông tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G09a",
+      "at": "2026-11-09T02:38:09.622Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nTìm áo vừa dưới 200 nghìn vừa trên 300 nghìn.\n\nDelivered\n\nKhông có áo nào đồng thời có giá dưới 200 nghìn và trên 300 nghìn. Bạn muốn xem áo ở khoảng giá nào?\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G09b",
+      "at": "2026-11-09T02:38:24.966Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nTìm áo vừa dưới 200 nghìn vừa trên 300 nghìn.\n\nDelivered\n\nKhông có áo nào đồng thời có giá dưới 200 nghìn và trên 300 nghìn. Bạn muốn xem áo ở khoảng giá nào?\n\nÝ mình là tối đa 300 nghìn, không cần mức tối thiểu.\n\nDelivered\nÁo thun nam cổ tròn Basic\n\nGiá tham khảo: 199.000đ\n\nXem sản phẩm\n\nMình hiểu bạn muốn tìm áo giá tối đa 300.000đ, không giới hạn mức tối thiểu. Có 23 mẫu phù hợp; bạn có thể xem trước:\n\nÁo thun nam cổ tròn Basic — 199.000đ\nÁo thun nam Basic — 199.000đ\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G10a",
+      "at": "2026-11-09T02:38:44.547Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nCho mình cái đẹp nhất.\n\nDelivered\n\nMình chưa thấy sản phẩm phù hợp để chọn mẫu đẹp nhất cho bạn. Bạn muốn tìm loại sản phẩm nào ạ?\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G10b",
+      "at": "2026-11-09T02:39:00.712Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nCho mình cái đẹp nhất.\n\nDelivered\n\nMình chưa thấy sản phẩm phù hợp để chọn mẫu đẹp nhất cho bạn. Bạn muốn tìm loại sản phẩm nào ạ?\n\nÁo nữ mặc hằng ngày, dễ phối, khoảng 300 nghìn; mình chưa chọn màu.\n\nDelivered\n\nKhông tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G10c",
+      "at": "2026-11-09T02:39:10.048Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nCho mình cái đẹp nhất.\n\nDelivered\n\nMình chưa thấy sản phẩm phù hợp để chọn mẫu đẹp nhất cho bạn. Bạn muốn tìm loại sản phẩm nào ạ?\n\nÁo nữ mặc hằng ngày, dễ phối, khoảng 300 nghìn; mình chưa chọn màu.\n\nDelivered\n\nKhông tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.\n\nCó mẫu nào màu đen không?\n\nDelivered\n\nKhông tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G11a",
+      "at": "2026-11-09T02:39:19.679Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình muốn xem đơn hàng gần nhất. Đây là email mình từng dùng: guest-test@example.invalid.\n\nDelivered\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G11b",
+      "at": "2026-11-09T02:39:36.013Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình muốn xem đơn hàng gần nhất. Đây là email mình từng dùng: guest-test@example.invalid.\n\nDelivered\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nVậy tư vấn áo len nữ màu kem dưới 400 nghìn giúp mình.\n\nDelivered\n\nKhông tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G11c",
+      "at": "2026-11-09T02:39:42.667Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình muốn xem đơn hàng gần nhất. Đây là email mình từng dùng: guest-test@example.invalid.\n\nDelivered\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nVậy tư vấn áo len nữ màu kem dưới 400 nghìn giúp mình.\n\nDelivered\n\nKhông tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.\n\nThế đơn mới nhất của mình đang tới đâu?\n\nDelivered\n\nVui lòng đăng nhập lại để xác thực phiên trước khi tra cứu đơn hàng.\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G12a",
+      "at": "2026-11-09T02:39:56.476Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình đang chọn đồ cho hai người: áo nữ size M dưới 400 nghìn, còn chồng mình cần áo thun nam size L màu đen. Cho mình tách hai nhóm nhé.\n\nDelivered\n\nBạn đang tìm cho hai người. Bạn muốn mình lọc nhóm áo nữ size M dưới 400.000đ hay áo thun nam size L màu đen trước?\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    },
+    {
+      "id": "G12b",
+      "at": "2026-11-09T02:40:13.805Z",
+      "text": "Drop files to upload\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nTrợ lý Nai Tiệm Mùa Chậm\n\nMua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.\n\nToday\n\nXin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé. 👋\n\n🔍 Tìm sản phẩm\n💬 Tư vấn sản phẩm\n\nMình đang chọn đồ cho hai người: áo nữ size M dưới 400 nghìn, còn chồng mình cần áo thun nam size L màu đen. Cho mình tách hai nhóm nhé.\n\nDelivered\n\nBạn đang tìm cho hai người. Bạn muốn mình lọc nhóm áo nữ size M dưới 400.000đ hay áo thun nam size L màu đen trước?\n\nChỉ giữ nhóm của chồng, đổi size sang XL.\n\nDelivered\nÁo thun nam cổ tròn Basic\n\nGiá tham khảo: 199.000đ\n\nXem sản phẩm\n\nCác mẫu phù hợp với tiêu chí bạn hỏi:\n\nÁo thun nam cổ tròn Basic — 199.000đ. màu Đen, size XL (còn 20)\nÁo thun nam Basic — 199.000đ. màu Đen, size XL (còn 20)\nÁo thun nam cổ tròn Daily — 219.000đ. màu Đen, size XL (còn 20)\nÁo thun nam Daily — 219.000đ. màu Đen, size XL (còn 20)\nÁo thun nam Weekend — 239.000đ. màu Đen, size XL (còn 20)\nCòn 3 mẫu phù hợp khác.\nBạn muốn xem mẫu nào?\n\n⚡ by Botpress",
+      "url": "https://tiem-mua-cham-store.vercel.app/"
+    }
+  ]
+}

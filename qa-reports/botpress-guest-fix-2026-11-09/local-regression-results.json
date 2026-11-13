@@ -1,0 +1,320 @@
+{
+  "source": "Local action regression; mocked HTTP using public snapshot; variant prices are fixture values, not live evidence",
+  "at": "2026-11-09T03:12:54.710Z",
+  "passed": 21,
+  "evidence": [
+    {
+      "id": "G02",
+      "text": "Mình tìm áo len nữ mặc đi làm, màu trung tính như be, kem hoặc nâu, size M, giá tối đa 400 nghìn; ưu tiên loại mềm và còn hàng nhé.",
+      "count": 8,
+      "names": [
+        "Áo len nữ Basic",
+        "Áo len nữ màu kem Basic",
+        "Áo len nữ Daily",
+        "Áo len nữ màu kem Daily",
+        "Áo len nữ Weekend",
+        "Áo len nữ màu kem Weekend",
+        "Áo len nữ Urban",
+        "Áo len nữ màu kem Urban"
+      ],
+      "reply": "Có 8 sản phẩm khớp các bộ lọc trong danh mục:\n1. Áo len nữ Basic — 329.000đ. màu Kem, size M: còn 20, giá biến thể 329.000đ; màu Be, size M: còn 20, giá biến thể 329.000đ Chất liệu: Sợi acrylic.\n2. Áo len nữ màu kem Basic — 329.000đ. màu Kem, size M: còn 20, giá biến thể 329.000đ; màu Be, size M: còn 20, giá biến thể 329.000đ Chất liệu: Acrylic.\n3. Áo len nữ Daily — 349.000đ. màu Kem, size M: còn 20, giá biến thể 349.000đ; màu Be, size M: còn 20, giá biến thể 349.000đ Chất liệu: Sợi acrylic.\n4. Áo len nữ màu kem Daily — 349.000đ. màu Kem, size M: còn 20, giá biến thể 349.000đ; màu Be, size M: còn 20, giá biến thể 349.000đ Chất liệu: Acrylic.\n5. Áo len nữ Weekend — 369.000đ. màu Kem, size M: còn 20, giá biến thể 369.000đ; màu Be, size M: còn 20, giá biến thể 369.000đ Chất liệu: Sợi acrylic.\nĐang hiển thị 5/8 mẫu; còn 3 mẫu khớp khác.\nDanh mục chưa có tiêu chí đánh giá độ mềm hoặc mức phù hợp đi làm; mình chỉ xác nhận các thông tin sản phẩm và biến thể ở trên."
+    },
+    {
+      "id": "G02-cheapest",
+      "text": "Trong mấy mẫu đó mẫu nào rẻ nhất?",
+      "count": 1,
+      "names": [
+        "Áo len nữ Basic"
+      ],
+      "reply": "Mẫu phù hợp trong danh mục:\n1. Áo len nữ Basic — 329.000đ. màu Kem, size M: còn 20, giá biến thể 329.000đ; màu Nâu, size M: còn 20, giá biến thể 329.000đ; màu Be, size M: còn 20, giá biến thể 329.000đ Chất liệu: Sợi acrylic.\nDanh mục chưa có tiêu chí đánh giá độ mềm hoặc mức phù hợp đi làm; mình chỉ xác nhận các thông tin sản phẩm và biến thể ở trên."
+    },
+    {
+      "id": "G02-reference",
+      "text": "Mẫu đó còn màu kem size M không, hay chỉ còn be/nâu?",
+      "count": 1,
+      "names": [
+        "Áo len nữ Basic"
+      ],
+      "reply": "Mẫu phù hợp trong danh mục:\n1. Áo len nữ Basic — 329.000đ. màu Kem, size M: còn 20, giá biến thể 329.000đ"
+    },
+    {
+      "id": "G03",
+      "text": "Nếu không có màu kem thì đổi sang be hoặc nâu cũng được, miễn dưới 400 nghìn. À size S cũng được nếu không còn M.",
+      "count": 1,
+      "names": [
+        "Áo len nữ Basic"
+      ],
+      "reply": "Mẫu phù hợp trong danh mục:\n1. Áo len nữ Basic — 329.000đ. màu Nâu, size M: còn 20, giá biến thể 329.000đ; màu Be, size M: còn 20, giá biến thể 329.000đ"
+    },
+    {
+      "id": "G04",
+      "text": "Thôi tìm áo thun nam màu đen size M dưới 250 nghìn cho chồng mình; bỏ tiêu chí áo len và nữ nhé.",
+      "count": 7,
+      "names": [
+        "Áo thun nam Basic",
+        "Áo thun nam cổ tròn Basic",
+        "Áo thun nam Daily",
+        "Áo thun nam cổ tròn Daily",
+        "Áo thun nam Weekend",
+        "Áo thun nam cổ tròn Weekend",
+        "Áo thun nam dài tay Basic"
+      ],
+      "reply": "Có 7 sản phẩm khớp các bộ lọc trong danh mục:\n1. Áo thun nam Basic — 199.000đ. màu Đen, size M: còn 20, giá biến thể 199.000đ\n2. Áo thun nam cổ tròn Basic — 199.000đ. màu Đen, size M: còn 20, giá biến thể 199.000đ\n3. Áo thun nam Daily — 219.000đ. màu Đen, size M: còn 20, giá biến thể 219.000đ\n4. Áo thun nam cổ tròn Daily — 219.000đ. màu Đen, size M: còn 20, giá biến thể 219.000đ\n5. Áo thun nam Weekend — 239.000đ. màu Đen, size M: còn 20, giá biến thể 239.000đ\nĐang hiển thị 5/7 mẫu; còn 2 mẫu khớp khác."
+    },
+    {
+      "id": "G05-price",
+      "text": "Áo thun nam Daily giá bao nhiêu?",
+      "count": 1,
+      "names": [
+        "Áo thun nam Daily"
+      ],
+      "reply": "Mẫu phù hợp trong danh mục:\n1. Áo thun nam Daily — 219.000đ"
+    },
+    {
+      "id": "G05-price-stock",
+      "text": "Nếu lấy size M màu đen thì giá có khác không và hiện shop có xác nhận còn hàng không?",
+      "count": 1,
+      "names": [
+        "Áo thun nam Daily"
+      ],
+      "reply": "Mẫu phù hợp trong danh mục:\n1. Áo thun nam Daily — 219.000đ. màu Đen, size M: còn 20, giá biến thể 219.000đ"
+    },
+    {
+      "id": "G07",
+      "text": "Có bao nhiêu áo thun nam dưới 250 nghìn màu đen còn size M? Liệt kê giúp mình các mẫu đó, nhưng đừng tính mẫu hết hàng.",
+      "count": 7,
+      "names": [
+        "Áo thun nam Basic",
+        "Áo thun nam cổ tròn Basic",
+        "Áo thun nam Daily",
+        "Áo thun nam cổ tròn Daily",
+        "Áo thun nam Weekend",
+        "Áo thun nam cổ tròn Weekend",
+        "Áo thun nam dài tay Basic"
+      ],
+      "reply": "Có 7 sản phẩm khớp các bộ lọc trong danh mục:\n1. Áo thun nam Basic — 199.000đ. màu Đen, size M: còn 20, giá biến thể 199.000đ\n2. Áo thun nam cổ tròn Basic — 199.000đ. màu Đen, size M: còn 20, giá biến thể 199.000đ\n3. Áo thun nam Daily — 219.000đ. màu Đen, size M: còn 20, giá biến thể 219.000đ\n4. Áo thun nam cổ tròn Daily — 219.000đ. màu Đen, size M: còn 20, giá biến thể 219.000đ\n5. Áo thun nam Weekend — 239.000đ. màu Đen, size M: còn 20, giá biến thể 239.000đ\n6. Áo thun nam cổ tròn Weekend — 239.000đ. màu Đen, size M: còn 20, giá biến thể 239.000đ\n7. Áo thun nam dài tay Basic — 249.000đ. màu Đen, size M: còn 20, giá biến thể 249.000đ"
+    },
+    {
+      "id": "G08",
+      "text": "Mình tìm Quantum Unicorn ZX-999, nếu hết thì cho mẫu gần giống nhất dưới 300 nghìn, màu tối, size M.",
+      "count": 0,
+      "names": [],
+      "reply": "Không tìm thấy mẫu bạn nêu trong danh mục. Để tìm mẫu thay thế, bạn muốn loại sản phẩm nào? Mình sẽ giữ các điều kiện giá, màu và size đã nêu."
+    },
+    {
+      "id": "G09-conflict",
+      "text": "Tìm áo vừa dưới 200 nghìn vừa trên 300 nghìn.",
+      "count": 0,
+      "names": [],
+      "reply": "Hai mức giá bạn nêu đang mâu thuẫn nhau. Bạn muốn tìm sản phẩm dưới 200.000đ hay trên 300.000đ?"
+    },
+    {
+      "id": "G09-correct",
+      "text": "Ý mình là tối đa 300 nghìn, không cần mức tối thiểu.",
+      "count": 23,
+      "names": [
+        "Áo thun nam Basic",
+        "Áo thun nam cổ tròn Basic",
+        "Áo thun nam Daily",
+        "Áo thun nam cổ tròn Daily",
+        "Áo thun unisex nhiều màu Basic",
+        "Áo thun nam Weekend",
+        "Áo thun unisex nhiều màu Daily",
+        "Áo thun nam cổ tròn Weekend",
+        "Áo thun unisex in hình Basic",
+        "Áo thun nam dài tay Basic",
+        "Áo thun nam Urban",
+        "Áo thun nam cổ tròn Urban",
+        "Áo thun unisex nhiều màu Weekend",
+        "Áo thun unisex in hình Daily",
+        "Áo thun nam dài tay Daily",
+        "Áo thun nam Premium",
+        "Áo thun nam cổ tròn Premium",
+        "Áo thun unisex nhiều màu Urban",
+        "Áo thun unisex in hình Weekend",
+        "Áo thun nam dài tay Weekend",
+        "Áo nỉ unisex cổ tròn Basic",
+        "Áo thun unisex nhiều màu Premium",
+        "Áo nỉ unisex cổ tròn Basic"
+      ],
+      "reply": "Có 23 sản phẩm khớp các bộ lọc trong danh mục:\n1. Áo thun nam Basic — 199.000đ\n2. Áo thun nam cổ tròn Basic — 199.000đ\n3. Áo thun nam Daily — 219.000đ\n4. Áo thun nam cổ tròn Daily — 219.000đ\n5. Áo thun unisex nhiều màu Basic — 219.000đ\nĐang hiển thị 5/23 mẫu; còn 18 mẫu khớp khác."
+    },
+    {
+      "id": "G10-vague",
+      "text": "Cho mình cái đẹp nhất.",
+      "count": 0,
+      "names": [],
+      "reply": "Bạn đang tìm loại sản phẩm nào (áo, quần hay váy), và có kiểu dáng hoặc ngân sách mong muốn không?"
+    },
+    {
+      "id": "G10-budget",
+      "text": "Áo nữ mặc hằng ngày, dễ phối, khoảng 300 nghìn; mình chưa chọn màu.",
+      "count": 0,
+      "names": [],
+      "reply": "Chưa có áo nữ khớp ngân sách và các điều kiện bạn nêu. Bạn có thể tăng ngân sách một chút hoặc muốn xem thêm áo unisex không? Mình sẽ giữ các tiêu chí còn lại; chưa tự đổi ngân sách hay nhóm sản phẩm."
+    },
+    {
+      "id": "G10-followup",
+      "text": "Có mẫu nào màu đen không?",
+      "count": 0,
+      "names": [],
+      "reply": "Chưa có áo nữ khớp ngân sách và các điều kiện bạn nêu. Bạn có thể tăng ngân sách một chút hoặc muốn xem thêm áo unisex không? Mình sẽ giữ các tiêu chí còn lại; chưa tự đổi ngân sách hay nhóm sản phẩm."
+    },
+    {
+      "id": "G12-groups",
+      "text": "Mình đang chọn đồ cho hai người: áo nữ size M dưới 400 nghìn, còn chồng mình cần áo thun nam size L màu đen. Cho mình tách hai nhóm nhé.",
+      "count": 0,
+      "names": [],
+      "reply": "Bạn đang tìm cho hai người. Bạn muốn mình lọc nhóm áo nữ size M dưới 400.000đ hay áo thun nam size L màu đen trước?"
+    },
+    {
+      "id": "G12-select",
+      "text": "Chỉ giữ nhóm của chồng, đổi size sang XL.",
+      "count": 15,
+      "names": [
+        "Áo thun nam Basic",
+        "Áo thun nam cổ tròn Basic",
+        "Áo thun nam Daily",
+        "Áo thun nam cổ tròn Daily",
+        "Áo thun nam Weekend",
+        "Áo thun nam cổ tròn Weekend",
+        "Áo thun nam dài tay Basic",
+        "Áo thun nam Urban",
+        "Áo thun nam cổ tròn Urban",
+        "Áo thun nam dài tay Daily",
+        "Áo thun nam Premium",
+        "Áo thun nam cổ tròn Premium",
+        "Áo thun nam dài tay Weekend",
+        "Áo thun nam dài tay Urban",
+        "Áo thun nam dài tay Premium"
+      ],
+      "reply": "Có 15 sản phẩm khớp các bộ lọc trong danh mục:\n1. Áo thun nam Basic — 199.000đ. màu Đen, size XL: còn 20, giá biến thể 199.000đ\n2. Áo thun nam cổ tròn Basic — 199.000đ. màu Đen, size XL: còn 20, giá biến thể 199.000đ\n3. Áo thun nam Daily — 219.000đ. màu Đen, size XL: còn 20, giá biến thể 219.000đ\n4. Áo thun nam cổ tròn Daily — 219.000đ. màu Đen, size XL: còn 20, giá biến thể 219.000đ\n5. Áo thun nam Weekend — 239.000đ. màu Đen, size XL: còn 20, giá biến thể 239.000đ\nĐang hiển thị 5/15 mẫu; còn 10 mẫu khớp khác."
+    },
+    {
+      "id": "G01",
+      "text": "Shop có áo nào dễ mặc đi làm không?",
+      "count": 95,
+      "names": [
+        "Áo thun nam Basic",
+        "Áo thun nam cổ tròn Basic",
+        "Áo thun nam Daily",
+        "Áo thun nam cổ tròn Daily",
+        "Áo thun unisex nhiều màu Basic",
+        "Áo thun nam Weekend",
+        "Áo thun unisex nhiều màu Daily",
+        "Áo thun nam cổ tròn Weekend",
+        "Áo thun unisex in hình Basic",
+        "Áo thun nam dài tay Basic",
+        "Áo thun nam Urban",
+        "Áo thun nam cổ tròn Urban",
+        "Áo thun unisex nhiều màu Weekend",
+        "Áo thun unisex in hình Daily",
+        "Áo thun nam dài tay Daily",
+        "Áo thun nam Premium",
+        "Áo thun nam cổ tròn Premium",
+        "Áo thun unisex nhiều màu Urban",
+        "Áo thun unisex in hình Weekend",
+        "Áo thun nam dài tay Weekend",
+        "Áo nỉ unisex cổ tròn Basic",
+        "Áo thun unisex nhiều màu Premium",
+        "Áo nỉ unisex cổ tròn Basic",
+        "Áo thun nam dài tay Urban",
+        "Áo thun unisex in hình Urban",
+        "Áo nỉ unisex cổ tròn Daily",
+        "Áo nỉ unisex cổ tròn Daily",
+        "Áo len nữ Basic",
+        "Áo thun unisex in hình Premium",
+        "Áo len nữ màu kem Basic",
+        "Áo thun nam dài tay Premium",
+        "Áo nỉ unisex cổ tròn Weekend",
+        "Áo nỉ unisex cổ tròn Weekend",
+        "Áo len nữ Daily",
+        "Áo len nữ màu kem Daily",
+        "Áo sơ mi nam Basic",
+        "Áo nỉ unisex cổ tròn Urban",
+        "Áo sơ mi nam công sở Basic",
+        "Áo nỉ unisex cổ tròn Urban",
+        "Áo len nữ Weekend",
+        "Áo len nữ màu kem Weekend",
+        "Áo sơ mi nam Daily",
+        "Áo sơ mi nam xanh Basic",
+        "Áo nỉ unisex cổ tròn Premium",
+        "Áo sơ mi nam công sở Daily",
+        "Áo nỉ unisex cổ tròn Premium",
+        "Áo len nữ Urban",
+        "Áo len nữ màu kem Urban",
+        "Áo sơ mi nam Weekend",
+        "Áo sơ mi nam xanh Daily",
+        "Áo hoodie nam Basic",
+        "Áo sơ mi nam công sở Weekend",
+        "Áo len nữ Premium",
+        "Áo len nữ màu kem Premium",
+        "Áo sơ mi nam Urban",
+        "Áo hoodie nam Daily",
+        "Áo sơ mi nam xanh Weekend",
+        "Áo sơ mi nam công sở Urban",
+        "Áo sơ mi nam Premium",
+        "Áo hoodie nam Weekend",
+        "Áo sơ mi nam công sở Premium",
+        "Áo sơ mi nam xanh Urban",
+        "Áo hoodie nam Urban",
+        "Áo sơ mi nam xanh Premium",
+        "Áo hoodie nam Premium",
+        "Áo khoác unisex streetwear Basic",
+        "Áo khoác denim unisex Basic",
+        "Áo khoác unisex streetwear Daily",
+        "Áo khoác denim unisex Daily",
+        "Áo khoác unisex streetwear Weekend",
+        "Áo khoác denim unisex Weekend",
+        "Áo khoác bomber unisex Basic",
+        "Áo khoác unisex streetwear Urban",
+        "Áo khoác denim unisex Urban",
+        "Áo khoác bomber unisex Daily",
+        "Áo khoác unisex streetwear Premium",
+        "Áo khoác denim unisex Premium",
+        "Áo khoác bomber unisex Weekend",
+        "Bộ đồ thể thao unisex Basic",
+        "Áo blazer nữ Basic",
+        "Áo khoác bomber unisex Urban",
+        "Bộ đồ thể thao unisex Daily",
+        "Áo blazer nữ Daily",
+        "Áo khoác bomber unisex Premium",
+        "Áo blazer nữ Weekend",
+        "Bộ đồ thể thao unisex Weekend",
+        "Bộ đồ thể thao unisex Urban",
+        "Áo blazer nữ Urban",
+        "Áo blazer nữ Premium",
+        "Bộ đồ thể thao unisex Premium",
+        "Áo khoác da nam Basic",
+        "Áo khoác da nam Daily",
+        "Áo khoác da nam Weekend",
+        "Áo khoác da nam Urban",
+        "Áo khoác da nam Premium"
+      ],
+      "reply": "Bạn muốn áo sơ mi hay áo thun để đi làm, cho nam hay nữ? Bạn cho mình thêm ngân sách hoặc size để mình lọc theo danh mục nhé."
+    },
+    {
+      "id": "Sold-out-combination",
+      "text": "Áo thun nam Daily màu đen size M còn hàng không?",
+      "count": 0,
+      "names": [],
+      "reply": "Không tìm thấy sản phẩm khớp chính xác trong dữ liệu cửa hàng."
+    },
+    {
+      "id": "Sold-out-detail",
+      "text": "Áo thun nam Daily màu đen size M",
+      "count": 1,
+      "names": [
+        "Áo thun nam Daily"
+      ],
+      "reply": "Mẫu phù hợp trong danh mục:\n1. Áo thun nam Daily — 219.000đ. màu Đen, size M: hết hàng, giá biến thể 219.000đ"
+    },
+    {
+      "id": "Conversation-isolation",
+      "text": "Màu đen size M",
+      "count": 0,
+      "names": [],
+      "reply": "Không tìm thấy sản phẩm phù hợp với các điều kiện đã nêu."
+    }
+  ]
+}

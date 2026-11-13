@@ -1,0 +1,269 @@
+try {
+  const SUPABASE_URL = env.SUPABASE_URL?.replace(/\/$/, '')
+  const SERVICE_KEY = env.SUPABASE_SERVICE_KEY
+  if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('Thiếu cấu hình Supabase')
+
+  const currentInput = [workflow.userMessage, (event.payload as any)?.text, (event.payload as any)?.payload?.text, event.preview].find((value: any) => typeof value === 'string' && value.trim().length > 0)
+  const userMessage = String(currentInput ?? '').trim()
+  workflow.userMessage = userMessage
+  const headers = {
+  apikey: SERVICE_KEY,
+  Authorization: 'Bearer ' + SERVICE_KEY
+  }
+  const normalize = (value: any) => String(value ?? '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[đĐ]/g, 'd')
+  .toLowerCase()
+  const normalizedCurrent = normalize(userMessage)
+  const isFollowUp = /^(?:trong nhung mau do|trong cac mau do|nhung mau do|cac mau do|(?:con|co) (?:mau (?:den|trang|be|nau|xanh|do|hong|vang|kem|ghi|xam)|size (?:xs|s|m|l|xl|xxl)|hang)|mau (?:do|nay|ay|den|trang|be|nau|xanh|hong|vang|kem|ghi|xam)|chi giu nhom cua chong|giu nhom cua chong|mau nao|co mau nao|neu lay|neu mau|neu den|neu khong co mau|re nhat|dat nhat|a thoi|y minh la|thuc ra|ngan sach la|neu doi sang|doi sang|thay bang|instead|actually|doi mau|doi size|chuyen sang|toi da|khoang|tam|duoi|tren|mau|size|sz|loai do)\b/.test(normalizedCurrent)
+  && !/^(?:ao|quan|vay|dam|somi|thun|len|hoodie|daily|weekend|premium|basic|classic|urban)\b/.test(normalizedCurrent)
+  const priorProductQuery = String(conversation.lastProductQuery || ((Date.now() - Number(user.lastProductQueryAt ?? 0) < 1800000) ? user.lastProductQuery : '') || '').trim()
+  const followUpText = normalizedCurrent.replace(/^(?:trong nhung mau do|trong cac mau do|nhung mau do|cac mau do|mau do|mau nay|mau ay|neu lay|neu mau|neu den|neu khong co mau|a thoi|y minh la|thuc ra|ngan sach la|neu doi sang|doi sang|thay bang|instead|actually)\b/, '').trim()
+  const isHusbandGroupFollowUp = /^(?:chi giu nhom cua chong|giu nhom cua chong)\b/.test(normalizedCurrent)
+const husbandClause = normalize(priorProductQuery).match(/chong minh can\s+(.+?)(?:[.!?]|$)/)?.[1]
+const baseFollowUpQuery = isHusbandGroupFollowUp && husbandClause ? husbandClause.replace(/\bsize\s+(?:xs|s|m|l|xl|xxl)\b/i, '').trim() : (/(?:doi mau|doi size|chuyen sang|mau .+ sang|size .+ sang)/.test(normalizedCurrent) ? priorProductQuery.replace(/\b(?:mau\s+)?(?:den|trang|be|nau|xanh|do|hong|vang|kem|ghi|xam)\b/gi, ' ').replace(/\bsize\s+(?:xs|s|m|l|xl|xxl)\b/gi, ' ').replace(/\s+/g, ' ').trim() : priorProductQuery)
+const cleanFollowUpText = isHusbandGroupFollowUp ? followUpText.replace(/^(?:chi giu nhom cua chong|giu nhom cua chong)[,\s]*/, '').replace(/\bdoi size sang\b/g, 'size') : followUpText
+const isPriceCorrection = isFollowUp && /(?:toi da|duoi|nho hon|khong qua|under|below|khoang|tam|ngan sach la)/.test(normalizedCurrent); const priorWithoutPrice = priorProductQuery.replace(/(?:duoi|nho hon|toi da|khong qua|under|below|max(?:imum)?|ngan sach(?: la)?|tren|hon|cao hon|above|over)\s*\d[\d.,]*\s*(?:k|nghin|ngan|vnd|dong|d)?/g, ' '); const searchMessage = isFollowUp && priorProductQuery ? (isPriceCorrection ? priorWithoutPrice + ' ' + normalizedCurrent : baseFollowUpQuery + ' ' + cleanFollowUpText) : userMessage
+  const startsNewProductSearch = /\b(?:ao|quan|vay|dam|giay|dep|tui|non|mu|that lung|phu kien|san pham|size|sz|mau|duoi|tren|ngan sach|con hang|hang con|basic|daily|weekend|classic|urban|premium|hoodie|len|thun|so mi|denim|streetwear|do ngu|mac nha)\b/.test(normalizedCurrent) && !/\b(?:danh muc|loai (?:trang phuc|quan ao|san pham)|nhung loai san pham|bao hanh|doi tra|van chuyen|phi ship|chinh sach)\b/.test(normalizedCurrent); if ((isFollowUp && priorProductQuery) || startsNewProductSearch) { conversation.lastProductQuery = searchMessage; user.lastProductQuery = searchMessage; user.lastProductQueryAt = Date.now() } else if (!isFollowUp) { conversation.lastProductQuery = ''; user.lastProductQuery = ''; user.lastProductQueryAt = 0 }
+  workflow.userMessage = searchMessage
+  const query = normalize(searchMessage).replace(/\bdail\b/g, 'daily').replace(/\bdaly\b/g, 'daily').replace(/^(?:quay lai tu van(?: san pham)?|tro lai tu van(?: san pham)?|tu van(?: san pham)?|tim kiem)\s*[:,]?\s*/, '')
+  const filterQuery = query.replace(/\b(?:bo|loai bo|khong can|khong muon)\s+(?:ao len|ao thun|ao so mi|ao|quan|vay|dam|nu|nam)(?:\s+(?:va|hoac)\s+(?:ao len|ao thun|ao so mi|ao|quan|vay|dam|nu|nam))*/g, ' ').replace(/\bthoi(?=\s+tim\b)/g, ' ')
+  const hasCurrentSizeFilter = /\b(?:size|sz)\s*(?:xs|s|m|l|xl|xxl)\b/.test(normalizedCurrent)
+  const hasCurrentColorFilter = /\b(?:mau\s+)?(?:den|trang|be|nau|xanh|do|hong|vang|kem|ghi|xam)\b|\b(?:black|white|navy|red)\b/.test(normalizedCurrent)
+  const sizeQuery = isFollowUp && hasCurrentSizeFilter ? normalizedCurrent : query
+  const replacementColor = normalizedCurrent.match(/(?:lay|chon|doi(?: mau)?(?: (?:den|trang|be|nau|xanh|do|hong|vang|kem|ghi|xam))? sang|chuyen sang|thay bang)\s+(?:mau\s+)?(den|trang|be|nau|xanh|do|hong|vang|kem|ghi|xam)\b/)?.[1] ?? null
+const colorQuery = isFollowUp && replacementColor ? replacementColor : isFollowUp && hasCurrentColorFilter ? normalizedCurrent : query
+  const priceQuery = /(?:a thoi|y minh la|thuc ra|ngan sach la|neu doi sang|doi sang|thay bang|instead|actually|toi da|duoi|nho hon|khong qua|under|below|khoang|tam)/.test(normalizedCurrent) ? normalizedCurrent : query
+  const asksPolicy = /\b(?:doi tra|doi hang|doi size.*(?:xu ly|the nao|chinh sach)|hoan tien|bao hanh|van chuyen|ship|phi giao hang|phi ship|giao hang|chinh sach|size.*khong vua|khong vua.*size)\b/.test(query)
+  const asksVagueBest = /\b(?:cai dep nhat|dep nhat|tot nhat|phu hop nhat)\b/.test(query) && !/\b(?:ao|quan|vay|dam|somi|thun|len|hoodie|san pham|daily|weekend|premium|basic|classic|urban)\b/.test(query)
+  const select = 'id,name,base_price,description,material,slug,image_url,gender_id,category_id'
+  const allRes = await axios.get(SUPABASE_URL + '/rest/v1/products', {
+  headers,
+  params: { select, order: 'base_price.asc', limit: 250 }
+  })
+  const allProducts = Array.isArray(allRes.data) ? allRes.data : []
+  const categoryRes = await axios.get(SUPABASE_URL + '/rest/v1/categories', {
+  headers,
+  params: { select: 'id,name,slug', order: 'id.asc', limit: 250 }
+  })
+  const allCategories = Array.isArray(categoryRes.data) ? categoryRes.data : []; const asksCategoryOverview = /(?:danh muc|loai (?:trang phuc|quan ao|san pham)|nhung loai san pham nao|trang phuc nao|(?:shop|cua hang).*(?:ban|kinh doanh)|(?:ban|kinh doanh).*(?:shop|cua hang))/.test(query); const categoryOverview = asksCategoryOverview ? allCategories.map((item: any) => ({ name: String(item.name ?? '').trim(), count: allProducts.filter((product: any) => Number(product.category_id) === Number(item.id)).length })).filter((item: any) => item.count > 0) : []
+
+  const isWomen = /\b(nu|nữ|women|female|em gai|chi em|em minh|em toi|vo|ban gai)\b/.test(filterQuery)
+  const isMen = /\b(nam|men|male|anh)\b/.test(filterQuery)
+  const genderFilter = isWomen ? 2 : isMen ? 1 : null
+  const category = filterQuery.includes('ao len') ? 'ao len'
+  : filterQuery.includes('ao thun') ? 'ao thun'
+  : filterQuery.includes('ao so mi') ? 'ao so mi'
+  : filterQuery.includes('hoodie') ? 'hoodie'
+  : /\bao\b/.test(filterQuery) ? 'ao'
+  : null
+  const matchedCategory = allCategories
+  .map((item: any) => ({ item, name: normalize(item.name), slug: normalize(String(item.slug ?? '').replace(/-/g, ' ')) }))
+  .filter(({ name, slug }) => (name.length >= 3 && filterQuery.includes(name)) || (slug.length >= 3 && filterQuery.includes(slug)))
+  .sort((a: any, b: any) => Math.max(b.name.length, b.slug.length) - Math.max(a.name.length, a.slug.length))[0]?.item
+  const categoryId = matchedCategory ? Number(matchedCategory.id) : null
+  const priceMatch = priceQuery.match(/(?:<\s*|(?:duoi|nho hon|toi da|khong qua|under|below|max(?:imum)?|khoang|tam)\s*)(\d[\d.,]*)\s*(k|nghin|ngan)?/)
+  let maxPrice: number | null = null
+  const lowerPriceMatch = priceQuery.match(/(?:>\s*|(?:tren|hon|cao hon|above|over)\s*)(\d[\d.,]*)\s*(k|nghin|ngan)?/)
+  const minAllowedPrice = lowerPriceMatch ? Number(lowerPriceMatch[1].replace(/[.,]/g, '')) * (lowerPriceMatch[2] ? 1000 : 1) : null
+  if (priceMatch) {
+  const numeric = Number(priceMatch[1].replace(/[.,]/g, ''))
+  maxPrice = numeric * (priceMatch[2] ? 1000 : 1)
+  } else {
+  const currencyMatch = priceQuery.match(/(\d[\d.,]*)\s*(?:vnd|dong|d)\b/)
+  if (currencyMatch && /duoi|nho hon|toi da|khong qua|under|below|ngan sach|a thoi|y minh la|thuc ra|doi sang|thay bang|instead|actually|khoang|tam/.test(priceQuery)) {
+  maxPrice = Number(currencyMatch[1].replace(/[.,]/g, ''))
+  }
+  }
+  const hasConflictingPriceRange = maxPrice !== null && minAllowedPrice !== null && minAllowedPrice > maxPrice
+  const sizeMatch = sizeQuery.match(/\b(?:size|sz)\s*(xs|s|m|l|xl|xxl)\b/)
+  const sizeChange = normalizedCurrent.match(/(?:doi|chuyen|thay)?\s*(?:size\s+)?(?:xs|s|m|l|xl|xxl)\s+(?:sang|thanh)\s+(xs|s|m|l|xl|xxl)/)?.[1]; const requestedSize = (normalizedCurrent.match(/size\s+(?:xs|s|m|l|xl|xxl)\s+(?:sang|thanh)\s+(xs|s|m|l|xl|xxl)/)?.[1] ?? sizeChange)?.toUpperCase() ?? sizeMatch?.[1]?.toUpperCase() ?? null
+  const requestedSizes = /size\s+s\s+neu\s+khong\s+co\s+m/.test(sizeQuery) ? ['M', 'S'] : requestedSize ? [requestedSize] : []
+  const colorMatch = colorQuery.match(/\b(den|trang(?!\s+san\s+pham)|be|nau|xanh|do|hong|vang|kem|ghi|xam)\b/)
+  const requestedColor = (userMessage.toLowerCase().includes('đỏ') || userMessage.toLowerCase().includes('màu do') || userMessage.toLowerCase().includes('mau do')) ? 'do' : colorMatch?.[1] === 'do' ? null : colorMatch?.[1] ?? null
+  const requestedColors = [...new Set([requestedColor, ...['den','trang','be','nau','xanh','do','hong','vang','kem','ghi','xam'].filter((color) => (' ' + colorQuery + ' ').includes(' ' + color + ' ')), /\b(?:navy|xanh navy)\b/.test(colorQuery) ? 'navy' : null, /\bblack\b/.test(colorQuery) ? 'den' : null, /\bwhite\b/.test(colorQuery) ? 'trang' : null].filter(Boolean) as string[])]
+  const colorAliases: Record<string, string[]> = { den: ['den','black'], trang: ['trang','white'], be: ['be','cream','ivory'], nau: ['nau','brown'], xanh: ['xanh','blue','navy','green'], navy: ['navy','blue','xanh navy'], do: ['do','red'], hong: ['hong','pink'], vang: ['vang','yellow'], kem: ['kem','cream'], ghi: ['ghi','gray','grey'], xam: ['xam','gray','grey'] }
+  const matchesRequestedColor = (value: any) => !requestedColors.length || requestedColors.some((color) => (colorAliases[color] ?? [color]).some((alias) => normalize(value).includes(normalize(alias))))
+  const wantsLink = /\b(link|url|duong dan|trang san pham)\b/.test(query)
+  const wantsInStock = /(?:chi hang con|con hang|san pham con hang|dung tinh mau het hang|khong tinh mau het hang|bo qua mau het hang|hang con lai)/.test(query)
+
+  const stopWords = new Set([
+  'ao','nam','nu','unisex','san','pham','mau','nao','gi','co','khong','shop',
+  'minh','toi','dang','chon','ban','cho','xem','tim','mua','can','muon','gui','gui','khong','phai','doi','don','link','url','so','mi','liet','ke',
+  'chinh','thuc','duong','dan','trang','san','phẩm','gia','duoi','nho','hon','toi',
+  'da','qua','duoi','quay','lai','tu','van','di','lam','mac','size','co','con','hang','ton','kho','chat','lieu','mau','mausac',
+  'material','stock','price','under','below','maximum','max','vnd','dong','d','k',
+  'nghin','ngan','sach','la','trung','tinh','neutral','neutrals','va','voi','tung','moi','the','nao','bao','nhieu','vay','phu','hop','chi','tiet','cac','bo','suu','tap','collection','collections','danh','muc','goi','y','hay','hien','co','xem','them','khac','toan','tat','ca','den','trang','be','nau','xanh','do','hong','vang','kem','ghi','xam','xs','s','m','l','xl','xxl','nhung','loai','sz','hoac','or','vua','neu','navy','black','white','xanhnavy','trong','noi','luc','tren','nay','trong','noi','luc','tren','nay','uu','tien','mem','de','phoi','sang','khoang','chua','nhe','xac','nhan','thieu','minimum','chong'
+  ])
+  const modelWords = ['basic','daily','weekend','urban','premium','classic']
+  const tokens = filterQuery.match(/[a-z0-9]+/g) ?? []
+  const nameTokens = asksCategoryOverview ? [] : [...new Set(tokens.filter((token) =>
+  !stopWords.has(token) && !['re','nhat','dat','dark','lay','thi'].includes(token) && !/^\d+(?:k|nghin|ngan|d|vnd|dong)?$/.test(token)
+  ))]
+  let candidates = allProducts.filter((product: any) => {
+  const name = normalize(product.name)
+  if (genderFilter && product.gender_id !== genderFilter) return false
+  if (category && !name.includes(category)) return false
+  if (!category && categoryId !== null && Number(product.category_id) !== categoryId) return false
+  if (maxPrice !== null && Number(product.base_price ?? Infinity) > maxPrice) return false
+  if (minAllowedPrice !== null && Number(product.base_price ?? 0) < minAllowedPrice) return false
+  if (nameTokens.length) {
+  const modelToken = nameTokens.some((token) => modelWords.includes(token))
+  const matched = nameTokens.filter((token) => name.includes(token)).length
+  const matchedModelToken = nameTokens.some((token) => modelWords.includes(token) && name.includes(token))
+  if ((modelToken && !matchedModelToken) || nameTokens.filter((token) => !modelWords.includes(token)).some((token) => !name.includes(token))) return false
+  }
+  return true
+  })
+
+  // Only use a fallback for broad category searches. Never substitute unrelated
+  // products for a named item that did not match the catalog.
+  const specificNameSearch = nameTokens.length > 0
+  let usedFallback = false
+  if (!candidates.length && !specificNameSearch && (genderFilter || category || maxPrice !== null)) {
+  candidates = allProducts.filter((product: any) => {
+  const name = normalize(product.name)
+  return (!genderFilter || product.gender_id === genderFilter)
+  && (!category || name.includes(category))
+  && (category || categoryId === null || Number(product.category_id) === categoryId)
+  && (maxPrice === null || Number(product.base_price ?? Infinity) <= maxPrice)
+      && (minAllowedPrice === null || Number(product.base_price ?? 0) >= minAllowedPrice)
+  })
+  }
+
+  if (!category && categoryId === null && nameTokens.length === 0 && maxPrice === null && genderFilter === null && !/(?:bao nhieu|dem so|so luong)/.test(query)) {
+  const seenCategories = new Set<number>()
+  candidates = candidates.filter((product: any) => {
+  const id = Number(product.category_id)
+  if (!Number.isFinite(id) || seenCategories.has(id)) return false
+  seenCategories.add(id)
+  return true
+  })
+  }
+  if (!asksCategoryOverview && nameTokens.length) { const exactNames = candidates.filter((product: any) => filterQuery.includes(normalize(product.name))); if (exactNames.length) candidates = exactNames }
+  const requestedCandidates = candidates.slice(0, 250)
+  const productIds = requestedCandidates.map((p: any) => p.id)
+  const variantMap: Record<string, any[]> = {}
+  if (productIds.length) {
+  let offset = 0
+  const pageSize = 500
+  while (true) {
+  const variantRes = await axios.get(SUPABASE_URL + '/rest/v1/product_variants', {
+  headers,
+  params: {
+  select: 'id,product_id,size,color,stock,price',
+  product_id: 'in.(' + productIds.join(',') + ')',
+  // Include zero-stock variants to report sold-out options accurately.
+  order: 'id.asc',
+  limit: pageSize,
+  offset
+  }
+  })
+  const page = Array.isArray(variantRes.data) ? variantRes.data : []
+  for (const variant of page) {
+  if (!variantMap[variant.product_id]) variantMap[variant.product_id] = []
+  variantMap[variant.product_id].push(variant)
+  }
+  if (page.length < pageSize) break
+  offset += page.length
+  }
+  }
+
+  const formatPrice = (price: number | null) =>
+  price === null ? 'Chưa cập nhật giá' : price.toLocaleString('vi-VN') + 'đ'
+  let processed = requestedCandidates.map((product: any) => {
+  const variants = (variantMap[product.id] ?? []).map((variant: any) => ({
+  id: variant.id,
+  size: variant.size,
+  color: variant.color,
+  stock: Number(variant.stock),
+  price: variant.price !== null && variant.price !== undefined ? Number(variant.price) : null
+  }))
+  const preferredSizes = requestedSizes.length > 1
+    ? [variants.some((variant: any) => normalize(variant.size) === normalize(requestedSizes[0])) ? requestedSizes[0] : requestedSizes[requestedSizes.length - 1]]
+    : requestedSizes
+  const matchingVariants = variants.filter((variant: any) =>
+  (!requestedSizes.length || preferredSizes.some((size) => normalize(variant.size) === normalize(size))) &&
+  matchesRequestedColor(variant.color) && (!wantsInStock || variant.stock > 0)
+  )
+  
+  
+  
+  const prices = matchingVariants.map((variant: any) => variant.price).filter((price: any) => price !== null)
+  const basePrice = product.base_price !== null && product.base_price !== undefined
+  ? Number(product.base_price) : null
+  const minPrice = prices.length ? Math.min(...prices) : basePrice
+  return {
+  ...product,
+  variants: matchingVariants,
+  sizes: [...new Set(variants.map((variant: any) => variant.size).filter(Boolean))],
+  colors: [...new Set(variants.map((variant: any) => variant.color).filter(Boolean))],
+  minPrice,
+  inStock: matchingVariants.some((variant: any) => variant.stock > 0),
+  url: product.slug && (product.gender_id === 1 || product.gender_id === 2)
+  ? 'https://tiem-mua-cham-store.vercel.app/' +
+  (product.gender_id === 1 ? 'men/' : 'women/') + encodeURIComponent(product.slug)
+  : ''
+  }
+  })
+  if (requestedSizes.length || requestedColors.length || wantsInStock) processed = processed.filter((product: any) => product.variants.length > 0)
+  if (maxPrice !== null || minAllowedPrice !== null) {
+  processed = processed.filter((product: any) =>
+  product.minPrice !== null && (minAllowedPrice === null || product.minPrice >= minAllowedPrice) && (maxPrice === null || product.minPrice <= maxPrice!)
+  )
+  }
+
+  if (wantsLink && processed.length) processed = processed.slice(0, 1)
+  workflow.productCount = processed.length
+  if (/\b(?:hai nguoi|2 nguoi)\b/.test(query) && /\b(?:chong|vo)\b/.test(query)) { workflow.productCount = 0; workflow.productsText = 'Bạn đang tìm cho hai người. Bạn muốn mình lọc nhóm áo nữ size M dưới 400.000đ hay áo thun nam size L màu đen trước?'; workflow.productsJson = '[]'; } else if (asksPolicy) { workflow.productCount = 0; workflow.productsText = 'Mình chưa có thông tin xác thực về thời hạn đổi size hoặc phí vận chuyển. Bạn vui lòng xem mục Vận chuyển & trả hàng hoặc liên hệ chăm sóc khách hàng nhé.'; workflow.productsJson = '[]'; } else if (asksVagueBest) { workflow.productCount = 0; workflow.productsText = 'Bạn đang tìm loại sản phẩm nào (áo, quần hay váy), và có kiểu dáng hoặc ngân sách mong muốn không?'; workflow.productsJson = '[]'; } else if (hasConflictingPriceRange) { workflow.productCount = 0; workflow.productsText = 'Hai mức giá bạn nêu đang mâu thuẫn nhau. Bạn muốn tìm sản phẩm dưới 200.000đ hay trên 300.000đ?'; workflow.productsJson = '[]'; } else if (asksCategoryOverview) { workflow.productCount = 0; workflow.productsText = 'Shop đang bán các danh mục trang phục sau: ' + categoryOverview.map((item: any) => item.name + ' (' + item.count + ' sản phẩm)').join('; ') + '.'; workflow.productsJson = '[]'; } else if (!processed.length) {
+  workflow.productsText = /(?:bao nhieu|dem so|so luong)/.test(query) ? 'Có 0 sản phẩm phù hợp.' : specificNameSearch
+  ? 'Không tìm thấy sản phẩm khớp chính xác trong dữ liệu cửa hàng.'
+  : 'Không tìm thấy sản phẩm phù hợp với các điều kiện đã nêu.'
+  workflow.productsJson = '[]'
+  } else {
+  processed = processed.slice(0, 8)
+  const productText = processed.map((product: any, index: number) => {
+  const variantText = product.variants.length
+  ? product.variants.map((variant: any) =>
+  '   - Màu: ' + variant.color + ' | Size: ' + variant.size +
+  ' | Giá: ' + formatPrice(variant.price) + ' | Còn: ' + variant.stock
+  ).join('\n')
+  : '   Không có biến thể phù hợp với màu/size đã hỏi.'
+  return [
+  (index + 1) + '. ' + product.name,
+  '   Giá tham khảo từ: ' + formatPrice(product.minPrice),
+  '   Chất liệu: ' + (product.material || 'Chưa cập nhật'),
+  '   URL chính thức: ' + (product.url || 'Không có URL xác thực'),
+  '   Tình trạng các biến thể:',
+  variantText
+  ].join('\n')
+  }).join('\n\n')
+  workflow.productsText = /(?:bao nhieu|dem so|so luong)/.test(query) ? 'Có ' + workflow.productCount + ' sản phẩm phù hợp.\n\n' + productText : productText
+  workflow.productsJson = JSON.stringify(processed.map((product: any) => ({
+  id: product.id,
+  name: product.name,
+  price: product.minPrice === null ? '' : product.minPrice.toLocaleString('vi-VN'),
+  minPrice: product.minPrice,
+  description: product.description ?? '',
+  material: product.material ?? '',
+  slug: product.slug ?? '',
+  url: product.url,
+  gender_id: product.gender_id ?? 0,
+  sizes: product.sizes,
+  colors: product.colors,
+  inStock: product.inStock,
+  variants: product.variants,
+  matchedKeyword: true,
+  image: Array.isArray(product.image_url) ? (product.image_url[0] ?? '')
+  : typeof product.image_url === 'string' ? product.image_url : ''
+  })))
+  }
+  workflow.debugConsult = 'OK | products=' + processed.length +
+  ' | linkRequest=' + wantsLink + ' | msg=' + userMessage
+  } catch (err: any) {
+  workflow.productCount = 0
+  workflow.productsText = 'Hiện chưa thể truy vấn sản phẩm và tồn kho. Không tự suy đoán dữ liệu.'
+  workflow.productsJson = '[]'
+  workflow.debugConsult = 'ERR: ' + err.message
+  }

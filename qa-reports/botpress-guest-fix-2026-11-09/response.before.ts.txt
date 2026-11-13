@@ -1,0 +1,129 @@
+const normalize = (value: any) =>
+String(value ?? '')
+.normalize('NFD')
+.replace(/[\u0300-\u036f]/g, '')
+.replace(/[đĐ]/g, 'd')
+.toLowerCase()
+const query = normalize(workflow.userMessage)
+const asksList = /\b(liet ke|danh sach|tat ca|toan bo|cac mau|nhung mau)\b/.test(query)
+const asksCount = /\b(dem so|tong so|bao nhieu (?:san pham|mau|loai|ao|quan|vay|dam))\b/.test(query)
+const rawResults = workflow.productsJson
+const catalogProducts = Array.isArray(rawResults) ? rawResults : JSON.parse(String(rawResults || '[]'))
+const asksPolicy = /\b(doi size|doi kich co|doi sang size|doi sang co|doi tra|tra hang|hoan tien|bao hanh|van chuyen|phi ship|giao hang|chinh sach)\b/.test(query)
+const asksCategory = /\b(loai san pham|loai trang phuc|loai quan ao|danh muc|trang phuc nao)\b/.test(query)
+const asksMaterial = /\b(chat lieu|vai gi|lam tu)\b/.test(query)
+const asksColorSize = /\b(size|mau|con hang|ton kho)\b/.test(query)
+const asksPrice = /\b(gia|price|bao nhieu tien|nhieu vay)\b/.test(query)
+const hasShoppingIntent = /\b(?:ao|quan|vay|dam|giay|dep|tui|phu kien|san pham|mua|tim|gia|duoi|con hang|ton kho|size|sz|mau|chat lieu|danh muc|loai|basic|daily|weekend|premium|urban|classic)\b/.test(query)
+
+if (!asksPolicy && !asksCategory && !asksMaterial && !asksColorSize && !asksList && !asksCount && !hasShoppingIntent) { workflow.consultText = 'Mình chưa rõ bạn đang tìm sản phẩm nào. Bạn cho mình biết loại sản phẩm, mẫu, màu/size hoặc khoảng giá nhé.' } else if (asksPolicy) { workflow.consultText = /\b(doi size|doi kich co|doi sang size|doi sang co)\b/.test(query) ? 'Nếu bạn muốn đổi size cho đơn đã mua, vui lòng đăng nhập và cung cấp mã đơn để shop kiểm tra chính sách áp dụng. Nếu bạn đang chọn size trước khi mua, cho mình biết mẫu sản phẩm nhé.' : String(workflow.productsText || 'Mình chưa có thông tin chính sách đổi trả hoặc phí vận chuyển.') } else if (asksCategory) {
+const categories = String(workflow.productsText || '')
+.split(/[;\n]+/)
+.filter(Boolean)
+workflow.consultText = categories.length
+? [
+'Shop có 3 nhóm sản phẩm chính:',
+'• Nam: áo thun, sơ mi, quần, áo khoác/hoodie và đồ ngủ.',
+'• Nữ: áo, áo len, quần, chân váy, váy/đầm và đồ ngủ.',
+'• Unisex: basic, denim, sporty và streetwear.',
+'Ngoài ra có các bộ sưu tập theo phong cách tối giản, công sở, dạo phố và đi biển.',
+'Bạn muốn xem nhóm nào?'
+].join('\n')
+: 'Shop chưa có dữ liệu danh mục. Bạn đang quan tâm nhóm nào?'
+} else if (asksPrice) {
+if (!catalogProducts.length) {
+workflow.consultText = 'Mình chưa tìm thấy mẫu khớp để báo giá. Bạn cho mình biết thêm loại áo hoặc tên mẫu nhé.'
+} else {
+const shown = catalogProducts.slice(0, 5)
+const lines = shown.map((product: any) => {
+const price = typeof product.minPrice === 'number' ? product.minPrice.toLocaleString('vi-VN') + 'đ' : String(product.price || 'Chưa cập nhật giá')
+return String(product.name || 'Sản phẩm') + ' — ' + price
+})
+workflow.consultText = lines.length === 1 ? lines[0] : 'Giá các mẫu phù hợp:\n' + lines.join('\n')
+}
+} else if (asksColorSize && !asksCount) {
+if (catalogProducts.length === 1) {
+const product = catalogProducts[0]
+const variants = Array.isArray(product.variants) ? product.variants : []
+const price =
+typeof product.minPrice === 'number'
+? product.minPrice.toLocaleString('vi-VN') + 'đ'
+: String(product.price || 'Chưa cập nhật giá')
+if (variants.length) {
+const details = variants
+.slice(0, 4)
+.map(
+(v: any) =>
+'Màu ' +
+(v.color || 'chưa rõ') +
+', size ' +
+(v.size || 'chưa rõ') +
+(typeof v.stock === 'number' ? ' (còn ' + v.stock + ')' : '')
+)
+.join('; ')
+workflow.consultText =
+String(product.name || 'Sản phẩm') +
+' — ' +
+price +
+'. Hiện có ' +
+details +
+'.' +
+(product.material ? ' Chất liệu: ' + product.material + '.' : '')
+} else {
+workflow.consultText =
+String(product.name || 'Sản phẩm') + ' — ' + price + '. Shop chưa có biến thể khớp màu/size bạn hỏi.'
+}
+} else if (!catalogProducts.length && String(workflow.productsText || '').startsWith('Bạn đang tìm cho hai người.')) { workflow.consultText = String(workflow.productsText) } else if (!catalogProducts.length) {
+workflow.consultText = 'Không tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.'
+} else if (hasShoppingIntent) {
+const shown = catalogProducts.slice(0, 5)
+const lines = shown.map((product: any, index: number) => {
+const price = typeof product.minPrice === 'number' ? product.minPrice.toLocaleString('vi-VN') + 'đ' : String(product.price || 'Chưa cập nhật giá')
+const variants = Array.isArray(product.variants) ? product.variants.slice(0, 3) : []
+const variantText = variants.length ? variants.map((v: any) => 'màu ' + (v.color || 'chưa rõ') + ', size ' + (v.size || 'chưa rõ') + (typeof v.stock === 'number' ? ' (còn ' + v.stock + ')' : '')).join('; ') : 'chưa có thông tin biến thể'
+return (index + 1) + '. ' + String(product.name || 'Sản phẩm') + ' — ' + price + '. ' + variantText
+})
+if (catalogProducts.length > shown.length) lines.push('Còn ' + (catalogProducts.length - shown.length) + ' mẫu phù hợp khác.')
+workflow.consultText = 'Các mẫu phù hợp với tiêu chí bạn hỏi:\n' + lines.join('\n') + '\nBạn muốn xem mẫu nào?'
+} else {
+workflow.consultText = 'Có nhiều mẫu phù hợp. Bạn cho mình biết màu, size hoặc khoảng giá để lọc chính xác hơn nhé.'
+}
+} else if (asksMaterial) {
+if (catalogProducts.length === 1) {
+const product = catalogProducts[0]
+workflow.consultText =
+String(product.name || 'Sản phẩm') +
+(product.material ? ' có chất liệu ' + product.material + '.' : ': shop chưa cập nhật chất liệu.')
+} else if (!catalogProducts.length && String(workflow.productsText || '').startsWith('Bạn đang tìm cho hai người.')) { workflow.consultText = String(workflow.productsText) } else if (!catalogProducts.length) {
+workflow.consultText = 'Không tìm thấy sản phẩm phù hợp trong dữ liệu cửa hàng.'
+} else {
+workflow.consultText =
+'Có nhiều mẫu phù hợp. Bạn muốn hỏi chất liệu mẫu nào: ' +
+catalogProducts
+.slice(0, 8)
+.map((product: any) => product.name)
+.join(', ') +
+'?'
+}
+} else if (asksList || asksCount) {
+const products = catalogProducts
+const reportedCount = Number(workflow.productCount)
+const count = reportedCount > 0 ? reportedCount : products.length
+if (!products.length && count > 0) {
+workflow.consultText = 'Mình chưa lấy được danh sách sản phẩm đầy đủ. Bạn thử lại giúp mình nhé.'
+} else if (asksCount) {
+workflow.consultText = 'Có ' + count + ' sản phẩm phù hợp.'
+} else {
+const shown = products.slice(0, 8)
+const lines = shown.map((product: any, index: number) => {
+const price =
+typeof product.minPrice === 'number'
+? product.minPrice.toLocaleString('vi-VN') + 'đ'
+: String(product.price || 'Chưa cập nhật giá')
+return index + 1 + '. ' + String(product.name || 'Sản phẩm') + ' — ' + price
+})
+if (count > shown.length)
+lines.push('Đang hiển thị ' + shown.length + ' mẫu đầu trong tổng số ' + count + ' mẫu phù hợp.')
+workflow.consultText = lines.length ? lines.join('\n') : 'Không tìm thấy sản phẩm phù hợp với điều kiện đã nêu.'
+}
+}
