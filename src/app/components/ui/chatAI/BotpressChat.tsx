@@ -53,7 +53,7 @@ export default function ChatBot() {
       if (root.querySelector('[data-hide-botpress-branding]')) return
       const style = document.createElement('style')
       style.dataset.hideBotpressBranding = 'true'
-      style.textContent = '.bpComposerFooter { margin-top: 4px !important; } .bpComposerFooter p { display: none !important; }'
+      style.textContent = '.bpComposerFooter { margin-top: 20px !important; } .bpComposerFooter p { display: none !important; }'
       root.appendChild(style)
     }
 

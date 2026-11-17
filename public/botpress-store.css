@@ -197,12 +197,13 @@
 }
 
 .bpComposerFooter {
-  margin-top: 4px;
+  margin-top: 20px;
 }
 
 .bpComposerFooter p {
   display: none !important;
 }
+
 
 .bpMessageBlocksTextTableContainer {
   max-width: 100%;
