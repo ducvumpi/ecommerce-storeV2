@@ -42,8 +42,43 @@ export default function ChatBot() {
   const desiredIdentity = useRef<string | null>(null)
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
+  const brandingObserver = useRef<MutationObserver | null>(null)
   const chatActivity = useRef(new Map<string, number>())
   const chatOrderTokenRefresh = useRef(new Map<string, number>())
+
+  const hideBotpressBranding = () => {
+    // Botpress renders the webchat in a Shadow DOM, so app-level CSS cannot
+    // reach the composer footer. Apply the rule inside the widget's root.
+    const applyToRoot = (root: ShadowRoot) => {
+      if (root.querySelector('[data-hide-botpress-branding]')) return
+      const style = document.createElement('style')
+      style.dataset.hideBotpressBranding = 'true'
+      style.textContent = '.bpComposerFooter { margin-top: 4px !important; } .bpComposerFooter p { display: none !important; }'
+      root.appendChild(style)
+    }
+
+    const visit = (node: ParentNode) => {
+      node.querySelectorAll('*').forEach((element) => {
+        if (element.shadowRoot) {
+          applyToRoot(element.shadowRoot)
+          visit(element.shadowRoot)
+        }
+      })
+      if (node instanceof Element && node.shadowRoot) {
+        applyToRoot(node.shadowRoot)
+        visit(node.shadowRoot)
+      }
+    }
+
+    if (brandingObserver.current) return
+    visit(document)
+    brandingObserver.current = new MutationObserver((records) => {
+      records.forEach((record) => record.addedNodes.forEach((node) => {
+        if (node instanceof Element) visit(node)
+      }))
+    })
+    brandingObserver.current.observe(document.body, { childList: true, subtree: true })
+  }
 
   const handleInjectReady = () => {
     if (!window.botpress) return
@@ -60,6 +95,7 @@ export default function ChatBot() {
       window.botpress.on('webchat:ready', () => {
         syncConversation()
         setBotReady(true)
+        hideBotpressBranding()
       })
       window.botpress.on('conversation', syncConversation)
       window.botpress.on('webchat:opened', () => syncConversation())

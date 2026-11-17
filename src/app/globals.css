@@ -1697,3 +1697,6 @@ html {
 .sending-auth .bpMessageContainer:has(a.bpMessageBlocksTextLink) {
   display: none !important;
 }
+.bpComposerFooter p {
+  display: none !important;
+}

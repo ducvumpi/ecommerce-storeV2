@@ -196,6 +196,14 @@
   font-size: 11px;
 }
 
+.bpComposerFooter {
+  margin-top: 4px;
+}
+
+.bpComposerFooter p {
+  display: none !important;
+}
+
 .bpMessageBlocksTextTableContainer {
   max-width: 100%;
   overflow-x: auto;

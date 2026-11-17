@@ -2,6 +2,7 @@
 const normalize = (value: any) => String(value ?? '').normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase()
 const query = normalize(workflow.userMessage)
+const latestQuery = normalize((workflow as any).currentUserMessage || workflow.userMessage)
 let products: any[] = []
 try {
   const raw = workflow.productsJson
@@ -26,7 +27,12 @@ if (clarification) {
   workflow.consultText = 'Bạn muốn áo sơ mi hay áo thun để đi làm, cho nam hay nữ? Bạn cho mình thêm ngân sách hoặc size để mình lọc theo danh mục nhé.'
 } else if (!products.length) {
   if (/\b(?:khoang|tam)\b/.test(query) && /\bnu\b/.test(query)) {
-    workflow.consultText = 'Chưa có áo nữ khớp ngân sách và các điều kiện bạn nêu. Bạn có thể tăng ngân sách một chút hoặc muốn xem thêm áo unisex không? Mình sẽ giữ các tiêu chí còn lại; chưa tự đổi ngân sách hay nhóm sản phẩm.'
+    const colorMatch = latestQuery.match(/\b(?:mau\s+)?(den|trang|be|nau|xanh|hong|vang|kem|ghi|xam)\b/)
+    const colorNames: Record<string, string> = { den: 'đen', trang: 'trắng', be: 'be', nau: 'nâu', xanh: 'xanh', hong: 'hồng', vang: 'vàng', kem: 'kem', ghi: 'ghi', xam: 'xám' }
+    const colorText = colorMatch ? ' màu ' + (colorNames[colorMatch[1]] || colorMatch[1]) : ''
+    workflow.consultText = colorMatch
+      ? 'Mình đã ghi nhận bạn muốn' + colorText + '. Hiện chưa có áo nữ ' + colorText + ' khớp ngân sách khoảng 300.000đ và các điều kiện còn lại. Bạn muốn tăng ngân sách một chút hay xem thêm áo unisex? Mình chưa tự đổi nhóm hoặc ngân sách.'
+      : 'Chưa có áo nữ khớp ngân sách và các điều kiện bạn nêu. Bạn có thể tăng ngân sách một chút hoặc muốn xem thêm áo unisex không? Mình sẽ giữ các tiêu chí còn lại; chưa tự đổi ngân sách hay nhóm sản phẩm.'
   } else {
     workflow.consultText = sourceText || 'Chưa xác minh được sản phẩm theo điều kiện bạn nêu. Bạn thử lại giúp mình nhé.'
   }

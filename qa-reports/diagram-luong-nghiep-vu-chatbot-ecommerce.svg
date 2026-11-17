@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1450" viewBox="0 0 1800 1450" role="img" aria-labelledby="title desc">
+  <title id="title">Luồng nghiệp vụ chatbot hội thoại trong thương mại điện tử</title>
+  <desc id="desc">Sơ đồ mô tả luồng khách guest và khách đã đăng nhập từ website qua Botpress, truy vấn catalog, tư vấn sản phẩm và tra cứu đơn hàng được xác thực bằng Supabase.</desc>
+  <defs>
+    <marker id="arrowNavy" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="#25445f"/></marker>
+    <marker id="arrowTeal" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="#167e83"/></marker>
+    <marker id="arrowOrange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 Z" fill="#bd6c29"/></marker>
+    <style>
+      .bg{fill:#f4f7fb}.title{font:700 34px Arial,sans-serif;fill:#17324d;letter-spacing:.2px}.subtitle{font:400 17px Arial,sans-serif;fill:#54677b}
+      .lane-title{font:700 16px Arial,sans-serif;fill:#17324d;letter-spacing:1px}.lane-num{font:700 14px Arial,sans-serif;fill:#fff}
+      .box{stroke-width:2;rx:18}.blue{fill:#fff;stroke:#547da5}.teal{fill:#f3fbfa;stroke:#21878a}.orange{fill:#fff8f1;stroke:#c57a3a}.dark{fill:#17324d;stroke:#17324d}
+      .h{font:700 19px Arial,sans-serif;fill:#17324d}.h-white{font:700 19px Arial,sans-serif;fill:#fff}.body{font:400 15px Arial,sans-serif;fill:#34495e}.body-small{font:400 13px Arial,sans-serif;fill:#526579}.body-white{font:400 14px Arial,sans-serif;fill:#eaf1f7}
+      .tag{font:700 12px Arial,sans-serif;fill:#fff;letter-spacing:.5px}.arrow{fill:none;stroke:#25445f;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrowNavy)}
+      .arrow-teal{fill:none;stroke:#167e83;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrowTeal)}.arrow-orange{fill:none;stroke:#bd6c29;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrowOrange)}
+      .dashed{fill:none;stroke:#8aa0b5;stroke-width:2;stroke-dasharray:8 7}.decision{fill:#fff;stroke:#547da5;stroke-width:2.5}.decision-text{font:700 16px Arial,sans-serif;fill:#17324d;text-anchor:middle}
+      .label{font:600 12px Arial,sans-serif;fill:#5a6d7f}.footer{font:400 13px Arial,sans-serif;fill:#64778a}.pill{fill:#e4edf6;stroke:#cadae8;stroke-width:1}
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1800" height="1450"/>
+  <rect x="0" y="0" width="1800" height="128" fill="#17324d"/>
+  <text class="title" x="60" y="54" fill="#ffffff" style="fill:#ffffff">LUỒNG NGHIỆP VỤ CHATBOT HỘI THOẠI TRONG THƯƠNG MẠI ĐIỆN TỬ</text>
+  <text class="subtitle" x="62" y="91" style="fill:#d7e4ee">Tích hợp Botpress với website Next.js và Supabase · phân luồng Guest / Auth · tư vấn sản phẩm và tra cứu đơn hàng</text>
+  <rect class="pill" x="1430" y="77" width="305" height="30" rx="15"/>
+  <text class="label" x="1582" y="97" text-anchor="middle">Hình X · Mô hình nghiệp vụ triển khai</text>
+
+  <!-- Lane 1: identity -->
+  <rect x="38" y="150" width="1724" height="322" rx="22" fill="#edf3f9" stroke="#d7e2ec"/>
+  <circle cx="70" cy="181" r="15" fill="#315f87"/><text class="lane-num" x="70" y="186" text-anchor="middle">1</text>
+  <text class="lane-title" x="96" y="187">TIẾP CẬN WEBSITE VÀ ĐỒNG BỘ DANH TÍNH</text>
+
+  <rect class="box blue" x="62" y="257" width="210" height="132"/>
+  <rect x="62" y="257" width="210" height="34" rx="16" fill="#315f87"/>
+  <text class="tag" x="80" y="279">TÁC NHÂN</text>
+  <text class="h" x="82" y="321">Người dùng</text>
+  <text class="body" x="82" y="348">Guest hoặc đã đăng nhập</text>
+  <text class="body-small" x="82" y="371">Duyệt web · mở khung chat</text>
+
+  <rect class="box blue" x="322" y="242" width="270" height="162"/>
+  <text class="h" x="344" y="278">Website TMĐT</text>
+  <text class="body" x="344" y="306">Next.js · danh mục · giỏ hàng</text>
+  <text class="body" x="344" y="332">BotpressChat đọc phiên Supabase</text>
+  <text class="body-small" x="344" y="366">Gửi sự kiện định danh theo conversation</text>
+  <text class="body-small" x="344" y="387">Không dùng dữ liệu chat làm quyền truy cập</text>
+
+  <path class="arrow" d="M272 323 H322"/>
+  <text class="label" x="297" y="309" text-anchor="middle">mở chat</text>
+  <path class="arrow" d="M592 323 H625"/>
+  <polygon class="decision" points="710,252 795,323 710,394 625,323"/>
+  <text class="decision-text" x="710" y="318">Có phiên</text>
+  <text class="decision-text" x="710" y="340">Supabase?</text>
+
+  <path class="arrow" d="M755 286 H837 V234 H865"/>
+  <text class="label" x="815" y="222">Không · Guest</text>
+  <rect class="box teal" x="865" y="190" width="260" height="92"/>
+  <text class="h" x="887" y="225">Sự kiện Guest</text>
+  <text class="body" x="887" y="252">Không gửi PII / mã đơn</text>
+
+  <path class="arrow-teal" d="M755 360 H837 V365 H865"/>
+  <text class="label" x="812" y="388">Có · Auth</text>
+  <rect class="box teal" x="865" y="314" width="260" height="104"/>
+  <text class="h" x="887" y="348">Gọi `/api/chat/profile`</text>
+  <text class="body" x="887" y="375">Xác minh session / access token</text>
+  <text class="body-small" x="887" y="399">Đọc hồ sơ của chính user (RLS)</text>
+
+  <path class="arrow-teal" d="M1125 365 H1170"/>
+  <rect class="box teal" x="1170" y="314" width="250" height="104"/>
+  <text class="h" x="1192" y="348">Supabase Auth + RLS</text>
+  <text class="body" x="1192" y="375">Profile và danh tính đã xác thực</text>
+  <text class="body-small" x="1192" y="399">Cấp chat token giới hạn, 15 phút</text>
+
+  <rect class="box dark" x="1460" y="244" width="270" height="150"/>
+  <text class="h-white" x="1484" y="282">Botpress Webchat</text>
+  <text class="body-white" x="1484" y="311">Nhận event Guest / Auth</text>
+  <text class="body-white" x="1484" y="337">Giữ conversation và ngữ cảnh</text>
+  <text class="body-white" x="1484" y="366">Phân tích ý định người dùng</text>
+  <path class="arrow" d="M1125 236 H1428 V280 H1460"/>
+  <text class="label" x="1285" y="224" text-anchor="middle">guest event</text>
+  <path class="arrow-teal" d="M1420 365 H1460"/>
+  <text class="label" x="1440" y="352" text-anchor="middle">auth event</text>
+
+  <!-- Intent router -->
+  <path class="arrow" d="M1595 394 V500 H900 V525"/>
+  <rect class="box dark" x="655" y="525" width="490" height="90"/>
+  <text class="h-white" x="900" y="560" text-anchor="middle">Botpress · phân loại ý định</text>
+  <text class="body-white" x="900" y="590" text-anchor="middle">Tư vấn sản phẩm  ·  Tra cứu đơn  ·  FAQ / cần làm rõ</text>
+
+  <!-- Lane 2: product consultation -->
+  <rect x="38" y="642" width="1724" height="224" rx="22" fill="#eaf6f4" stroke="#c9e3de"/>
+  <circle cx="70" cy="674" r="15" fill="#167e83"/><text class="lane-num" x="70" y="679" text-anchor="middle">2</text>
+  <text class="lane-title" x="96" y="680">TƯ VẤN VÀ TÌM KIẾM SẢN PHẨM</text>
+  <path class="arrow-teal" d="M760 615 V630 H180 V704"/>
+  <text class="label" x="428" y="646">nhánh tư vấn</text>
+
+  <rect class="box teal" x="62" y="704" width="240" height="122"/>
+  <text class="h" x="84" y="741">Tiếp nhận yêu cầu</text>
+  <text class="body" x="84" y="769">Tên / loại · giới tính</text>
+  <text class="body" x="84" y="795">Màu · size · giá · còn hàng</text>
+
+  <path class="arrow-teal" d="M302 765 H342"/>
+  <rect class="box teal" x="342" y="704" width="300" height="122"/>
+  <text class="h" x="364" y="741">Botpress Products</text>
+  <text class="body" x="364" y="769">Truy vấn catalog và biến thể</text>
+  <text class="body-small" x="364" y="795">Chuẩn hóa câu hỏi / giữ tiêu chí</text>
+
+  <path class="arrow-teal" d="M642 765 H682"/>
+  <rect class="box blue" x="682" y="704" width="290" height="122"/>
+  <text class="h" x="704" y="741">Supabase Catalog</text>
+  <text class="body" x="704" y="769">products · categories</text>
+  <text class="body" x="704" y="795">product_variants · stock · price</text>
+
+  <path class="arrow-teal" d="M972 765 H1012"/>
+  <rect class="box teal" x="1012" y="704" width="300" height="122"/>
+  <text class="h" x="1034" y="741">Lọc và xếp kết quả</text>
+  <text class="body" x="1034" y="769">Khớp điều kiện đã xác nhận</text>
+  <text class="body-small" x="1034" y="795">Không khớp → hỏi lại / báo 0 kết quả</text>
+
+  <path class="arrow-teal" d="M1312 765 H1352"/>
+  <rect class="box teal" x="1352" y="704" width="380" height="122"/>
+  <text class="h" x="1374" y="741">Botpress trả lời + carousel</text>
+  <text class="body" x="1374" y="769">1 sản phẩm → 1 thẻ; nhiều kết quả</text>
+  <text class="body" x="1374" y="795">→ tối đa 5 thẻ/trang, kèm giá và link</text>
+
+  <!-- Lane 3: order inquiry -->
+  <rect x="38" y="893" width="1724" height="292" rx="22" fill="#fff5eb" stroke="#efd9c4"/>
+  <circle cx="70" cy="925" r="15" fill="#bd6c29"/><text class="lane-num" x="70" y="930" text-anchor="middle">3</text>
+  <text class="lane-title" x="96" y="931">TRA CỨU ĐƠN HÀNG CÓ KIỂM SOÁT QUYỀN</text>
+  <path class="arrow-orange" d="M1145 570 H1745 V880 H280 V944"/>
+  <text class="label" x="1450" y="875">nhánh tra cứu đơn</text>
+
+  <polygon class="decision" points="280,944 375,1020 280,1096 185,1020"/>
+  <text class="decision-text" x="280" y="1016">Guest hay</text>
+  <text class="decision-text" x="280" y="1038">đã đăng nhập?</text>
+
+  <path class="arrow-orange" d="M356 981 H420"/>
+  <text class="label" x="387" y="967">Guest</text>
+  <rect class="box orange" x="420" y="944" width="260" height="100"/>
+  <text class="h" x="442" y="981">Yêu cầu đăng nhập</text>
+  <text class="body" x="442" y="1010">Không trả dữ liệu đơn hàng</text>
+
+  <path class="arrow-teal" d="M356 1058 H420 V1117"/>
+  <text class="label" x="384" y="1082">Auth</text>
+  <rect class="box teal" x="420" y="1067" width="280" height="98"/>
+  <text class="h" x="442" y="1102">`/api/chat/orders`</text>
+  <text class="body-small" x="442" y="1129">Bearer token đã ký, scope + hạn dùng</text>
+
+  <path class="arrow-teal" d="M700 1116 H744"/>
+  <rect class="box blue" x="744" y="1067" width="285" height="98"/>
+  <text class="h" x="766" y="1102">Server xác minh token</text>
+  <text class="body-small" x="766" y="1129">HMAC · scope · expiry · user ID</text>
+
+  <path class="arrow-teal" d="M1029 1116 H1073"/>
+  <rect class="box blue" x="1073" y="1067" width="265" height="98"/>
+  <text class="h" x="1095" y="1102">Supabase Orders</text>
+  <text class="body-small" x="1095" y="1129">Chỉ lọc `user_id` đã xác minh</text>
+
+  <path class="arrow-teal" d="M1338 1116 H1382"/>
+  <rect class="box teal" x="1382" y="1067" width="350" height="98"/>
+  <text class="h" x="1404" y="1102">Tóm tắt đơn an toàn</text>
+  <text class="body-small" x="1404" y="1129">Trạng thái · sản phẩm · tổng tiền</text>
+
+  <!-- Fallback and security note -->
+  <rect x="62" y="1210" width="1670" height="88" rx="16" fill="#edf3f9" stroke="#d7e2ec"/>
+  <text class="h" x="88" y="1246">Nhánh hỗ trợ khác</text>
+  <text class="body" x="286" y="1246">FAQ / chính sách / câu hỏi thiếu tiêu chí → trả lời theo nguồn hoặc hỏi làm rõ; không suy đoán dữ liệu sản phẩm hay đơn hàng.</text>
+  <text class="body-small" x="88" y="1276">Ranh giới bảo mật: danh tính được xác minh ở server; event phía trình duyệt chỉ dùng để điều phối hội thoại, không tự cấp quyền truy cập đơn.</text>
+
+  <line x1="62" y1="1330" x2="1732" y2="1330" stroke="#cbd6e0" stroke-width="1.5"/>
+  <text class="footer" x="62" y="1362">Nguồn mô hình: mã tích hợp `BotpressChat`, API `/api/chat/profile`, `/api/chat/orders` và luồng catalog của project. Sơ đồ mô tả luồng hiện tại.</text>
+  <text class="footer" x="1732" y="1362" text-anchor="end">Dùng trong DOCX · SVG vector + PNG 2700 px</text>
+</svg>

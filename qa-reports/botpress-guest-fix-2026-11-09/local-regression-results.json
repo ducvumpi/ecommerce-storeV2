@@ -1,7 +1,7 @@
 {
   "source": "Local action regression; mocked HTTP using public snapshot; variant prices are fixture values, not live evidence",
-  "at": "2026-11-09T03:12:54.710Z",
-  "passed": 21,
+  "at": "2026-11-13T02:46:17.829Z",
+  "passed": 23,
   "evidence": [
     {
       "id": "G02",
@@ -45,6 +45,15 @@
         "Áo len nữ Basic"
       ],
       "reply": "Mẫu phù hợp trong danh mục:\n1. Áo len nữ Basic — 329.000đ. màu Nâu, size M: còn 20, giá biến thể 329.000đ; màu Be, size M: còn 20, giá biến thể 329.000đ"
+    },
+    {
+      "id": "G03-size-fallback",
+      "text": "Áo len nữ Weekend màu nâu size M, nếu không còn M thì size S cũng được, dưới 400 nghìn.",
+      "count": 1,
+      "names": [
+        "Áo len nữ Weekend"
+      ],
+      "reply": "Mẫu phù hợp trong danh mục:\n1. Áo len nữ Weekend — 369.000đ. màu Nâu, size S: còn 40, giá biến thể 369.000đ"
     },
     {
       "id": "G04",
@@ -100,6 +109,27 @@
       "count": 0,
       "names": [],
       "reply": "Không tìm thấy mẫu bạn nêu trong danh mục. Để tìm mẫu thay thế, bạn muốn loại sản phẩm nào? Mình sẽ giữ các điều kiện giá, màu và size đã nêu."
+    },
+    {
+      "id": "G08-type-clarification",
+      "text": "Áo thun nam",
+      "count": 13,
+      "names": [
+        "Áo thun nam Basic",
+        "Áo thun nam cổ tròn Basic",
+        "Áo thun nam Daily",
+        "Áo thun nam cổ tròn Daily",
+        "Áo thun nam Weekend",
+        "Áo thun nam cổ tròn Weekend",
+        "Áo thun nam dài tay Basic",
+        "Áo thun nam Urban",
+        "Áo thun nam cổ tròn Urban",
+        "Áo thun nam dài tay Daily",
+        "Áo thun nam Premium",
+        "Áo thun nam cổ tròn Premium",
+        "Áo thun nam dài tay Weekend"
+      ],
+      "reply": "Có 13 sản phẩm khớp các bộ lọc trong danh mục:\n1. Áo thun nam Basic — 199.000đ. màu Đen, size M: còn 20, giá biến thể 199.000đ; màu Xanh navy, size M: còn 20, giá biến thể 199.000đ\n2. Áo thun nam cổ tròn Basic — 199.000đ. màu Đen, size M: còn 20, giá biến thể 199.000đ\n3. Áo thun nam Daily — 219.000đ. màu Đen, size M: còn 20, giá biến thể 219.000đ; màu Xanh navy, size M: còn 20, giá biến thể 219.000đ\n4. Áo thun nam cổ tròn Daily — 219.000đ. màu Đen, size M: còn 20, giá biến thể 219.000đ\n5. Áo thun nam Weekend — 239.000đ. màu Đen, size M: còn 20, giá biến thể 239.000đ\nĐang hiển thị 5/13 mẫu; còn 8 mẫu khớp khác."
     },
     {
       "id": "G09-conflict",
@@ -158,7 +188,7 @@
       "text": "Có mẫu nào màu đen không?",
       "count": 0,
       "names": [],
-      "reply": "Chưa có áo nữ khớp ngân sách và các điều kiện bạn nêu. Bạn có thể tăng ngân sách một chút hoặc muốn xem thêm áo unisex không? Mình sẽ giữ các tiêu chí còn lại; chưa tự đổi ngân sách hay nhóm sản phẩm."
+      "reply": "Mình đã ghi nhận bạn muốn màu đen. Hiện chưa có áo nữ  màu đen khớp ngân sách khoảng 300.000đ và các điều kiện còn lại. Bạn muốn tăng ngân sách một chút hay xem thêm áo unisex? Mình chưa tự đổi nhóm hoặc ngân sách."
     },
     {
       "id": "G12-groups",

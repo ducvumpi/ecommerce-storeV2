@@ -6,6 +6,8 @@ try {
   const currentInput = [workflow.userMessage, (event.payload as any)?.text, (event.payload as any)?.payload?.text, event.preview].find((value: any) => typeof value === 'string' && value.trim().length > 0)
   const userMessage = String(currentInput ?? '').trim()
   workflow.userMessage = userMessage
+  // Preserve the literal current turn for response copy while the search query may include prior context.
+  ;(workflow as any).currentUserMessage = userMessage
   const headers = {
   apikey: SERVICE_KEY,
   Authorization: 'Bearer ' + SERVICE_KEY
@@ -19,12 +21,30 @@ try {
   const isFollowUp = /^(?:trong may mau do|trong nhung mau do|trong cac mau do|nhung mau do|cac mau do|(?:con|co) (?:mau (?:den|trang|be|nau|xanh|do|hong|vang|kem|ghi|xam)|size (?:xs|s|m|l|xl|xxl)|hang)|mau (?:do|nay|ay|den|trang|be|nau|xanh|hong|vang|kem|ghi|xam)|chi giu nhom cua chong|giu nhom cua chong|mau nao|co mau nao|neu lay|neu mau|neu den|neu khong co mau|re nhat|dat nhat|a thoi|y minh la|thuc ra|ngan sach la|neu doi sang|doi sang|thay bang|instead|actually|doi mau|doi size|chuyen sang|toi da|khoang|tam|duoi|tren|mau|size|sz|loai do)\b/.test(normalizedCurrent)
   && !/^(?:ao|quan|vay|dam|somi|thun|len|hoodie|daily|weekend|premium|basic|classic|urban)\b/.test(normalizedCurrent)
   const priorProductQuery = String(conversation.lastProductQuery || '').trim()
+  const normalizedPriorQuery = normalize(priorProductQuery)
+  const hasPendingSkuFallback = /\b[a-z]{1,10}-?\d{2,}\b/.test(normalizedPriorQuery) &&
+    /(?:neu het|neu khong co|gan giong|thay the)/.test(normalizedPriorQuery)
+  const isFallbackProductTypeAnswer = hasPendingSkuFallback &&
+    /^\s*(?:(?:tim|cho minh tim|loai san pham la)\s+)?(?:ao|quan|vay|dam|giay|dep|hoodie|somi|thun|len)\b/.test(normalizedCurrent)
+  const fallbackPriceConstraint = hasPendingSkuFallback
+    ? normalizedPriorQuery.match(/\b(?:duoi|nho hon|toi da|khong qua|under|below)\s*\d[\d.,]*\s*(?:k|nghin|ngan|vnd|dong|d)?/)?.[0]
+    : null
+  const fallbackSizeConstraint = hasPendingSkuFallback
+    ? normalizedPriorQuery.match(/\bsize\s+(xs|s|m|l|xl|xxl)\b/)?.[0]
+    : null
+  const fallbackDarkConstraint = hasPendingSkuFallback && /\bmau toi\b/.test(normalizedPriorQuery) ? 'màu tối' : null
   const followUpText = normalizedCurrent.replace(/^(?:trong nhung mau do|trong cac mau do|nhung mau do|cac mau do|mau do|mau nay|mau ay|neu lay|neu mau|neu den|neu khong co mau|a thoi|y minh la|thuc ra|ngan sach la|neu doi sang|doi sang|thay bang|instead|actually)\b/, '').trim()
   const isHusbandGroupFollowUp = /^(?:chi giu nhom cua chong|giu nhom cua chong)\b/.test(normalizedCurrent)
 const husbandClause = normalize(priorProductQuery).match(/chong minh can\s+(.+?)(?:[.!?]|$)/)?.[1]
 const baseFollowUpQuery = isHusbandGroupFollowUp && husbandClause ? husbandClause.replace(/\bsize\s+(?:xs|s|m|l|xl|xxl)\b/i, '').trim() : (/(?:doi mau|doi size|chuyen sang|mau .+ sang|size .+ sang)/.test(normalizedCurrent) ? priorProductQuery.replace(/\b(?:mau\s+)?(?:den|trang|be|nau|xanh|do|hong|vang|kem|ghi|xam)\b/gi, ' ').replace(/\bsize\s+(?:xs|s|m|l|xl|xxl)\b/gi, ' ').replace(/\s+/g, ' ').trim() : priorProductQuery)
 const cleanFollowUpText = isHusbandGroupFollowUp ? followUpText.replace(/^(?:chi giu nhom cua chong|giu nhom cua chong)[,\s]*/, '').replace(/\bdoi size sang\b/g, 'size') : followUpText
-const isPriceCorrection = isFollowUp && /(?:toi da|duoi|nho hon|khong qua|under|below|khoang|tam|ngan sach la)/.test(normalizedCurrent); const priorWithoutPrice = priorProductQuery.replace(/(?:duoi|nho hon|toi da|khong qua|under|below|max(?:imum)?|ngan sach(?: la)?|tren|hon|cao hon|above|over)\s*\d[\d.,]*\s*(?:k|nghin|ngan|vnd|dong|d)?/g, ' '); const searchMessage = isFollowUp && priorProductQuery ? (isPriceCorrection ? priorWithoutPrice + ' ' + normalizedCurrent : baseFollowUpQuery + ' ' + cleanFollowUpText) : userMessage
+const isPriceCorrection = isFollowUp && /(?:toi da|duoi|nho hon|khong qua|under|below|khoang|tam|ngan sach la)/.test(normalizedCurrent)
+const priorWithoutPrice = priorProductQuery.replace(/(?:duoi|nho hon|toi da|khong qua|under|below|max(?:imum)?|ngan sach(?: la)?|tren|hon|cao hon|above|over)\s*\d[\d.,]*\s*(?:k|nghin|ngan|vnd|dong|d)?/g, ' ')
+const searchMessage = isFallbackProductTypeAnswer
+  ? [userMessage, fallbackDarkConstraint, fallbackPriceConstraint, fallbackSizeConstraint].filter(Boolean).join(' ')
+  : isFollowUp && priorProductQuery
+    ? (isPriceCorrection ? priorWithoutPrice + ' ' + normalizedCurrent : baseFollowUpQuery + ' ' + cleanFollowUpText)
+    : userMessage
   const startsNewProductSearch = /\b(?:ao|quan|vay|dam|giay|dep|tui|non|mu|that lung|phu kien|san pham|size|sz|mau|duoi|tren|ngan sach|con hang|hang con|basic|daily|weekend|classic|urban|premium|hoodie|len|thun|so mi|denim|streetwear|do ngu|mac nha)\b/.test(normalizedCurrent) && !/\b(?:danh muc|loai (?:trang phuc|quan ao|san pham)|nhung loai san pham|bao hanh|doi tra|van chuyen|phi ship|chinh sach)\b/.test(normalizedCurrent); if ((isFollowUp && priorProductQuery) || startsNewProductSearch) { conversation.lastProductQuery = searchMessage; user.lastProductQuery = searchMessage; user.lastProductQueryAt = Date.now() } else if (!isFollowUp) { conversation.lastProductQuery = ''; user.lastProductQuery = ''; user.lastProductQueryAt = 0 }
   workflow.userMessage = searchMessage
   const query = normalize(searchMessage).replace(/\bdail\b/g, 'daily').replace(/\bdaly\b/g, 'daily').replace(/^(?:quay lai tu van(?: san pham)?|tro lai tu van(?: san pham)?|tu van(?: san pham)?|tim kiem)\s*[:,]?\s*/, '')
@@ -79,12 +99,22 @@ const colorQuery = isFollowUp && /\b(?:doi|chuyen) sang\s+(?:mau\s+)?(?:den|tran
   const hasConflictingPriceRange = maxPrice !== null && minAllowedPrice !== null && minAllowedPrice > maxPrice
   const sizeMatch = sizeQuery.match(/\b(?:size|sz)\s*(xs|s|m|l|xl|xxl)\b/)
   const sizeChange = normalizedCurrent.match(/(?:doi|chuyen|thay)?\s*(?:size\s+)?(?:xs|s|m|l|xl|xxl)\s+(?:sang|thanh)\s+(xs|s|m|l|xl|xxl)/)?.[1]; const requestedSize = (normalizedCurrent.match(/size\s+(?:xs|s|m|l|xl|xxl)\s+(?:sang|thanh)\s+(xs|s|m|l|xl|xxl)/)?.[1] ?? sizeChange)?.toUpperCase() ?? sizeMatch?.[1]?.toUpperCase() ?? null
-  const requestedSizes = /size\s+s\s+(?:cung duoc\s+)?neu\s+khong\s+(?:co|con)\s+m/.test(sizeQuery) ? ['M', 'S'] : requestedSize ? [requestedSize] : []
+  const allowsSizeFallback =
+    /\bsize\s+s\b.{0,40}\b(?:cung duoc\s+)?neu\s+khong\s+(?:co|con)\s+m\b/.test(sizeQuery) ||
+    /\bsize\s+m\b.{0,80}\bneu\s+khong\s+con\s+m\b.{0,40}\bsize\s+s\b/.test(sizeQuery)
+  const requestedSizes = allowsSizeFallback ? ['M', 'S'] : requestedSize ? [requestedSize] : []
   const colorMatch = colorQuery.match(/\b(den|trang(?!\s+san\s+pham)|be|nau|xanh|do|hong|vang|kem|ghi|xam)\b/)
   const requestedColor = (userMessage.toLowerCase().includes('đỏ') || userMessage.toLowerCase().includes('màu do') || userMessage.toLowerCase().includes('mau do')) ? 'do' : colorMatch?.[1] === 'do' ? null : colorMatch?.[1] ?? null
   const requestedColors = [...new Set([requestedColor, ...['den','trang','be','nau','xanh','do','hong','vang','kem','ghi','xam'].filter((color) => (color !== 'do' || requestedColor === 'do') && (' ' + colorQuery + ' ').includes(' ' + color + ' ')), /\b(?:navy|xanh navy)\b/.test(colorQuery) ? 'navy' : null, /\bblack\b/.test(colorQuery) ? 'den' : null, /\bwhite\b/.test(colorQuery) ? 'trang' : null].filter(Boolean) as string[])]
   const colorAliases: Record<string, string[]> = { den: ['den','black'], trang: ['trang','white'], be: ['be','cream','ivory'], nau: ['nau','brown'], xanh: ['xanh','blue','navy','green'], navy: ['navy','blue','xanh navy'], do: ['do','red'], hong: ['hong','pink'], vang: ['vang','yellow'], kem: ['kem','cream'], ghi: ['ghi','gray','grey'], xam: ['xam','gray','grey'] }
-  const matchesRequestedColor = (value: any) => !requestedColors.length || requestedColors.some((color) => (colorAliases[color] ?? [color]).some((alias) => normalize(value).includes(normalize(alias))))
+  const wantsDarkColor = /\bmau toi\b/.test(colorQuery)
+  const darkColorAliases = ['den','black','xanh navy','navy','xam dam','ghi dam','nau dam']
+  const matchesRequestedColor = (value: any) => {
+    const color = normalize(value)
+    return (!requestedColors.length && !wantsDarkColor) ||
+      requestedColors.some((requested) => (colorAliases[requested] ?? [requested]).some((alias) => color.includes(normalize(alias)))) ||
+      (wantsDarkColor && darkColorAliases.some((alias) => color.includes(normalize(alias))))
+  }
   const wantsLink = /\b(link|url|duong dan|trang san pham)\b/.test(query)
   const wantsInStock = /(?:chi hang con|con hang|san pham con hang|dung tinh mau het hang|khong tinh mau het hang|bo qua mau het hang|hang con lai)/.test(query)
 
