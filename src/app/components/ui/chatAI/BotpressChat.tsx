@@ -3,6 +3,7 @@ import Script from 'next/script'
 import { supabase } from '@/app/libs/supabaseClient'
 import type { User } from '@supabase/supabase-js'
 import { useEffect, useState, useRef } from 'react'
+import { toast } from 'react-hot-toast'
 import './botpress-launcher.css'
 
 const IDENTITY_STORAGE_PREFIX = 'store:botpress:identity:v2'
@@ -37,6 +38,7 @@ export default function ChatBot() {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const sentIdentities = useRef(new Map<string, string>())
   const sentGuestEvents = useRef(new Set<string>())
+  const handledCartRequests = useRef(new Set<string>())
   const pendingIdentities = useRef(new Set<string>())
   const productLinkCache = useRef(new Map<string, string | null>())
   const desiredIdentity = useRef<string | null>(null)
@@ -489,6 +491,100 @@ export default function ChatBot() {
 
     let productCatalogPromise: Promise<Array<{ name: string; slug: string; gender_id: number }> | null> | null = null
 
+    const handleCartAddEvent = async (event?: any) => {
+      const payload = event?.action ? event : event?.payload
+      if (payload?.action !== 'cart.add') return
+
+      const requestId = String(payload.requestId ?? '').trim()
+      const productId = Number(payload.productId)
+      const variantId = String(payload.variantId ?? '').trim()
+      const quantity = Number(payload.quantity)
+      if (!requestId || !Number.isSafeInteger(productId) || productId <= 0 || !variantId || !Number.isSafeInteger(quantity) || quantity < 1) {
+        toast.error('Không thể thêm sản phẩm: thông tin sản phẩm chưa đầy đủ.')
+        return
+      }
+      if (handledCartRequests.current.has(requestId)) return
+      handledCartRequests.current.add(requestId)
+      if (handledCartRequests.current.size > 100) {
+        const oldestRequest = handledCartRequests.current.values().next().value
+        if (oldestRequest) handledCartRequests.current.delete(oldestRequest)
+      }
+
+      try {
+        const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser()
+        if (authError || !currentUser) {
+          toast.error('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.')
+          return
+        }
+
+        const [{ data: variant, error: variantError }, { data: product, error: productError }] = await Promise.all([
+          supabase.from('product_variants')
+            .select('id, product_id, size, color, price, stock')
+            .eq('id', variantId)
+            .eq('product_id', productId)
+            .maybeSingle(),
+          supabase.from('products')
+            .select('id, name, description, image_url')
+            .eq('id', productId)
+            .maybeSingle(),
+        ])
+
+        if (variantError || productError || !variant || !product) {
+          toast.error('Không tìm thấy đúng sản phẩm hoặc biến thể để thêm vào giỏ.')
+          return
+        }
+        const availableStock = Number(variant.stock ?? 0)
+        if (availableStock < quantity) {
+          toast.error(availableStock > 0
+            ? `Mẫu này chỉ còn ${availableStock} sản phẩm.`
+            : 'Biến thể này hiện đã hết hàng.')
+          return
+        }
+
+        let { data: cart, error: cartError } = await supabase
+          .from('cart')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .maybeSingle()
+        if (cartError) throw cartError
+        if (!cart) {
+          const created = await supabase
+            .from('cart')
+            .insert({ user_id: currentUser.id })
+            .select('id')
+            .single()
+          if (created.error) throw created.error
+          cart = created.data
+        }
+
+        const { data: existingItem, error: existingError } = await supabase
+          .from('cart_items')
+          .select('id, quantity')
+          .eq('cart_id', cart.id)
+          .eq('variant_id', variantId)
+          .maybeSingle()
+        if (existingError) throw existingError
+
+        const newQuantity = Number(existingItem?.quantity ?? 0) + quantity
+        if (newQuantity > availableStock) {
+          toast.error(`Trong kho chỉ còn ${availableStock} sản phẩm của mẫu này.`)
+          return
+        }
+
+        const saveResult = existingItem
+          ? await supabase.from('cart_items').update({ quantity: newQuantity }).eq('id', existingItem.id)
+          : await supabase.from('cart_items').insert({ cart_id: cart.id, variant_id: variantId, quantity })
+        if (saveResult.error) throw saveResult.error
+
+        toast.success(`Đã thêm ${quantity} ${product.name} (${variant.color}, size ${variant.size}) vào giỏ hàng.`)
+      } catch (error) {
+        console.error('[Botpress] Could not add requested item to cart:', error)
+        toast.error('Chưa thể thêm sản phẩm vào giỏ. Vui lòng thử lại sau.')
+      }
+    }
+
+    const unsubscribeCartAdd = window.botpress.on('customEvent', handleCartAddEvent)
+
     const productUrlFor = async (productName: string) => {
       let productUrl = productLinkCache.current.get(productName)
       if (productUrl === undefined) {
@@ -592,7 +688,10 @@ export default function ChatBot() {
     linkObserver.observe(document.body, { childList: true, subtree: true })
     void repairProductLinks()
 
-    return () => linkObserver.disconnect()
+    return () => {
+      linkObserver.disconnect()
+      if (typeof unsubscribeCartAdd === 'function') unsubscribeCartAdd()
+    }
   }, [botReady])
 
   return (
