@@ -702,9 +702,10 @@ export default function ChatBot() {
         onReady={handleInjectReady}
       />
       {injectReady && <Script
-        src="https://files.bpcontent.cloud/2026/11/04/10/20261104104139-YKEB1I3J.js"
+        src="https://files.bpcontent.cloud/2026/11/18/09/20261118090830-O09480IA.js"
         strategy="afterInteractive"
       />}
     </>
   )
 }
+
