@@ -496,10 +496,10 @@ export default function ChatBot() {
       if (payload?.action !== 'cart.add') return
 
       const requestId = String(payload.requestId ?? '').trim()
-      const productId = Number(payload.productId)
+      const productId = String(payload.productId ?? '').trim()
       const variantId = String(payload.variantId ?? '').trim()
       const quantity = Number(payload.quantity)
-      if (!requestId || !Number.isSafeInteger(productId) || productId <= 0 || !variantId || !Number.isSafeInteger(quantity) || quantity < 1) {
+      if (!requestId || !productId || !variantId || !Number.isSafeInteger(quantity) || quantity < 1) {
         toast.error('Không thể thêm sản phẩm: thông tin sản phẩm chưa đầy đủ.')
         return
       }
