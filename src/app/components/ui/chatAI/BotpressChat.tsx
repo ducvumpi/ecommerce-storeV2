@@ -2,7 +2,7 @@
 import Script from 'next/script'
 import { supabase } from '@/app/libs/supabaseClient'
 import type { User } from '@supabase/supabase-js'
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import './botpress-launcher.css'
 
@@ -10,6 +10,8 @@ const IDENTITY_STORAGE_PREFIX = 'store:botpress:identity:v2'
 const CHAT_ACTIVITY_STORAGE_PREFIX = 'store:botpress:last-activity:v1'
 const CONVERSATION_IDLE_TIMEOUT_MS = 30 * 60 * 1000
 const CHAT_ORDER_TOKEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000
+const GUEST_GREETING_TEXT =
+  'Xin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé.'
 
 function identityStorageKey(conversationId: string) {
   const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
@@ -45,42 +47,75 @@ export default function ChatBot() {
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
   const brandingObserver = useRef<MutationObserver | null>(null)
+  const brandingShadowObservers = useRef(new Map<ShadowRoot, MutationObserver>())
   const chatActivity = useRef(new Map<string, number>())
   const chatOrderTokenRefresh = useRef(new Map<string, number>())
 
-  const hideBotpressBranding = () => {
+  const hideBotpressBranding = useCallback(() => {
     // Botpress renders the webchat in a Shadow DOM, so app-level CSS cannot
-    // reach the composer footer. Apply the rule inside the widget's root.
+    // reach the composer footer or individual messages.
     const applyToRoot = (root: ShadowRoot) => {
       if (root.querySelector('[data-hide-botpress-branding]')) return
       const style = document.createElement('style')
       style.dataset.hideBotpressBranding = 'true'
-      style.textContent = '.bpComposerFooter { margin-top: 20px !important; } .bpComposerFooter p { display: none !important; }'
+      style.textContent =
+        '.bpComposerFooter { margin-top: 20px !important; } .bpComposerFooter p { display: none !important; } [data-hide-guest-greeting="true"] { display: none !important; }'
       root.appendChild(style)
     }
 
+    const updateGuestGreetingVisibility = (node: ParentNode) => {
+      node.querySelectorAll<HTMLElement>('.bpMessageBlocksTextText').forEach((message) => {
+        if (!message.textContent?.trim().startsWith(GUEST_GREETING_TEXT)) return
+        const container = message.closest<HTMLElement>('.bpMessageContainer')
+        if (!container) return
+
+        if (document.documentElement.dataset.chatAuthenticated === 'true') {
+          container.dataset.hideGuestGreeting = 'true'
+        } else {
+          delete container.dataset.hideGuestGreeting
+        }
+      })
+    }
+
+    const observeShadowRoot = (root: ShadowRoot) => {
+      if (brandingShadowObservers.current.has(root)) return
+      const observer = new MutationObserver(() => updateGuestGreetingVisibility(root))
+      observer.observe(root, { childList: true, subtree: true })
+      brandingShadowObservers.current.set(root, observer)
+    }
+
     const visit = (node: ParentNode) => {
+      updateGuestGreetingVisibility(node)
       node.querySelectorAll('*').forEach((element) => {
         if (element.shadowRoot) {
           applyToRoot(element.shadowRoot)
+          observeShadowRoot(element.shadowRoot)
           visit(element.shadowRoot)
         }
       })
       if (node instanceof Element && node.shadowRoot) {
         applyToRoot(node.shadowRoot)
+        observeShadowRoot(node.shadowRoot)
         visit(node.shadowRoot)
       }
     }
 
-    if (brandingObserver.current) return
     visit(document)
+    if (brandingObserver.current) return
     brandingObserver.current = new MutationObserver((records) => {
       records.forEach((record) => record.addedNodes.forEach((node) => {
         if (node instanceof Element) visit(node)
       }))
     })
     brandingObserver.current.observe(document.body, { childList: true, subtree: true })
-  }
+  }, [])
+
+  useEffect(() => () => {
+    brandingObserver.current?.disconnect()
+    brandingObserver.current = null
+    brandingShadowObservers.current.forEach((observer) => observer.disconnect())
+    brandingShadowObservers.current.clear()
+  }, [])
 
   const handleInjectReady = () => {
     if (!window.botpress) return
@@ -128,6 +163,12 @@ export default function ChatBot() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (user === undefined) return
+    document.documentElement.dataset.chatAuthenticated = user ? 'true' : 'false'
+    hideBotpressBranding()
+  }, [botReady, hideBotpressBranding, user])
 
   // The SDK cannot send events until Webchat has been opened once.
   useEffect(() => {

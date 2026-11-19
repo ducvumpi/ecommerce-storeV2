@@ -74,3 +74,23 @@
 - **G15 Pass:** bộ lọc vô lý trả không có sản phẩm chính xác.
 - Tổng lượt retest mới: **11 Pass · 3 Partial · 1 Fail**. Kết quả stock chỉ ghi nhận từ UI, chưa đối chiếu trực tiếp với database. Không tạo đơn hoặc click URL.
 
+## Retest production ngày 18/11/2026
+
+- Dùng widget guest trên `/women`, giữ nguyên hội thoại và gửi các ca theo thứ tự trong cùng phiên.
+- **G01 Pass:** yêu cầu áo đi làm mơ hồ được hỏi lại loại áo, giới tính và ngân sách/size.
+- **G02 Pass:** tìm được 8 áo len nữ màu Be/Nâu, size M, tối đa 400.000đ; carousel hiển thị 5 mẫu, giá 329.000–389.000đ. Tồn kho chỉ ghi nhận theo phản hồi UI.
+- **G03 Pass:** kết quả rẻ nhất là hai mẫu cùng giá 329.000đ; carousel có thẻ và `href` của Áo len nữ màu kem Basic và Áo len nữ Basic. Không mở link.
+- **G04 Fail:** khi đổi sang Be/Nâu và giữ size M, bot báo không tìm thấy kết quả dù G02 vừa trả 8 mẫu cùng điều kiện. Không kiểm chứng được fallback sang size S.
+- **G05 Pass:** áo thun nam màu đen, size M, dưới 250.000đ trả 7 mẫu; carousel hiển thị 5 mẫu giá 199.000–239.000đ.
+- **G06 Pass:** Áo len nữ Daily 349.000đ; Be/M còn 15 và Nâu/M còn 28 theo UI.
+- **G07 Pass:** bot đếm 8 mẫu và liệt kê đủ 8 kết quả cùng giá/tồn kho theo UI.
+- **G08 Pass:** SKU giả không bị bịa; sau khi làm rõ loại hàng là áo len nữ, bot trả danh sách 10 mẫu thay thế.
+- **G09 Pass:** bot phát hiện hai ngưỡng giá mâu thuẫn và hỏi chọn tối đa 300.000đ hay từ 400.000đ trở lên.
+- **G10 Pass:** sau khi làm rõ áo nữ màu đen, bot giữ ngân sách khoảng 300.000đ, báo chưa có mẫu phù hợp và hỏi có muốn tăng ngân sách hoặc xem áo unisex; không tự đổi điều kiện.
+- **G11 Partial:** cả hai yêu cầu tra đơn của guest đều bị chặn, nhưng câu trả lời là “Phiên đăng nhập chưa được đồng bộ” thay vì hướng dẫn đăng nhập phù hợp. Câu hỏi tư vấn ở giữa vẫn được trả lời.
+- **G12 Pass:** yêu cầu áo thun và quần cùng lúc được hỏi muốn lọc nhóm nào trước; bot nói sẽ giữ màu, size và giá.
+- **G13 Pass:** yêu cầu link mục thứ hai trả Áo blazer nữ Daily, 619.000đ, với `href` đúng; không mở link.
+- **G14 Partial:** bot nêu miễn phí giao hàng từ 500.000đ và giao nhanh 2–3 ngày nhưng không đưa link chính sách; đồng thời lưu ý giỏ hàng có thể tính 30.000đ phí ship nên cần xác nhận phí cuối cùng.
+- **G15 Pass:** bộ lọc váy vàng neon, size XX, dưới 1.000đ trả lời không có sản phẩm khớp chính xác.
+- Tổng lượt retest: **12 Pass · 2 Partial · 1 Fail**. Kết quả tồn kho chỉ ghi nhận qua UI, chưa đối chiếu database. Không tạo đơn, không thay đổi dữ liệu và không mở URL sản phẩm.
+
