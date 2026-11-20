@@ -12,6 +12,7 @@ const CONVERSATION_IDLE_TIMEOUT_MS = 30 * 60 * 1000
 const CHAT_ORDER_TOKEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 const GUEST_GREETING_TEXT =
   'Xin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé.'
+const AUTH_GREETING_TEXT = 'Xin ch\u00e0o! T\u00f4i c\u00f3 th\u1ec3 gi\u00fap g\u00ec cho b\u1ea1n?'
 
 function identityStorageKey(conversationId: string) {
   const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
@@ -59,33 +60,40 @@ export default function ChatBot() {
       const style = document.createElement('style')
       style.dataset.hideBotpressBranding = 'true'
       style.textContent =
-        '.bpComposerFooter { margin-top: 20px !important; } .bpComposerFooter p { display: none !important; } [data-hide-guest-greeting="true"] { display: none !important; }'
+        '.bpComposerFooter { margin-top: 20px !important; } .bpComposerFooter p { display: none !important; } [data-hide-guest-greeting="true"], [data-hide-auth-greeting="true"] { display: none !important; }'
       root.appendChild(style)
     }
 
-    const updateGuestGreetingVisibility = (node: ParentNode) => {
+    const updateGreetingVisibility = (node: ParentNode) => {
       node.querySelectorAll<HTMLElement>('.bpMessageBlocksTextText').forEach((message) => {
-        if (!message.textContent?.trim().startsWith(GUEST_GREETING_TEXT)) return
+        const text = message.textContent?.trim() ?? ''
+        const isGuestGreeting = text.startsWith(GUEST_GREETING_TEXT)
+        const isAuthGreeting = text.startsWith(AUTH_GREETING_TEXT)
+        if (!isGuestGreeting && !isAuthGreeting) return
         const container = message.closest<HTMLElement>('.bpMessageContainer')
         if (!container) return
 
-        if (document.documentElement.dataset.chatAuthenticated === 'true') {
-          container.dataset.hideGuestGreeting = 'true'
-        } else {
-          delete container.dataset.hideGuestGreeting
+        const isAuthenticated = document.documentElement.dataset.chatAuthenticated === 'true'
+        if (isGuestGreeting) {
+          if (isAuthenticated) container.dataset.hideGuestGreeting = 'true'
+          else delete container.dataset.hideGuestGreeting
+        }
+        if (isAuthGreeting) {
+          if (!isAuthenticated) container.dataset.hideAuthGreeting = 'true'
+          else delete container.dataset.hideAuthGreeting
         }
       })
     }
 
     const observeShadowRoot = (root: ShadowRoot) => {
       if (brandingShadowObservers.current.has(root)) return
-      const observer = new MutationObserver(() => updateGuestGreetingVisibility(root))
+      const observer = new MutationObserver(() => updateGreetingVisibility(root))
       observer.observe(root, { childList: true, subtree: true })
       brandingShadowObservers.current.set(root, observer)
     }
 
     const visit = (node: ParentNode) => {
-      updateGuestGreetingVisibility(node)
+      updateGreetingVisibility(node)
       node.querySelectorAll('*').forEach((element) => {
         if (element.shadowRoot) {
           applyToRoot(element.shadowRoot)
