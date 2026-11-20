@@ -53,6 +53,11 @@ function identityStorageKey(conversationId: string) {
   return `${IDENTITY_STORAGE_PREFIX}:${botId}:${conversationId}`
 }
 
+function lastIdentityStorageKey() {
+  const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
+  return `${IDENTITY_STORAGE_PREFIX}:${botId}:last-identity`
+}
+
 function readStoredIdentity(key: string) {
   try {
     const identity = window.localStorage.getItem(key)
@@ -91,18 +96,59 @@ export default function ChatBot() {
       const style = document.createElement('style')
       style.dataset.hideBotpressBranding = 'true'
       style.textContent =
-        '.bpComposerFooter { margin-top: 20px !important; } .bpComposerFooter p { display: none !important; } [data-hide-guest-greeting="true"], [data-hide-auth-greeting="true"] { display: none !important; }'
+        '.bpComposerFooter { margin-top: 20px !important; } .bpComposerFooter p { display: none !important; } [data-hide-guest-greeting="true"], [data-hide-auth-greeting="true"], [data-hide-duplicate-greeting="true"], [data-hide-empty-product-fallback="true"] { display: none !important; }'
       root.appendChild(style)
     }
 
     const updateGreetingVisibility = (node: ParentNode) => {
-      node.querySelectorAll<HTMLElement>('.bpMessageBlocksTextText').forEach((message) => {
+      const messages = Array.from(node.querySelectorAll<HTMLElement>('.bpMessageBlocksTextText'))
+      let firstGreeting: 'guest' | 'auth' | null = null
+      messages.forEach((message) => {
         const text = message.textContent?.trim() ?? ''
         const isGuestGreeting = text.startsWith(GUEST_GREETING_TEXT)
         const isAuthGreeting = text.startsWith(AUTH_GREETING_TEXT)
-        if (!isGuestGreeting && !isAuthGreeting) return
         const container = message.closest<HTMLElement>('.bpMessageContainer')
         if (!container) return
+
+        // Identity sync events can replay the greeting in a restored transcript.
+        // Keep the first greeting and avoid showing subsequent copies.
+        if (isGuestGreeting || isAuthGreeting) {
+          const kind = isGuestGreeting ? 'guest' : 'auth'
+          if (firstGreeting === kind) container.dataset.hideDuplicateGreeting = 'true'
+          else {
+            firstGreeting = kind
+            delete container.dataset.hideDuplicateGreeting
+          }
+        }
+
+        // An auth sync event has no customer product query. Hide the product
+        // fallback emitted immediately after a greeting when no user message
+        // has arrived since that greeting.
+        const isEmptyProductFallback = text === 'Không tìm thấy sản phẩm khớp chính xác trong dữ liệu cửa hàng.'
+        if (isEmptyProductFallback) {
+          const viewport = container.closest<HTMLElement>('.bpMessageListViewport')
+          const orderedContainers = viewport
+            ? Array.from(viewport.querySelectorAll<HTMLElement>(':scope > .bpMessageContainer'))
+            : []
+          const ownIndex = orderedContainers.indexOf(container)
+          let lastGreetingIndex = -1
+          orderedContainers.forEach((item, index) => {
+            const greeting = item.querySelector<HTMLElement>('.bpMessageBlocksTextText')?.textContent?.trim() ?? ''
+            if (greeting.startsWith(GUEST_GREETING_TEXT) || greeting.startsWith(AUTH_GREETING_TEXT)) {
+              lastGreetingIndex = index
+            }
+          })
+          const userMessageSinceGreeting = lastGreetingIndex >= 0 && orderedContainers
+            .slice(lastGreetingIndex + 1, ownIndex)
+            .some((item) => item.classList.contains('bpMessageDeliveryStatus'))
+          if (lastGreetingIndex >= 0 && !userMessageSinceGreeting) {
+            container.dataset.hideEmptyProductFallback = 'true'
+          } else {
+            delete container.dataset.hideEmptyProductFallback
+          }
+        }
+
+        if (!isGuestGreeting && !isAuthGreeting) return
 
         const isAuthenticated = document.documentElement.dataset.chatAuthenticated === 'true'
         if (isGuestGreeting) {
@@ -264,8 +310,11 @@ export default function ChatBot() {
       // A different tab may have finished sending while this tab waited.
       const storedIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
       if (storedIdentity === identity && (user || (!authenticatedSessionSeen.current && guestEventWasSent))) return
+      const lastIdentity = readStoredIdentity(lastIdentityStorageKey())
       const previouslyAuthenticated =
-        (storedIdentity?.startsWith('auth:') ?? false) || authenticatedSessionSeen.current
+        (storedIdentity?.startsWith('auth:') ?? false) ||
+        (lastIdentity?.startsWith('auth:') ?? false) ||
+        authenticatedSessionSeen.current
 
       // Keep shopping context during idle periods, but start a clean guest
       // conversation when an authenticated session ends so order details and
@@ -348,6 +397,9 @@ export default function ChatBot() {
           profile,
           chatOrderToken,
           isLoggedIn: true,
+          // Re-establish the order lookup capability after a page reload or a
+          // new conversation without replaying the auth greeting.
+          ...(lastIdentity === identity ? { tokenRefreshOnly: true } : {}),
         }
       } else {
         payload = {
@@ -370,6 +422,7 @@ export default function ChatBot() {
       }
       try {
         window.localStorage.setItem(key, identity)
+        window.localStorage.setItem(lastIdentityStorageKey(), identity)
         if (!user) window.localStorage.setItem(guestEventSentKey, 'sent')
       } catch {
         // The event was sent even if browser storage is unavailable.
@@ -398,6 +451,12 @@ export default function ChatBot() {
     const identity = `auth:${user.id}:${user.email ?? ''}`
     const identityKey = identityStorageKey(conversationId)
     const pendingIdentityKey = `${identityKey}:${identity}`
+    // The conversation identity sync above already supplies a fresh token on
+    // page load. Start the refresh clock here so it cannot race that event and
+    // send a second auth trigger (which can replay greetings/fallback branches).
+    if (!chatOrderTokenRefresh.current.has(conversationId)) {
+      chatOrderTokenRefresh.current.set(conversationId, Date.now())
+    }
     let active = true
     let refreshing = false
 

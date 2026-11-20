@@ -57,7 +57,7 @@ export default function AccountProfile() {
   });
   const [profileData, setProfileData] = useState({
     last_name: '', first_name: '', email: '', phone: "",
-    address: '', bio: '', dateOfBirth: '31/01/1990', gender: 'Nam'
+    address: '', bio: '', dateOfBirth: '', gender: 'Nam'
   });
 
   useEffect(() => {
@@ -91,6 +91,7 @@ export default function AccountProfile() {
     const fetchProfileData = async () => {
       const profile = await supabase.auth.getUser();
       if (!profile.data.user) return;
+      const user = profile.data.user;
       const { data, error } = await supabase
         .from("profiles").select("*")
         .eq("id", profile.data.user.id).single();
@@ -98,11 +99,11 @@ export default function AccountProfile() {
 
       setProfileData(prev => ({
         ...prev,
-        last_name: data?.last_name || "",
-        first_name: data?.first_name || "",
-        email: data?.email || "",
-        phone: data?.phone || 0,
-        gender: data?.gender || "Nam",
+        last_name: data?.last_name || user.user_metadata?.last_name || "",
+        first_name: data?.first_name || user.user_metadata?.first_name || "",
+        email: data?.email || user.email || "",
+        phone: data?.phone || "",
+        gender: data?.gender || "",
         dateOfBirth: data?.date_of_birth || "",
       }));
 

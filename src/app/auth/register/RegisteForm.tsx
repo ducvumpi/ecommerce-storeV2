@@ -5,8 +5,9 @@ import { SignupForm, SignUpSchema } from "../../api/loginAPI";
 import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
 import { useCaptcha } from "@/app/hooks/useCaptcha";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { loginWithGoogle } from "@/app/api/loginAPI";
+import { useAuth } from "@/app/AuthProvider";
 
 const inputStyle = (hasError?: boolean): React.CSSProperties => ({
     height: 42, padding: "0 14px",
@@ -22,6 +23,7 @@ const labelStyle: React.CSSProperties = {
 const errStyle: React.CSSProperties = { fontSize: 11, color: "#c07050", margin: "4px 0 0" };
 
 export default function RegisterForm() {
+    const { user } = useAuth();
     const router = useRouter();
     const { canvasRef, captchaInput, setCaptchaInput, captchaError, refresh, validate } = useCaptcha();
     const [loading, setLoading] = useState(false);
@@ -37,6 +39,12 @@ export default function RegisterForm() {
     const { control, handleSubmit, formState: { errors } } = useForm<SignupForm>({
         resolver: yupResolver(SignUpSchema),
     });
+
+    useEffect(() => {
+        if (user) router.replace("/");
+    }, [router, user]);
+
+    if (user) return null;
 
 
     return (

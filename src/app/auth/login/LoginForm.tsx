@@ -6,7 +6,8 @@ import { useAuthStore } from "@/app/store/isLoggedIn";
 import { useRouter } from "next/navigation";
 import { loginWithGoogle } from "@/app/api/loginAPI";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/app/AuthProvider";
 
 const inputStyle: React.CSSProperties = {
     height: 42, padding: "0 14px", border: "1px solid #e2d9ce",
@@ -20,12 +21,17 @@ const labelStyle: React.CSSProperties = {
 };
 
 export default function LoginFormAuth() {
+    const { user } = useAuth();
     const { onSubmit } = useAuthStore();
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const { control, handleSubmit, formState: { errors } } = useForm<LoginData>({
         resolver: yupResolver(LoginSchema),
     });
+
+    useEffect(() => {
+        if (user) router.replace("/");
+    }, [router, user]);
 
     const handleLogin = async (data: LoginData) => {
         const success = await onSubmit(data);
@@ -34,6 +40,8 @@ export default function LoginFormAuth() {
             router.refresh();
         }
     };
+
+    if (user) return null;
 
     return (
         <div style={{ background: "#faf8f5", minHeight: "100vh", padding: "60px 16px", fontFamily: "var(--font-sans, Lora, serif)" }}>
