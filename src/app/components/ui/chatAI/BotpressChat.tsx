@@ -685,7 +685,7 @@ export default function ChatBot() {
         onReady={handleInjectReady}
       />
       {injectReady && <Script id="botpress-init-config" strategy="afterInteractive">
-        `window.botpress.init(${JSON.stringify(BOTPRESS_INIT_CONFIG)})`
+        {`window.botpress.init(${JSON.stringify(BOTPRESS_INIT_CONFIG)})`}
       </Script>}
     </>
   )
