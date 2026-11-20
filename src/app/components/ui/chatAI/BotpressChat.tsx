@@ -8,6 +8,42 @@ import './botpress-launcher.css'
 
 const IDENTITY_STORAGE_PREFIX = 'store:botpress:identity:v2'
 const CHAT_ORDER_TOKEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000
+const BOTPRESS_INIT_CONFIG = {
+  botId: '43725cc2-1a63-4330-bff8-cfe6d9772a82',
+  clientId: '33f591b6-229d-4873-91f1-7f8d7b1e542f',
+  configuration: {
+    version: 'v2',
+    composerPlaceholder: '"Tôi có thể giúp gì cho bạn hôm nay?"',
+    botName: 'Trợ lý Nai Tiệm Mùa Chậm.',
+    botAvatar: 'https://files.bpcontent.cloud/2026/11/18/09/20261118090953-TVLI9WXB.png',
+    botDescription: 'Mua sắm tự động giúp người dùng duyệt sản phẩm, xem chi tiết, tra cứu giá và nhận tư vấn nhanh chóng trong quá trình mua hàng.',
+    website: { title: 'https://tiem-mua-cham-store.vercel.app/', link: 'https://tiem-mua-cham-store.vercel.app/' },
+    email: { title: 'tiemmuacham@gmail.com', link: 'tiemmuacham@gmail.com' },
+    phone: { title: '+84 38 8999 699', link: '+84 38 8999 699' },
+    termsOfService: { title: 'Terms of service', link: 'https://tiem-mua-cham-store.vercel.app/' },
+    privacyPolicy: { title: 'Privacy policy', link: 'https://tiem-mua-cham-store.vercel.app/' },
+    color: '#ccbc96',
+    variant: 'solid',
+    headerVariant: 'glass',
+    themeMode: 'light',
+    fontFamily: 'inter',
+    radius: 4,
+    feedbackEnabled: true,
+    footer: '[⚡ by Botpress](https://botpress.com/?from=webchat)',
+    allowFileUpload: true,
+    soundEnabled: true,
+    proactiveMessageEnabled: false,
+    proactiveBubbleMessage: 'Hi! 👋 Need help?',
+    proactiveBubbleTriggerType: 'afterDelay',
+    proactiveBubbleDelayTime: 10,
+    conversationHistory: true,
+    homePageEnabled: false,
+    mainCardEnabled: false,
+    conversationStartersEnabled: false,
+    conversationStarters: [],
+    conversationStartersDisplayStyle: 'cards',
+  },
+}
 const GUEST_GREETING_TEXT =
   'Xin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé.'
 const AUTH_GREETING_TEXT = 'Xin ch\u00e0o! T\u00f4i c\u00f3 th\u1ec3 gi\u00fap g\u00ec cho b\u1ea1n?'
@@ -648,10 +684,9 @@ export default function ChatBot() {
         strategy="afterInteractive"
         onReady={handleInjectReady}
       />
-      {injectReady && <Script
-        src="https://files.bpcontent.cloud/2026/11/18/09/20261118090830-O09480IA.js"
-        strategy="afterInteractive"
-      />}
+      {injectReady && <Script id="botpress-init-config" strategy="afterInteractive">
+        `window.botpress.init(${JSON.stringify(BOTPRESS_INIT_CONFIG)})`
+      </Script>}
     </>
   )
 }
