@@ -22,4 +22,21 @@ Baseline: [Botpress-thesis-auth-test-run-2026-11-20.md](./Botpress-thesis-auth-t
 
 ## Retest status
 
-No production pass is claimed for A02/A05/A06/A07 or the reload behavior until the code is deployed. The Botpress flow itself was not editable from the currently available Studio page in this run, so publication of the flow-level silent `tokenRefreshOnly` branch remains unverified. Re-test after deploying the website and publishing the Botpress flow; keep the same conversation for the reload scenario as requested.
+At the time of the initial local verification, no production pass was claimed because deployment had not yet been reported. The subsequent production retest is recorded below. The Botpress Studio flow itself was not editable from the available page, so its `tokenRefreshOnly` branch was not directly inspected; the browser retest verifies the observed user-facing behavior on the tested existing conversation.
+
+## Production retest — 2026-11-20
+
+After the user reported deployment, the shared authenticated production browser was retested without logging out, changing profile data, or creating a new chat conversation.
+
+| Case | Result | Evidence |
+|---|---|---|
+| A01 — authenticated session | Pass | Navbar still displays the signed-in member after reload and route navigation. |
+| A02 — profile | Partial | Profile loads the authenticated email. Name remains the generic “Người dùng”; phone and date of birth are empty in the account data. No fake date is displayed. |
+| A03 — orders | Pass | `/orders` finishes loading and displays 2 orders. |
+| A05 — login while authenticated | Pass | `/auth/login` redirects to `/`; login form is not shown. |
+| A06 — register while authenticated | Pass | `/auth/register` redirects to `/`; registration form is not shown. |
+| A07 — settings route | Pass | `/settings` redirects to `/info` instead of returning 404. |
+| Reload greeting / empty product fallback | Pass for the tested reload | Reload preserved the existing transcript. It showed one greeting total and no new “Không tìm thấy sản phẩm khớp chính xác…” response after reload without a new user message. |
+| A09 / auth conversation continuity | Pass for the restored transcript | Existing order lookup and product consultation messages remained in the same Botpress conversation; no new conversation was started. |
+
+The profile remains Partial because the account has no verified name, phone, or date-of-birth values to display. The browser showed unrelated font request blocks and 404 resource errors; they did not prevent these Auth pages from loading. This retest does not prove the behavior for a brand-new conversation or every Botpress workflow path.
