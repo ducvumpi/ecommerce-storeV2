@@ -7,8 +7,6 @@ import { toast } from 'react-hot-toast'
 import './botpress-launcher.css'
 
 const IDENTITY_STORAGE_PREFIX = 'store:botpress:identity:v2'
-const CHAT_ACTIVITY_STORAGE_PREFIX = 'store:botpress:last-activity:v1'
-const CONVERSATION_IDLE_TIMEOUT_MS = 30 * 60 * 1000
 const CHAT_ORDER_TOKEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000
 const GUEST_GREETING_TEXT =
   'Xin chào! Tôi có thể giúp tìm hoặc tư vấn sản phẩm. Nếu muốn tra cứu đơn hàng, vui lòng đăng nhập tài khoản trước nhé.'
@@ -17,11 +15,6 @@ const AUTH_GREETING_TEXT = 'Xin ch\u00e0o! T\u00f4i c\u00f3 th\u1ec3 gi\u00fap g
 function identityStorageKey(conversationId: string) {
   const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
   return `${IDENTITY_STORAGE_PREFIX}:${botId}:${conversationId}`
-}
-
-function chatActivityStorageKey(conversationId: string) {
-  const botId = window.botpress?.botId || window.botpress?.clientId || 'store'
-  return `${CHAT_ACTIVITY_STORAGE_PREFIX}:${botId}:${conversationId}`
 }
 
 function readStoredIdentity(key: string) {
@@ -45,11 +38,13 @@ export default function ChatBot() {
   const pendingIdentities = useRef(new Set<string>())
   const productLinkCache = useRef(new Map<string, string | null>())
   const desiredIdentity = useRef<string | null>(null)
+  const authenticatedSessionSeen = useRef(false)
+  const logoutResetSourceConversation = useRef<string | null>(null)
+  const logoutResetConversations = useRef(new Set<string>())
   const messageListenerAdded = useRef(false)
   const readyListenerAdded = useRef(false)
   const brandingObserver = useRef<MutationObserver | null>(null)
   const brandingShadowObservers = useRef(new Map<ShadowRoot, MutationObserver>())
-  const chatActivity = useRef(new Map<string, number>())
   const chatOrderTokenRefresh = useRef(new Map<string, number>())
 
   const hideBotpressBranding = useCallback(() => {
@@ -131,7 +126,13 @@ export default function ChatBot() {
       readyListenerAdded.current = true
       const syncConversation = (id?: unknown) => {
         const currentId = typeof id === 'string' ? id : window.botpress?.conversationId
-        if (currentId) setConversationId(currentId)
+        if (currentId) {
+          if (logoutResetSourceConversation.current && currentId !== logoutResetSourceConversation.current) {
+            logoutResetConversations.current.add(currentId)
+            logoutResetSourceConversation.current = null
+          }
+          setConversationId(currentId)
+        }
       }
       window.botpress.on('webchat:initialized', () => {
         syncConversation()
@@ -196,6 +197,7 @@ export default function ChatBot() {
   useEffect(() => {
     if (user === undefined) return
     const identity = user ? `auth:${user.id}:${user.email ?? ''}` : 'guest'
+    if (user) authenticatedSessionSeen.current = true
     desiredIdentity.current = identity
     if (!botReady || !conversationId || !window.botpress?.sendEvent) return
     const key = identityStorageKey(conversationId)
@@ -213,7 +215,10 @@ export default function ChatBot() {
       }
     })()
     // A pending auth send may still replace the stored guest state.
-    if (previousIdentity === identity && pendingIdentities.current.size === 0 && (user || guestEventWasSent)) return
+    if (
+      previousIdentity === identity && pendingIdentities.current.size === 0 &&
+      (user || (!authenticatedSessionSeen.current && guestEventWasSent))
+    ) return
     pendingIdentities.current.add(pendingKey)
 
     const sendIdentity = async () => {
@@ -222,8 +227,63 @@ export default function ChatBot() {
       if (desiredIdentity.current !== identity) return
       // A different tab may have finished sending while this tab waited.
       const storedIdentity = readStoredIdentity(key) ?? sentIdentities.current.get(key)
-      if (storedIdentity === identity && (user || guestEventWasSent)) return
-      const previouslyAuthenticated = storedIdentity?.startsWith('auth:') ?? false
+      if (storedIdentity === identity && (user || (!authenticatedSessionSeen.current && guestEventWasSent))) return
+      const previouslyAuthenticated =
+        (storedIdentity?.startsWith('auth:') ?? false) || authenticatedSessionSeen.current
+
+      // Keep shopping context during idle periods, but start a clean guest
+      // conversation when an authenticated session ends so order details and
+      // authenticated greetings do not remain in the transcript.
+      if (!user && previouslyAuthenticated) {
+        const webchat = window.botpress
+        if (webchat?.restartConversation && webchat.conversationId === conversationId) {
+          logoutResetSourceConversation.current = conversationId
+          let unsubscribeConversation: (() => void) | undefined
+          let conversationTimeout: ReturnType<typeof setTimeout> | undefined
+          const conversationChanged = new Promise<string>((resolve) => {
+            unsubscribeConversation = webchat.on('conversation', (nextId) => {
+              if (typeof nextId === 'string' && nextId !== conversationId) resolve(nextId)
+            }) ?? undefined
+          })
+
+          try {
+            await webchat.restartConversation()
+            const nextConversationId = webchat.conversationId
+            const confirmedConversationId = nextConversationId && nextConversationId !== conversationId
+              ? nextConversationId
+              : await Promise.race([
+                conversationChanged,
+                new Promise<string>((_, reject) => {
+                  conversationTimeout = setTimeout(() => {
+                    reject(new Error('Botpress did not confirm the guest conversation after logout.'))
+                  }, 10_000)
+                }),
+              ])
+            logoutResetConversations.current.add(confirmedConversationId)
+            logoutResetSourceConversation.current = null
+            authenticatedSessionSeen.current = false
+            chatOrderTokenRefresh.current.delete(conversationId)
+            setConversationId(confirmedConversationId)
+            return
+          } catch (error) {
+            logoutResetSourceConversation.current = null
+            const nextConversationId = webchat.conversationId
+            if (nextConversationId && nextConversationId !== conversationId) {
+              logoutResetConversations.current.add(nextConversationId)
+              authenticatedSessionSeen.current = false
+              chatOrderTokenRefresh.current.delete(conversationId)
+              setConversationId(nextConversationId)
+              return
+            }
+            console.error('Failed to restart the Botpress conversation after logout:', error)
+          } finally {
+            if (conversationTimeout) clearTimeout(conversationTimeout)
+            unsubscribeConversation?.()
+          }
+        }
+      }
+
+      if (desiredIdentity.current !== identity) return
       // Send guest identity on first visit as well as on logout so Botpress can
       // run its guest trigger and record the event in the conversation logs.
       const type = user ? 'auth' : 'guest'
@@ -257,7 +317,7 @@ export default function ChatBot() {
         payload = {
           type,
           text: '__guest__',
-          reason: previouslyAuthenticated ? 'logout' : 'guest',
+          reason: previouslyAuthenticated || logoutResetConversations.current.has(conversationId) ? 'logout' : 'guest',
           email: null,
           userId: null,
           isLoggedIn: false,
@@ -267,7 +327,11 @@ export default function ChatBot() {
       sentIdentities.current.set(key, identity)
       if (user) chatOrderTokenRefresh.current.set(conversationId, Date.now())
       else chatOrderTokenRefresh.current.delete(conversationId)
-      if (!user) sentGuestEvents.current.add(key)
+      if (!user) {
+        sentGuestEvents.current.add(key)
+        logoutResetConversations.current.delete(conversationId)
+        authenticatedSessionSeen.current = false
+      }
       try {
         window.localStorage.setItem(key, identity)
         if (!user) window.localStorage.setItem(guestEventSentKey, 'sent')
@@ -365,172 +429,6 @@ export default function ChatBot() {
     }
   }, [botReady, conversationId, user])
 
-  useEffect(() => {
-    const webchat = window.botpress
-    if (!botReady || !conversationId || !webchat) return
-
-    const activityKey = chatActivityStorageKey(conversationId)
-    let idleTimer: ReturnType<typeof setTimeout> | null = null
-    let resetInProgress = false
-    let active = true
-
-    const getLastActivity = () => {
-      try {
-        const stored = Number(window.localStorage.getItem(activityKey))
-        if (Number.isFinite(stored) && stored > 0) {
-          chatActivity.current.set(activityKey, stored)
-          return stored
-        }
-      } catch {
-        // Fall back to the in-memory timestamp when browser storage is unavailable.
-      }
-      return chatActivity.current.get(activityKey) ?? null
-    }
-
-    const setLastActivity = (timestamp: number) => {
-      chatActivity.current.set(activityKey, timestamp)
-      try {
-        window.localStorage.setItem(activityKey, String(timestamp))
-      } catch {
-        // The idle timer still works for this page when browser storage is unavailable.
-      }
-    }
-
-    const scheduleIdleReset = () => {
-      if (idleTimer) clearTimeout(idleTimer)
-      const lastActivity = getLastActivity()
-      if (lastActivity === null) return
-      const delay = Math.max(0, CONVERSATION_IDLE_TIMEOUT_MS - (Date.now() - lastActivity))
-      idleTimer = setTimeout(() => {
-        void resetIfIdle()
-      }, delay)
-    }
-
-    const resetIfIdle = async () => {
-      if (!active || resetInProgress || window.botpress?.conversationId !== conversationId) return
-      const lastActivity = getLastActivity()
-      if (lastActivity === null) return
-      const remaining = CONVERSATION_IDLE_TIMEOUT_MS - (Date.now() - lastActivity)
-      if (remaining > 0) {
-        scheduleIdleReset()
-        return
-      }
-
-      resetInProgress = true
-      const startNewConversation = async () => {
-        if (!active || window.botpress?.conversationId !== conversationId) return
-        const latestActivity = getLastActivity()
-        if (latestActivity === null || Date.now() - latestActivity < CONVERSATION_IDLE_TIMEOUT_MS) {
-          scheduleIdleReset()
-          return
-        }
-
-        try {
-          let unsubscribeConversation: (() => void) | undefined
-          let conversationTimeout: ReturnType<typeof setTimeout> | undefined
-          const conversationChanged = new Promise<string>((resolve) => {
-            unsubscribeConversation = webchat.on('conversation', (nextId) => {
-              if (typeof nextId === 'string' && nextId !== conversationId) resolve(nextId)
-            }) ?? undefined
-          })
-
-          try {
-            await webchat.restartConversation()
-            const nextConversationId = webchat.conversationId
-            const confirmedConversationId = nextConversationId && nextConversationId !== conversationId
-              ? nextConversationId
-              : await Promise.race([
-                conversationChanged,
-                new Promise<string>((_, reject) => {
-                  conversationTimeout = setTimeout(() => {
-                    reject(new Error('Botpress did not confirm the new conversation.'))
-                  }, 10_000)
-                }),
-              ])
-            setConversationId(confirmedConversationId)
-          } finally {
-            if (conversationTimeout) clearTimeout(conversationTimeout)
-            unsubscribeConversation?.()
-          }
-        } catch (error) {
-          console.error('Failed to start a new Botpress conversation after inactivity:', error)
-          idleTimer = setTimeout(() => {
-            void resetIfIdle()
-          }, 30_000)
-        }
-      }
-
-      try {
-        if (navigator.locks) {
-          await navigator.locks.request(`botpress-idle-reset:${activityKey}`, startNewConversation)
-        } else {
-          await startNewConversation()
-        }
-      } catch (error) {
-        console.error('Failed to acquire the Botpress conversation reset lock:', error)
-        idleTimer = setTimeout(() => {
-          void resetIfIdle()
-        }, 30_000)
-      } finally {
-        resetInProgress = false
-      }
-    }
-
-    const recordChatActivity = () => {
-      if (!active || window.botpress?.conversationId !== conversationId) return
-      const now = Date.now()
-      const lastActivity = getLastActivity()
-      if (lastActivity !== null && now - lastActivity >= CONVERSATION_IDLE_TIMEOUT_MS) {
-        void resetIfIdle()
-        return
-      }
-      setLastActivity(now)
-      scheduleIdleReset()
-    }
-
-    const handleChatInteraction = (event: Event) => {
-      const target = event.target
-      if (!(target instanceof Element) || !target.closest('.bpWebchat, .bpChatContainer')) return
-      recordChatActivity()
-    }
-
-    const checkIdleOnReturn = () => {
-      if (document.visibilityState === 'visible') void resetIfIdle()
-    }
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === activityKey) scheduleIdleReset()
-    }
-
-    const unsubscribeMessageSent = webchat.on('messageSent', recordChatActivity)
-    const unsubscribeOpened = webchat.on('webchat:opened', recordChatActivity)
-    document.addEventListener('pointerdown', handleChatInteraction, true)
-    document.addEventListener('keydown', handleChatInteraction, true)
-    document.addEventListener('input', handleChatInteraction, true)
-    document.addEventListener('visibilitychange', checkIdleOnReturn)
-    window.addEventListener('focus', checkIdleOnReturn)
-    window.addEventListener('storage', handleStorageChange)
-
-    const initializeIdleTimer = () => {
-      if (getLastActivity() === null) setLastActivity(Date.now())
-      scheduleIdleReset()
-    }
-
-    initializeIdleTimer()
-
-    return () => {
-      active = false
-      if (idleTimer) clearTimeout(idleTimer)
-      if (typeof unsubscribeMessageSent === 'function') unsubscribeMessageSent()
-      if (typeof unsubscribeOpened === 'function') unsubscribeOpened()
-      document.removeEventListener('pointerdown', handleChatInteraction, true)
-      document.removeEventListener('keydown', handleChatInteraction, true)
-      document.removeEventListener('input', handleChatInteraction, true)
-      document.removeEventListener('visibilitychange', checkIdleOnReturn)
-      window.removeEventListener('focus', checkIdleOnReturn)
-      window.removeEventListener('storage', handleStorageChange)
-    }
-  }, [botReady, conversationId])
 
   useEffect(() => {
     if (!botReady || !window.botpress) return
