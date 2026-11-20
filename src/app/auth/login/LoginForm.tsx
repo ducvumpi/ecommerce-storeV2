@@ -3,10 +3,9 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { LoginData, LoginSchema } from "@/app/api/loginAPI";
 import { useAuthStore } from "@/app/store/isLoggedIn";
-import { useRouter } from "next/navigation";
 import { loginWithGoogle } from "@/app/api/loginAPI";
 import { Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/app/AuthProvider";
 
 const inputStyle: React.CSSProperties = {
@@ -23,21 +22,26 @@ const labelStyle: React.CSSProperties = {
 export default function LoginFormAuth() {
     const { user } = useAuth();
     const { onSubmit } = useAuthStore();
-    const router = useRouter();
+    const redirecting = useRef(false);
     const [showPassword, setShowPassword] = useState(false);
     const { control, handleSubmit, formState: { errors } } = useForm<LoginData>({
         resolver: yupResolver(LoginSchema),
     });
 
+    const redirectToHome = useCallback(() => {
+        if (redirecting.current) return;
+        redirecting.current = true;
+        window.location.replace("/");
+    }, []);
+
     useEffect(() => {
-        if (user) router.replace("/");
-    }, [router, user]);
+        if (user) redirectToHome();
+    }, [redirectToHome, user]);
 
     const handleLogin = async (data: LoginData) => {
         const success = await onSubmit(data);
         if (success) {
-            router.replace("/");
-            router.refresh();
+            redirectToHome();
         }
     };
 

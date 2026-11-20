@@ -690,18 +690,41 @@ export default function ShoppingCartUI() {
   const isIndeterminate = selectedItems.length > 0 && selectedItems.length < cartItems.length;
 
   useEffect(() => {
+    let active = true;
+    let latestFetchId = 0;
+    let authRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+
     async function fetchCart() {
+      const fetchId = ++latestFetchId;
       const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (!active || fetchId !== latestFetchId) return;
       if (userError || !user) {
         const guestItems = getGuestCart();
         setCartItems(guestItems as any);
+        setSelectedItems([]);
         setLoading(false);
         return;
       }
 
       const { data: cartData, error: cartError } = await supabase
-        .from('cart').select('id').eq('user_id', user.id).single();
-      if (cartError) { setLoading(false); return; }
+        .from('cart').select('id').eq('user_id', user.id).maybeSingle();
+      if (!active || fetchId !== latestFetchId) return;
+      if (cartError) {
+        console.error('Could not load the authenticated cart:', cartError);
+        setCartItems([]);
+        setSelectedItems([]);
+        setLoading(false);
+        return;
+      }
+      // A newly registered account may not have a cart row until its first
+      // cart.add action. Treat that as an empty cart, not as a failed query.
+      if (!cartData) {
+        setCartItems([]);
+        setSelectedItems([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.from('cart_items').select(`
         id, quantity,
         product_variant:variant_id (
@@ -709,30 +732,55 @@ export default function ShoppingCartUI() {
           product:product_id ( id, name, description, image_url )
         )
       `).eq('cart_id', cartData.id);
-      if (error) { setCartItems([]); setLoading(false); return; }
-      setCartItems((data ?? []) as unknown as CartItem[]);
+      if (!active || fetchId !== latestFetchId) return;
+      if (error) {
+        console.error('Could not load cart items:', error);
+        setCartItems([]);
+        setSelectedItems([]);
+        setLoading(false);
+        return;
+      }
+      const nextItems = (data ?? []) as unknown as CartItem[];
+      setCartItems(nextItems);
+      setSelectedItems(previous => previous.filter(id => nextItems.some(item => item.id === id)));
       setLoading(false);
     }
-    fetchCart();
+
     const channel = supabase
-      .channel('cart_items_changes')
+      .channel('cart_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cart' },
+        () => { void fetchCart(); }
+      )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'cart_items' },
-        () => {
-          fetchCart(); // refetch lại khi có thay đổi
-        }
+        () => { void fetchCart(); }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'product_variants' },
-        () => {
-          fetchCart();
-        }
+        () => { void fetchCart(); }
       )
       .subscribe();
 
+    // Keep the cart in sync when this page stays mounted through sign-in or
+    // sign-out. Defer the query until Supabase finishes its auth-state lock.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(event => {
+      if (event !== 'SIGNED_IN' && event !== 'SIGNED_OUT') return;
+      setLoading(true);
+      setSelectedItems([]);
+      if (authRefreshTimer) clearTimeout(authRefreshTimer);
+      authRefreshTimer = setTimeout(() => { void fetchCart(); }, 0);
+    });
+
+    void fetchCart();
+
     return () => {
+      active = false;
+      if (authRefreshTimer) clearTimeout(authRefreshTimer);
+      subscription.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, []);
